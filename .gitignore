@@ -1,0 +1,8 @@
+build/
+dist/
+nbproject/private/
+
+jacocoverage.report.xml
+jacoco.exec*
+
+*.podcast.xml

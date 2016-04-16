@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://www.netbeans.org/ns/project/1">
+    <type>org.netbeans.modules.java.j2seproject</type>
+    <configuration>
+        <data xmlns="http://www.netbeans.org/ns/j2se-project/3">
+            <name>MixcloudPodcast</name>
+            <source-roots>
+                <root id="src.dir"/>
+            </source-roots>
+            <test-roots>
+                <root id="test.src.dir"/>
+            </test-roots>
+        </data>
+        <spellchecker-wordlist xmlns="http://www.netbeans.org/ns/spellchecker-wordlist/1">
+            <word>attribute's</word>
+            <word>class's</word>
+            <word>Cloudcast</word>
+            <word>config</word>
+            <word>feed's</word>
+            <word>Firefox</word>
+            <word>hostname</word>
+            <word>html</word>
+            <word>http</word>
+            <word>https</word>
+            <word>launchd</word>
+            <word>list's</word>
+            <word>localhost</word>
+            <word>Mixcloud</word>
+            <word>Mixcloud's</word>
+            <word>Mozilla</word>
+            <word>offliberty</word>
+            <word>og</word>
+            <word>podcast</word>
+            <word>podcast's</word>
+            <word>property's</word>
+            <word>stackoverflow</word>
+            <word>thingy</word>
+            <word>Throwable</word>
+            <word>track's</word>
+            <word>unescape</word>
+            <word>unescaped</word>
+            <word>unescapes</word>
+            <word>unescaping</word>
+            <word>Uninstalls</word>
+            <word>url</word>
+            <word>website</word>
+            <word>www</word>
+        </spellchecker-wordlist>
+    </configuration>
+</project>

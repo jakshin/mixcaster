@@ -1,0 +1,9 @@
+<item>
+  <enclosure url="{{episode.enclosureUrl}}" length="{{episode.enclosureLength}}" type="{{episode.enclosureMimeType}}" />
+  <guid>{{episode.enclosureUrl}}</guid>
+  <link>{{episode.link}}</link>
+  <pubDate>{{episode.pubDate}}</pubDate>
+  <title>{{episode.title}}</title>
+  <itunes:author>{{episode.iTunesAuthor}}</itunes:author>
+  <itunes:summary>{{episode.iTunesSummary}}</itunes:summary>
+</item>
