@@ -66,7 +66,6 @@ public class MixcloudScraper {
 
             String trackWebPageUrl = this.makeUrlAbsolute(this.getAttributeValue("m-url", tag), urlStr);
             String musicUrl = this.decoder.decode(this.getAttributeValue("m-play-info", tag));
-            System.out.println(this.getAttributeValue("m-play-info", tag) + " => " + musicUrl);
             MusicUrlHeaderData data = this.getMusicUrlHeaderData(musicUrl);
 
             MixcloudFeed.Track track = new MixcloudFeed.Track();
