@@ -31,6 +31,11 @@ public class MixcloudDecoderTest {
     private MixcloudDecoder instance;
 
     /** Scaffolding. */
+    public MixcloudDecoderTest() {
+        this.instance = null;
+    }
+
+    /** Scaffolding. */
     @BeforeClass
     public static void setUpClass() {
     }
@@ -66,17 +71,14 @@ public class MixcloudDecoderTest {
     @Test
     public void decodeShouldReturnNullOnFailure() {
         String playInfo = "invalid";
-        String expResult = null;
         String result = instance.decode(playInfo);
-        assertEquals(expResult, result);
+        assertEquals(null, result);
     }
 
     /** Test. */
     @Test
     public void decodeShouldReturnNullOnNullInput() {
-        String playInfo = null;
-        String expResult = null;
-        String result = instance.decode(playInfo);
-        assertEquals(expResult, result);
+        String result = instance.decode(null);
+        assertEquals(null, result);
     }
 }

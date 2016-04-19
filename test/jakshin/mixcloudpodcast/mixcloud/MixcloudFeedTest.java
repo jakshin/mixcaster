@@ -18,7 +18,7 @@
 package jakshin.mixcloudpodcast.mixcloud;
 
 import jakshin.mixcloudpodcast.rss.PodcastRSS;
-import jakshin.mixcloudpodcast.utils.TrackLocation;
+import jakshin.mixcloudpodcast.utils.TrackLocator;
 import java.net.MalformedURLException;
 import java.util.Date;
 import org.junit.After;
@@ -71,25 +71,24 @@ public class MixcloudFeedTest {
         track.musicLengthBytes = 42;
         track.musicLastModifiedDate = new Date();
         track.ownerName = "Owner";
-        track.location = new TrackLocation(feed.url, track.webPageUrl, track.musicUrl);
         feed.tracks.add(track);
 
-        PodcastRSS rss = feed.createRSS();
+        PodcastRSS rss = feed.createRSS(null);
         assertEquals(feed.title, rss.title);
         assertEquals(feed.description, rss.description);
         assertEquals(feed.url, rss.link.toString());
         assertEquals(feed.locale, rss.language);
         assertEquals(feed.title, rss.iTunesAuthor);
-        assertEquals(feed.imageUrl, rss.iTunesImage);
+        assertEquals(feed.imageUrl, rss.iTunesImageUrl);
         assertEquals(feed.title, rss.iTunesOwnerName);
 
         PodcastRSS.PodcastEpisode ep = rss.episodes.get(0);
-        assertEquals(track.location.getLocalUrl(), ep.enclosureUrl.toString());
+        assertEquals(TrackLocator.getLocalUrl(null, feed.url, track.webPageUrl, track.musicUrl), ep.enclosureUrl.toString());
         assertEquals(track.musicContentType, ep.enclosureMimeType);
         assertEquals(track.musicLengthBytes, ep.enclosureLengthBytes);
         assertEquals(track.webPageUrl, ep.link.toString());
         assertEquals(track.musicLastModifiedDate, ep.pubDate);
-        assertEquals(track.title, ep.title);
+        assertEquals(track.title + " [DOWNLOADING, CAN'T PLAY YET]", ep.title);
         assertEquals(track.ownerName, ep.iTunesAuthor);
         assertEquals(track.summary, ep.iTunesSummary);
     }

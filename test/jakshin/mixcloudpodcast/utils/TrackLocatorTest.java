@@ -26,9 +26,9 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 
 /**
- * Unit tests for the TrackLocation class.
+ * Unit tests for the TrackLocator class.
  */
-public class TrackLocationTest {
+public class TrackLocatorTest {
     /** Scaffolding. */
     @BeforeClass
     public static void setUpClass() {
@@ -51,53 +51,34 @@ public class TrackLocationTest {
 
     /** Test. */
     @Test
-    public void getLocalUrlShouldWorkWithScrapeConstructor() {
-        TrackLocation instance = new TrackLocation("http://www.mixcloud.com/Foo/",
+    public void getLocalUrlShouldWork() {
+        String host = Main.config.getProperty("http_hostname");
+        String port = Main.config.getProperty("http_port");
+        String expResult = "http://" + host + ":" + port + "/Foo/ep1.m4a";
+        String result = TrackLocator.getLocalUrl(null, "http://www.mixcloud.com/Foo/",
                 "http://www.mixcloud.com/Foo/ep1/", "https://foo.com/a/b/c/d.m4a");
-        String host = Main.config.getProperty("http_hostname");
-        String port = Main.config.getProperty("http_port");
-        String expResult = "http://" + host + ":" + port + "/Foo/ep1.m4a";
-        String result = instance.getLocalUrl();
         assertEquals(expResult, result);
     }
 
     /** Test. */
     @Test
-    public void getLocalPathShouldWorkWithScrapeConstructor() {
-        TrackLocation instance = new TrackLocation("http://www.mixcloud.com/Foo",
-                "http://www.mixcloud.com/Foo/ep1", "https://foo.com/a/b/c/d.m4a");
-
+    public void getLocalPathShouldWorkWithFullUrl() {
         String expResult = Main.config.getProperty("music_dir");
         expResult = expResult.replace("~", System.getProperty("user.home"));
         if (!expResult.endsWith("/")) expResult += "/";
         expResult += "Foo/ep1.m4a";
 
-        String result = instance.getLocalPath();
+        String result = TrackLocator.getLocalPath("http://localhost:25683/Foo/ep1.m4a");
         assertEquals(expResult, result);
     }
 
     /** Test. */
     @Test
-    public void getLocalUrlShouldWorkWithHttpConstructor() {
-        TrackLocation instance = new TrackLocation("http://localhost:1234/Foo/ep1.m4a");
-        String host = Main.config.getProperty("http_hostname");
-        String port = Main.config.getProperty("http_port");
-        String expResult = "http://" + host + ":" + port + "/Foo/ep1.m4a";
-        String result = instance.getLocalUrl();
-        assertEquals(expResult, result);
-    }
+    public void getLocalPathShouldWorkWithAbsoluteUrl() {
+        Main.config.setProperty("music_dir", "/music/");
+        String expResult = "/music/Foo/ep1.m4a";
 
-    /** Test. */
-    @Test
-    public void getLocalPathShouldWorkWithHttpConstructor() {
-        TrackLocation instance = new TrackLocation("http://localhost:1234/Foo/ep1.m4a");
-
-        String expResult = Main.config.getProperty("music_dir");
-        expResult = expResult.replace("~", System.getProperty("user.home"));
-        if (!expResult.endsWith("/")) expResult += "/";
-        expResult += "Foo/ep1.m4a";
-
-        String result = instance.getLocalPath();
+        String result = TrackLocator.getLocalPath("/Foo/ep1.m4a");
         assertEquals(expResult, result);
     }
 }

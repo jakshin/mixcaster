@@ -30,16 +30,19 @@ public class Download {
      * @param remoteUrl The remote URL to download from.
      * @param remoteLengthBytes The length of the file to be downloaded from the remote URL.
      * @param remoteLastModifiedDate When the remote data was last modified, according to the remote server.
-     * @param localFile The full path of the local file to download to.
+     * @param localFilePath The full path of the local file to download to.
      */
-    public Download(String remoteUrl, int remoteLengthBytes, Date remoteLastModifiedDate, String localFile) {
+    public Download(String remoteUrl, int remoteLengthBytes, Date remoteLastModifiedDate, String localFilePath) {
         this.remoteUrl = remoteUrl;
         this.remoteLengthBytes = remoteLengthBytes;
         this.remoteLastModifiedDate = new Date(remoteLastModifiedDate.getTime());
-        this.localFile = localFile;
+        this.localFilePath = localFilePath;
     }
 
-    /** The remote URL to download from. */
+    /**
+     * The remote URL to download from.
+     * Assumed not to require URL-encoding, since this is only used to download scraped Mixcloud tracks.
+     */
     public final String remoteUrl;
 
     /** The length of the file to be downloaded from the remote URL. */
@@ -49,7 +52,7 @@ public class Download {
     public final Date remoteLastModifiedDate;
 
     /** The full path of the local file to download to. */
-    public final String localFile;
+    public final String localFilePath;
 
     /**
      * Indicates whether some other object is "equal to" this one.
@@ -65,7 +68,7 @@ public class Download {
         if (!Objects.equals(this.remoteUrl, other.remoteUrl)) return false;
         if (!Objects.equals(this.remoteLengthBytes, other.remoteLengthBytes)) return false;
         if (!Objects.equals(this.remoteLastModifiedDate, other.remoteLastModifiedDate)) return false;
-        if (!Objects.equals(this.localFile, other.localFile)) return false;
+        if (!Objects.equals(this.localFilePath, other.localFilePath)) return false;
 
         return true;
     }
@@ -81,7 +84,7 @@ public class Download {
         hash = 59 * hash + Objects.hashCode(this.remoteUrl);
         hash = 59 * hash + Objects.hashCode(this.remoteLengthBytes);
         hash = 59 * hash + Objects.hashCode(this.remoteLastModifiedDate);
-        hash = 59 * hash + Objects.hashCode(this.localFile);
+        hash = 59 * hash + Objects.hashCode(this.localFilePath);
         return hash;
     }
 }

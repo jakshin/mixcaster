@@ -10,7 +10,7 @@
 <itunes:author>{{podcast.iTunesAuthor}}</itunes:author> <!-- feed title -->
 <itunes:category text="{{podcast.iTunesCategory}}" />
 <itunes:explicit>{{podcast.iTunesExplicit}}</itunes:explicit>
-<itunes:image href="{{podcast.iTunesImage}}" />
+<itunes:image href="{{podcast.iTunesImageUrl}}" />
 <itunes:owner>
   <itunes:name>{{podcast.iTunesOwnerName}}</itunes:name> <!-- feed title -->
   <itunes:email>{{podcast.iTunesOwnerEmail}}</itunes:email>

@@ -98,7 +98,7 @@ public class PodcastRSSTest {
         instance.language = "en_US";
         instance.iTunesAuthor = "Author";
         instance.iTunesCategory = "Music";
-        instance.iTunesImage = "";
+        instance.iTunesImageUrl = "";
 
         PodcastRSS.PodcastEpisode ep = new PodcastRSS.PodcastEpisode();
         ep.enclosureUrl = new URL("http://foo/foo.mp3");
@@ -146,7 +146,7 @@ public class PodcastRSSTest {
         instance.language = "en_US";
         instance.iTunesAuthor = "Author";
         instance.iTunesCategory = "Music";
-        instance.iTunesImage = "";
+        instance.iTunesImageUrl = "";
 
         String result = instance.toString();
         assertEquals(expResult, result);

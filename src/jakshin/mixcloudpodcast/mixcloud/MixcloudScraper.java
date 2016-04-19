@@ -21,7 +21,7 @@ import jakshin.mixcloudpodcast.*;
 import jakshin.mixcloudpodcast.download.Download;
 import jakshin.mixcloudpodcast.download.DownloadQueue;
 import jakshin.mixcloudpodcast.entities.HtmlEntities;
-import jakshin.mixcloudpodcast.utils.TrackLocation;
+import jakshin.mixcloudpodcast.utils.TrackLocator;
 import java.io.*;
 import java.net.*;
 import java.util.Date;
@@ -39,6 +39,7 @@ public class MixcloudScraper {
      * but the download queue is not processed.
      *
      * @param urlStr The Mixcloud feed URL to scrape, e.g. "https://www.mixcloud.com/DJoseSolis/".
+     *      Valid Mixcloud feed URLs should not be or need to be URL-encoded.
      * @return An object containing info about the feed.
      * @throws MalformedURLException
      * @throws IOException
@@ -78,15 +79,11 @@ public class MixcloudScraper {
             track.musicLastModifiedDate = data.lastModifiedDate;
             track.ownerName = this.getAttributeValue("m-owner-name", tag);
 
-            track.location = new TrackLocation(feed.url, track.webPageUrl, track.musicUrl);
-            String localPath = track.location.getLocalPath();
-            Download download = new Download(track.musicUrl, track.musicLengthBytes, track.musicLastModifiedDate, localPath);
+            String localUrl = TrackLocator.getLocalUrl(null, feed.url, track.webPageUrl, track.musicUrl);
+            String localPath = TrackLocator.getLocalPath(localUrl);
 
-            if (DownloadQueue.getInstance().enqueue(download)) {
-                // the track hasn't been downloaded yet;
-                // add it to the feed, but with an indicator that you can't yet listen to it
-                track.title += " [DOWNLOADING, CAN'T PLAY YET]";
-            }
+            Download download = new Download(track.musicUrl, track.musicLengthBytes, track.musicLastModifiedDate, localPath);
+            DownloadQueue.getInstance().enqueue(download);
 
             feed.tracks.add(track);
         }
@@ -105,6 +102,7 @@ public class MixcloudScraper {
      *
      * @param urlStr The Mixcloud track URL to scrape,
      *      e.g. "https://www.mixcloud.com/DJoseSolis/the-official-trance-podcast-episode-199/".
+     *      Should not be or need to be URL-encoded.
      * @return The track's summary, or null if the relevant meta tag can't be found in the page.
      * @throws MalformedURLException
      * @throws IOException
@@ -121,6 +119,7 @@ public class MixcloudScraper {
      * Downloads a web page.
      *
      * @param urlStr The URL of the web page to download.
+     *      Should not be or need to be URL-encoded, since we only download Mixcloud web pages.
      * @return The web page's contents.
      * @throws MalformedURLException
      * @throws IOException
@@ -198,7 +197,7 @@ public class MixcloudScraper {
      * Gets HTTP header data associated with a music URL.
      * This performs a HEAD request on the URL, and returns the values of the Content-Length and Last-Modified headers.
      *
-     * @param urlStr The music URL.
+     * @param urlStr The music URL. Should not be or need to be URL-encoded.
      * @return Some HTTP header data associated with the URL.
      * @throws MalformedURLException
      * @throws IOException

@@ -44,20 +44,19 @@ public final class FileUtils {
         File file = new File(fileName);
         StringBuilder sb;
 
-        try (FileInputStream in = new FileInputStream(file)) {
-            try (Reader reader = new InputStreamReader(in, charset)) {
-                sb = new StringBuilder((int) file.length());
-                final char[] buf = new char[50_000];
+        try (Reader reader = new InputStreamReader(new FileInputStream(file), charset)) {
+            sb = new StringBuilder((int) file.length());
+            final char[] buf = new char[50_000];
 
-                while (true) {
-                    int charCount = reader.read(buf, 0, buf.length);
-                    if (charCount < 0) break;
+            while (true) {
+                int charCount = reader.read(buf, 0, buf.length);
+                if (charCount < 0) break;
 
-                    sb.append(buf, 0, charCount);
-                }
-
-                // the FileInputStream is closed by the reader
+                sb.append(buf, 0, charCount);
             }
+
+            // the Reader is automatically closed;
+            // the FileInputStream is closed by the Reader
         }
 
         return sb.toString();
@@ -82,13 +81,11 @@ public final class FileUtils {
             throw new UnsupportedEncodingException(charset);
         }
 
-        try (FileOutputStream out = new FileOutputStream(file)) {
-            try (Writer writer = new OutputStreamWriter(out, charset)) {
-                writer.write(str);
+        try (Writer writer = new OutputStreamWriter(new FileOutputStream(file), charset)) {
+            writer.write(str);
 
-                // the writer is automatically closed, which flushes it first;
-                // the FileOutputStream is closed by the writer
-            }
+            // the Writer is automatically closed, which flushes it first;
+            // the FileOutputStream is closed by the Writer
         }
     }
 

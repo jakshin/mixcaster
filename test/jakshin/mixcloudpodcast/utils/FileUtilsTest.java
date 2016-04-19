@@ -74,7 +74,9 @@ public class FileUtilsTest {
         String result = FileUtils.readFileIntoString(fileName, charset);
 
         File file = new File(fileName);
-        file.delete();
+        if (!file.delete()) {
+            fail("Invalid test because a temp file couldn't be deleted");
+        }
 
         return result;
     }
@@ -83,6 +85,7 @@ public class FileUtilsTest {
     @Test (expected=FileNotFoundException.class)
     public void readingUnnamedShouldThrow() throws IOException, SecurityException {
         String result = FileUtils.readFileIntoString("", "UTF-8");
+        assertEquals(null, result);  // shouldn't be reached
     }
 
     /** Test. */
@@ -95,6 +98,7 @@ public class FileUtilsTest {
     @Test (expected=UnsupportedEncodingException.class)
     public void readingInvalidCharsetShouldThrow() throws IOException, SecurityException {
         String result = FileUtils.readFileIntoString("/etc/hosts", "invalid");
+        assertEquals(null, result);  // shouldn't be reached
     }
 
     /** Test. */
@@ -102,7 +106,11 @@ public class FileUtilsTest {
     public void writingInvalidCharsetShouldThrow() throws IOException, SecurityException {
         String fileName = System.getProperty("java.io.tmpdir") + "FileUtils-invalid.test";
         File file = new File(fileName);
-        if (file.exists()) file.delete();
+        if (file.exists()) {
+            if (!file.delete()) {
+                fail("Invalid test because an existing temp file couldn't be deleted");
+            }
+        }
         boolean thrown = false;
 
         try {
@@ -124,6 +132,7 @@ public class FileUtilsTest {
     @Test (expected=FileNotFoundException.class)
     public void readingDirectoryShouldThrow() throws IOException, SecurityException {
         String result = FileUtils.readFileIntoString("/etc/", "UTF-8");
+        assertEquals(null, result);  // shouldn't be reached
     }
 
     /** Test. */
@@ -136,6 +145,7 @@ public class FileUtilsTest {
     @Test (expected=FileNotFoundException.class)
     public void readingInNonexistentDirectoryShouldThrow() throws IOException, SecurityException {
         String result = FileUtils.readFileIntoString("/does-not-exist/FileUtils.test", "UTF-8");
+        assertEquals(null, result);  // shouldn't be reached
     }
 
     /** Test. */

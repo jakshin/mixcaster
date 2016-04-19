@@ -45,7 +45,8 @@ public final class PodcastRSS {
         if (this.episodeXmlTemplate == null)
             this.episodeXmlTemplate = loadResource("podcastEpisode.xml");
 
-        // podcast properties
+        // podcast properties;
+        // none of the links/URLs are expected to require URL-encoding
         String p = this.podcastXmlTemplate.toString();
         p = this.replaceTemplateTag(p, "{{podcast.title}}", this.title);
         p = this.replaceTemplateTag(p, "{{podcast.description}}", this.description);
@@ -54,11 +55,12 @@ public final class PodcastRSS {
         p = this.replaceTemplateTag(p, "{{podcast.iTunesAuthor}}", this.iTunesAuthor);
         p = this.replaceTemplateTag(p, "{{podcast.iTunesCategory}}", this.iTunesCategory);
         p = this.replaceTemplateTag(p, "{{podcast.iTunesExplicit}}", this.iTunesExplicit ? "yes" : "no");
-        p = this.replaceTemplateTag(p, "{{podcast.iTunesImage}}", this.iTunesImage);
+        p = this.replaceTemplateTag(p, "{{podcast.iTunesImageUrl}}", this.iTunesImageUrl);
         p = this.replaceTemplateTag(p, "{{podcast.iTunesOwnerName}}", this.iTunesOwnerName);
         p = this.replaceTemplateTag(p, "{{podcast.iTunesOwnerEmail}}", this.iTunesOwnerEmail);
 
-        // episodes
+        // episodes;
+        // none of the links/URLs are expected to require URL-encoding
         StringBuilder episodeXml = new StringBuilder(1024 * this.episodes.size());
 
         for (PodcastEpisode episode : this.episodes) {
@@ -143,7 +145,10 @@ public final class PodcastRSS {
     /** A description of the podcast. */
     public String description;
 
-    /** The podcast's web page's URL (for human consumption, not the URL of the RSS XML). */
+    /**
+     * The podcast's web page's URL (for human consumption, not the URL of the RSS XML).
+     * Shouldn't require URL-encoding.
+     */
     public URL link;
 
     /** The language the podcast is in. */
@@ -158,8 +163,11 @@ public final class PodcastRSS {
     /** Whether the podcast contains explicit language. */
     public boolean iTunesExplicit;
 
-    /** A cover image for the podcast. */
-    public String iTunesImage;
+    /**
+     * The URL of a cover image for the podcast.
+     * Shouldn't require URL-encoding.
+     */
+    public String iTunesImageUrl;
 
     /** The podcast's owner's name. */
     public String iTunesOwnerName;
@@ -174,7 +182,10 @@ public final class PodcastRSS {
      * An episode of the podcast.
      */
     public static class PodcastEpisode {
-        /** The URL of the episode's audio file. */
+        /**
+         * The URL of the episode's audio file.
+         * Shouldn't require URL-encoding.
+         */
         public URL enclosureUrl;
 
         /** The MIME type of the episode's audio file. */
@@ -183,7 +194,10 @@ public final class PodcastRSS {
         /** The length in bytes of the episode's audio file. */
         public int enclosureLengthBytes;
 
-        /** The episode's web page's URL (for human consumption, not the URL of the audio file). */
+        /**
+         * The episode's web page's URL (for human consumption, not the URL of the audio file).
+         * Shouldn't require URL-encoding.
+         */
         public URL link;
 
         /** The episode's publication date/time. */

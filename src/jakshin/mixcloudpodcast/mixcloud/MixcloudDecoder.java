@@ -33,7 +33,7 @@ class MixcloudDecoder {
      * @param playInfo The "play info" scraped from Mixcloud's m-play-info attribute.
      * @return A string containing the stream URL, i.e. the URL from which the track can be downloaded.
      */
-    public String decode(String playInfo) {
+    String decode(String playInfo) {
         if (playInfo == null) return null;
 
         // found in https://github.com/jackyNIX/xbmc-mixcloud-plugin/blob/master/default.py
@@ -50,6 +50,7 @@ class MixcloudDecoder {
         }
 
         // e.g. {"stream_url": "https://stream19.mixcloud.com/c/m4a/64/c/b/2/5/4969-e079-4ce5-8b50-95b7364beedf.m4a", ...}
+        // it doesn't appear that the stream URL will ever be or need to be URL-encoded
         String regexStr = Main.config.getProperty("stream_url_regex");
         Pattern re = Pattern.compile(regexStr, Pattern.CASE_INSENSITIVE);
         Matcher matcher = re.matcher(sb);

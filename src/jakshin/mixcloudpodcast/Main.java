@@ -18,6 +18,7 @@
 package jakshin.mixcloudpodcast;
 
 import jakshin.mixcloudpodcast.download.DownloadQueue;
+import jakshin.mixcloudpodcast.http.WebServer;
 import jakshin.mixcloudpodcast.mixcloud.MixcloudFeed;
 import jakshin.mixcloudpodcast.mixcloud.MixcloudScraper;
 import jakshin.mixcloudpodcast.rss.PodcastRSS;
@@ -78,7 +79,7 @@ public class Main {
     /**
      * The application's version number.
      */
-    public static final String version = "0.6";
+    public static final String version = "0.6.1";
 
     /**
      * Scrapes the given Mixcloud feed URL, also downloading any tracks which haven't already been downloaded.
@@ -99,7 +100,7 @@ public class Main {
                 return;
             }
 
-            Pattern re = Pattern.compile("^https://www.mixcloud.com/([a-z]+)/?$", Pattern.CASE_INSENSITIVE);
+            Pattern re = Pattern.compile("^https://www.mixcloud.com/([a-z_-]+)/?$", Pattern.CASE_INSENSITIVE);
             Matcher matcher = re.matcher(mixcloudFeedUrl);
 
             if (!matcher.matches()) {
@@ -115,7 +116,7 @@ public class Main {
                 System.out.println(String.format("Scraping %s ...", mixcloudFeedUrl));
                 MixcloudScraper scraper = new MixcloudScraper();
                 feed = scraper.scrape(mixcloudFeedUrl);
-                rss = feed.createRSS();
+                rss = feed.createRSS(null);
             }
             catch (FileNotFoundException ex) {
                 // TODO logging
@@ -151,8 +152,9 @@ public class Main {
      * serving podcast RSS XML and downloaded music files.
      */
     private void runService() {
-        // TODO implement
-        System.out.println("Not implemented yet");
+        System.out.println("WARNING: the service doesn't actually work yet");
+        WebServer server = new WebServer();
+        server.run();
     }
 
     /**
@@ -160,7 +162,7 @@ public class Main {
      * The service is started immediately.
      */
     private void installService() {
-        // TODO implement
+        // TODO implement installation
         System.out.println("Not implemented yet");
     }
 
@@ -169,7 +171,7 @@ public class Main {
      * The service is stopped if it's running.
      */
     private void uninstallService() {
-        // TODO implement
+        // TODO implement uninstallation
         System.out.println("Not implemented yet");
     }
 
@@ -205,9 +207,10 @@ public class Main {
         // set up default values; there should be a 1-to-1 correspondence between values here and in the properties file
         Properties defaults = new Properties();
         defaults.setProperty("download_oldest_first", "false");
-        defaults.setProperty("download_threads", "3");  // must be an int in [1-50]
+        defaults.setProperty("download_threads", "3");           // must be an int in [1-50]
+        defaults.setProperty("http_cache_time_seconds", "600");  // must be an int >= 0
         defaults.setProperty("http_hostname", "localhost");
-        defaults.setProperty("http_port", "25683");     // must be an int in [1024-65535]
+        defaults.setProperty("http_port", "25683");              // must be an int in [1024-65535]
         defaults.setProperty("music_dir", "~/Music/Mixcloud");
         defaults.setProperty("stream_url_regex", "\"stream_url\":\\s*\"([^\"]+)\"");
         defaults.setProperty("track_regex", "<span\\s+class\\s*=\\s*\"play-button\"([^>]+)>");
@@ -236,6 +239,7 @@ public class Main {
 
             // validate numeric properties
             Main.validateIntegerProperty(cfg, "download_threads", 1, 50);
+            Main.validateIntegerProperty(cfg, "http_cache_time_seconds", 0, Integer.MAX_VALUE);
             Main.validateIntegerProperty(cfg, "http_port", 1024, 65535);
         }
         catch (IOException ex) {

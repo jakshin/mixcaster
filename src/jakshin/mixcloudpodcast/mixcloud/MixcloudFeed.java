@@ -18,7 +18,8 @@
 package jakshin.mixcloudpodcast.mixcloud;
 
 import jakshin.mixcloudpodcast.rss.PodcastRSS;
-import jakshin.mixcloudpodcast.utils.TrackLocation;
+import jakshin.mixcloudpodcast.utils.TrackLocator;
+import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Date;
@@ -34,10 +35,11 @@ public class MixcloudFeed {
      * Creates a podcast RSS object from the feed.
      * The Mixcloud-style data in the feed is mapped to podcast-style data for use in RSS.
      *
+     * @param localHostAndPort The local host and port from which tracks will be served (optional).
      * @return A PodcastRSS object containing data equivalent to the feed's.
      * @throws MalformedURLException
      */
-    public PodcastRSS createRSS() throws MalformedURLException {
+    public PodcastRSS createRSS(String localHostAndPort) throws MalformedURLException {
         PodcastRSS rss = new PodcastRSS();
 
         rss.title = this.title;
@@ -48,7 +50,7 @@ public class MixcloudFeed {
         rss.iTunesAuthor = this.title;
         rss.iTunesCategory = "Music";
         rss.iTunesExplicit = false;
-        rss.iTunesImage = this.imageUrl;
+        rss.iTunesImageUrl = this.imageUrl;
         rss.iTunesOwnerName = this.title;
         rss.iTunesOwnerEmail = "nobody@example.com";
 
@@ -56,12 +58,20 @@ public class MixcloudFeed {
         for (Track track : this.tracks) {
             PodcastRSS.PodcastEpisode episode = new PodcastRSS.PodcastEpisode();
 
-            episode.enclosureUrl = new URL(track.location.getLocalUrl());
+            String localUrlStr = TrackLocator.getLocalUrl(localHostAndPort, this.url, track.webPageUrl, track.musicUrl);
+            String localPath = TrackLocator.getLocalPath(localUrlStr);
+
+            String trackTitle = track.title;
+            if (!(new File(localPath).exists())) {
+                trackTitle += " [DOWNLOADING, CAN'T PLAY YET]";
+            }
+
+            episode.enclosureUrl = new URL(localUrlStr);
             episode.enclosureMimeType = track.musicContentType;
             episode.enclosureLengthBytes = track.musicLengthBytes;
             episode.link = new URL(track.webPageUrl);
             episode.pubDate = track.musicLastModifiedDate;
-            episode.title = track.title;
+            episode.title = trackTitle;
             episode.iTunesAuthor = track.ownerName;
             episode.iTunesSummary = track.summary;
 
@@ -71,13 +81,13 @@ public class MixcloudFeed {
         return rss;
     }
 
-    /** The feed's URL for human consumption. */
+    /** The feed's URL for human consumption. Assumed not to be or need to be URL-encoded. */
     public String url;
 
     /** The feed's title; usually an artist or DJ's name. From the "og:title" meta tag. */
     public String title;
 
-    /** The URL for the feed's image. From the "og:image" meta tag. */
+    /** The URL for the feed's image. From the "og:image" meta tag. Doesn't need URL-encoding. */
     public String imageUrl;
 
     /** A description of the feed. From the "og:description" meta tag. */
@@ -99,10 +109,16 @@ public class MixcloudFeed {
         /** The track's summary. From the track's detail page's "og:description" meta tag. */
         public String summary;
 
-        /** The URL to visit in a web browser to read about the track, listen to it, etc. From the "m-url" attribute. */
+        /**
+         * The URL to visit in a web browser to read about the track, listen to it, etc.
+         * From the "m-url" attribute. Doesn't need URL-encoding.
+         */
         public String webPageUrl;
 
-        /** The URL from which to download the music as an mp3, m4a, etc. From the "m-play-info" attribute. */
+        /**
+         * The URL from which to download the music as an mp3, m4a, etc.
+         * From the "m-play-info" attribute. Doesn't need URL-encoding.
+         */
         public String musicUrl;
 
         /** The MIME content type of the music file at musicUrl. From its Content-Type header. */
@@ -116,11 +132,5 @@ public class MixcloudFeed {
 
         /** The track's owner's name. From the "m-owner-name" attribute. */
         public String ownerName;
-
-        /**
-         * Provides information on how the music file can be accessed,
-         * after it has been downloaded from Mixcloud and stored locally.
-         */
-        public TrackLocation location;
     }
 }

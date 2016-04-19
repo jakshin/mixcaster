@@ -50,7 +50,7 @@ public final class DownloadQueue {
      * @return Whether the download was added to the queue; if not added, it's already been downloaded.
      */
     public synchronized boolean enqueue(Download download) {
-        File localFile = new File(download.localFile);
+        File localFile = new File(download.localFilePath);
         if (localFile.exists()) {
             return false;  // already downloaded
         }
@@ -118,7 +118,7 @@ public final class DownloadQueue {
         @Override
         public void run() {
             String msg = String.format("Starting download: %s%n    => %s",
-                    this.download.remoteUrl, this.download.localFile);
+                    this.download.remoteUrl, this.download.localFilePath);
             System.out.println(msg);
 
             HttpURLConnection conn = null;
@@ -141,7 +141,7 @@ public final class DownloadQueue {
                 in = new BufferedInputStream(conn.getInputStream());
 
                 // download the track to a *.part file
-                File localPartFile = new File(this.download.localFile + ".part");
+                File localPartFile = new File(this.download.localFilePath + ".part");
                 File localDir = localPartFile.getParentFile();
 
                 if (!localDir.exists() && !localDir.mkdirs()) {
@@ -172,7 +172,7 @@ public final class DownloadQueue {
                 out = null;
 
                 // rename the *.part file
-                Path localPath = Paths.get(this.download.localFile);
+                Path localPath = Paths.get(this.download.localFilePath);
                 Files.deleteIfExists(localPath);
                 Files.move(localPartFile.toPath(), localPath, StandardCopyOption.ATOMIC_MOVE);
 
@@ -180,7 +180,7 @@ public final class DownloadQueue {
                 long secondsTaken = (finished - started) / 1000;
 
                 msg = String.format("Finished download: %s%n    => %s in %s",
-                        this.download.remoteUrl, this.download.localFile, formatTimeSpan((int) secondsTaken));
+                        this.download.remoteUrl, this.download.localFilePath, formatTimeSpan((int) secondsTaken));
                 System.out.println(msg);
             }
             catch (IOException ex) {
@@ -258,7 +258,7 @@ public final class DownloadQueue {
     /** Private constructor to prevent instantiation except via getInstance(). */
     private DownloadQueue() {
         String downloadThreadsStr = Main.config.getProperty("download_threads");
-        int threads = Integer.parseInt(downloadThreadsStr);
+        int threads = Integer.parseInt(downloadThreadsStr);  // already validated
 
         // "threads" threads max (1-50), wait 5s before killing idle threads, don't retain any idle threads
         this.pool = new ThreadPoolExecutor(threads, threads, 5L, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>());
