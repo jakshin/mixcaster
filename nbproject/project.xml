@@ -12,6 +12,7 @@
             </test-roots>
         </data>
         <spellchecker-wordlist xmlns="http://www.netbeans.org/ns/spellchecker-wordlist/1">
+            <word>app</word>
             <word>attribute's</word>
             <word>class's</word>
             <word>Cloudcast</word>
@@ -22,18 +23,23 @@
             <word>html</word>
             <word>http</word>
             <word>https</word>
+            <word>iPhone</word>
+            <word>iTunes</word>
             <word>launchd</word>
             <word>list's</word>
             <word>localhost</word>
             <word>Mixcloud</word>
             <word>Mixcloud's</word>
+            <word>MixcloudPodcast</word>
             <word>Mozilla</word>
             <word>offliberty</word>
             <word>og</word>
             <word>podcast</word>
             <word>podcast's</word>
+            <word>podcasts</word>
             <word>property's</word>
             <word>request's</word>
+            <word>RSS</word>
             <word>stackoverflow</word>
             <word>thingy</word>
             <word>Throwable</word>
@@ -44,8 +50,10 @@
             <word>unescaping</word>
             <word>Uninstalls</word>
             <word>url</word>
+            <word>URLs</word>
             <word>website</word>
             <word>www</word>
+            <word>XML</word>
         </spellchecker-wordlist>
     </configuration>
 </project>
