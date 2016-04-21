@@ -171,6 +171,9 @@ public final class DownloadQueue {
                 out.close();
                 out = null;
 
+                // set the file's last-modified timestamp to match the value from Mixcloud's server
+                localPartFile.setLastModified(this.download.remoteLastModifiedDate.getTime());
+
                 // rename the *.part file
                 Path localPath = Paths.get(this.download.localFilePath);
                 Files.deleteIfExists(localPath);
