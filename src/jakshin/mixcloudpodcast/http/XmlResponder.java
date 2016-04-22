@@ -36,27 +36,33 @@ public class XmlResponder {
      * @param writer A writer which can be used to output the response.
      * @throws IOException
      */
-    void respond(HttpRequest request, Writer writer) throws IOException, ApplicationException {
-        String feedTitle = this.getSecondToLastComponentOfUrl(request.url);
-        // TODO handle null/empty as 403
-        System.out.println("Feed Title: " + feedTitle);  // TODO logging; in cache class?
+    void respond(HttpRequest request, Writer writer) throws IOException, HttpException, ApplicationException {
+        String feedName = this.getSecondToLastComponentOfUrl(request.url);
+        if (feedName == null || feedName.isEmpty()) {
+            throw new HttpException(403, "Forbidden");  // 404 would also be a fine choice
+        }
 
+        System.out.println("Feed Name: " + feedName);  // TODO logging; in cache class?
+
+        // get a feed, either from cache or by scraping
         FeedCache cache = FeedCache.getInstance();
-        MixcloudFeed feed = cache.getFromCache(feedTitle);
+        MixcloudFeed feed = cache.getFromCache(feedName);
 
         if (feed == null) {
             // kick off a scraper
-            String mixcloudFeedUrl = String.format("https://www.mixcloud.com/%s/", feedTitle);
+            String mixcloudFeedUrl = String.format("https://www.mixcloud.com/%s/", feedName);
             MixcloudScraper scraper = new MixcloudScraper();
             feed = scraper.scrape(mixcloudFeedUrl);
 
             // cache the MixcloudFeed instance
-            cache.addToCache(feed);
+            cache.addToCache(feedName, feed);
         }
 
+        // build the RSS XML
         PodcastRSS rss = feed.createRSS(request.host());
         String rssXml = rss.toString();
 
+        // kick off any downloads from Mixcloud which are now needed
         DownloadQueue downloads = DownloadQueue.getInstance();
         int downloadCount = downloads.queueSize();
 
@@ -66,14 +72,20 @@ public class XmlResponder {
             System.out.println(msg);
         }
         else {
-            System.out.println(String.format("Starting download of %d tracks", downloadCount));
+            String tracksStr = (downloadCount == 1) ? "track" : "tracks";
+            System.out.println(String.format("Starting download of %d %s", downloadCount, tracksStr));
             downloads.processQueue();
         }
 
-        // TODO write response headers via HttpResponse
+        // send the response headers
+        HttpHeaderWriter headerWriter = new HttpHeaderWriter();
+        headerWriter.sendSuccessHeaders(writer, feed.scraped, rssXml.length(), "application/xml");
 
-        writer.write(rssXml);
-        writer.flush();
+        // send the RSS XML, if needed
+        if (!request.isHead()) {
+            writer.write(rssXml);
+            writer.flush();
+        }
     }
 
     /**

@@ -39,16 +39,20 @@ class HttpResponse implements Runnable {
      */
     @Override
     public void run() {
-        // we manually close readers/writers/streams because the socket is closed when any of them are closed,
+        // we manually close readers/writers/streams because the socket gets closed when any of them are closed,
         // so we need to control their life-cycle carefully
         BufferedReader reader = null;
         BufferedWriter writer = null;
         BufferedOutputStream out = null;
+        HttpRequest request = null;
 
         try {
-            // parse and check the request
+            // initialize
+            writer = new BufferedWriter(new OutputStreamWriter(this.socket.getOutputStream(), "UTF-8"), 100_000);
             reader = new BufferedReader(new InputStreamReader(this.socket.getInputStream(), "ISO-8859-1"));
-            HttpRequest request = this.parseRequestHeaders(reader);
+
+            // parse and check the request
+            request = this.parseRequestHeaders(reader);
 
             if (request.httpVersion == null || !request.httpVersion.contains("/1.")) {
                 throw new HttpException(505, String.format("HTTP Version %s not supported", request.httpVersion));
@@ -62,26 +66,32 @@ class HttpResponse implements Runnable {
                 throw new HttpException(400, "Bad Request: empty URL");
             }
 
-            // route the request
+            // route the request to a responder
             if (this.getUrlWithoutQueryOrReference(request.url).toLowerCase(Locale.ROOT).endsWith(".xml")) {
                 // RSS XML request
-                writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), "UTF-8"), 100_000);
                 new XmlResponder().respond(request, writer);
             }
             else {
                 // any other request must be for a file
-                out = new BufferedOutputStream(socket.getOutputStream(), 100_000);
-                new FileResponder().respond(request, out);
+                out = new BufferedOutputStream(this.socket.getOutputStream(), 100_000);
+                new FileResponder().respond(request, writer, out);
             }
         }
-        catch (HttpException ex) {
-            // TODO logging, HTTP error dictated by the exception
-            System.out.println(ex.getClass().getCanonicalName() + ": " + ex.getMessage());
-        }
         catch (Throwable ex) {
-            // TODO logging, 500 error
-            // the HTTP response headers may already have been written out, but try anyway
+            // TODO logging
             System.out.println(ex.getClass().getCanonicalName() + ": " + ex.getMessage());
+
+            // if ex isn't an HttpException, the HTTP response headers may already have been written out, but try anyway
+            try {
+                boolean isHeadRequest = (request == null) ? false : request.isHead();
+                HttpHeaderWriter headerWriter = new HttpHeaderWriter();
+                headerWriter.sendErrorHeadersAndBody(writer, ex, isHeadRequest);
+            }
+            catch (Throwable ex2) {
+                // we're pretty bad off if we can't even send the response headers; log and give up
+                // TODO logging
+                System.out.println(ex2.getClass().getCanonicalName() + ": " + ex2.getMessage());
+            }
         }
         finally {
             this.closeAThing(reader);
@@ -104,9 +114,11 @@ class HttpResponse implements Runnable {
         while (true) {
             String line = reader.readLine();
             if (line == null || line.isEmpty()) break;
-            System.out.println(line);  // TODO remove test code
+
+            System.out.println("-> " + line);  // TODO logging
 
             if (request == null) {
+                // first line
                 String[] parts = line.split("\\s+");
                 if (parts.length != 3) {
                     throw new HttpException(400, "Bad Request: " + line);
@@ -120,6 +132,7 @@ class HttpResponse implements Runnable {
                 request.headers.put(lastHeaderName, oldValue + line.trim());
             }
             else {
+                // header line (Name: Value)
                 int colon = line.indexOf(':');
 
                 if (colon > 0) {

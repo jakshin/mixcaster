@@ -18,6 +18,7 @@
 package jakshin.mixcloudpodcast.rss;
 
 import jakshin.mixcloudpodcast.entities.XmlEntities;
+import jakshin.mixcloudpodcast.utils.DateFormatter;
 import java.io.*;
 import java.net.URL;
 import java.text.SimpleDateFormat;
@@ -35,11 +36,6 @@ public final class PodcastRSS {
     @Override
     public String toString() {
         // initialize, if we haven't already
-        if (this.dateFormatter == null) {
-            this.dateFormatter = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss z", Locale.ENGLISH);
-            this.dateFormatter.setTimeZone(TimeZone.getTimeZone("GMT"));
-        }
-
         if (this.podcastXmlTemplate == null)
             this.podcastXmlTemplate = loadResource("podcast.xml");
         if (this.episodeXmlTemplate == null)
@@ -69,7 +65,7 @@ public final class PodcastRSS {
             e = this.replaceTemplateTag(e, "{{episode.enclosureLength}}", Integer.toString(episode.enclosureLengthBytes));
             e = this.replaceTemplateTag(e, "{{episode.enclosureMimeType}}", episode.enclosureMimeType);
             e = this.replaceTemplateTag(e, "{{episode.link}}", episode.link.toString());
-            e = this.replaceTemplateTag(e, "{{episode.pubDate}}", dateFormatter.format(episode.pubDate));
+            e = this.replaceTemplateTag(e, "{{episode.pubDate}}", DateFormatter.format(episode.pubDate));
             e = this.replaceTemplateTag(e, "{{episode.title}}", episode.title);
             e = this.replaceTemplateTag(e, "{{episode.iTunesAuthor}}", episode.iTunesAuthor);
             e = this.replaceTemplateTag(e, "{{episode.iTunesSummary}}", episode.iTunesSummary);
@@ -80,12 +76,6 @@ public final class PodcastRSS {
         p = p.replace((CharSequence) "{{episodes}}", (CharSequence) episodeXml.toString().trim());
         return p;
     }
-
-    /**
-     * The thingy which can format dates in the format required by RSS.
-     * For example: "Tue, 29 Mar 2016 19:00:00 GMT".
-     */
-    private SimpleDateFormat dateFormatter;
 
     /** The thingy which can escape XML entities. */
     private final XmlEntities xmlEntities = new XmlEntities();

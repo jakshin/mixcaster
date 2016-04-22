@@ -39,21 +39,21 @@ class FeedCache {
 
     /**
      * Gets a feed from the cache.
-     * Returns null if a feed with the given title isn't in the cache.
+     * Returns null if a feed with the given name isn't in the cache.
      *
-     * @param feedTitle The title of the feed to retrieve from the cache.
+     * @param feedName The name of the feed to retrieve from the cache.
      * @return The feed, or null if no such feed was cached.
      */
-    synchronized MixcloudFeed getFromCache(String feedTitle) {
-        CachedFeedInfo existing = this.cachedFeeds.get(feedTitle);
+    synchronized MixcloudFeed getFromCache(String feedName) {
+        MixcloudFeed existing = this.cachedFeeds.get(feedName);
 
         if (existing != null) {
-            if ((System.currentTimeMillis() - existing.cachedTime) / 1000 < this.cacheTimeSeconds) {
-                return existing.feed;
+            if ((System.currentTimeMillis() - existing.scraped.getTime()) / 1000 < this.cacheTimeSeconds) {
+                return existing;
             }
             else {
                 // eject the expired feed from the cache
-                this.cachedFeeds.remove(feedTitle);
+                this.cachedFeeds.remove(feedName);
             }
         }
 
@@ -62,37 +62,16 @@ class FeedCache {
 
     /**
      * Adds a feed to the cache.
+     *
+     * @param feedName The name of the feed to add to the cache.
      * @param feed The feed to cache.
      */
-    synchronized void addToCache(MixcloudFeed feed) {
-        CachedFeedInfo info = new CachedFeedInfo(feed, System.currentTimeMillis());
-        this.cachedFeeds.put(feed.title, info);
-    }
-
-    /**
-     * Holds info about a cached MixcloudFeed instance.
-     */
-    private static class CachedFeedInfo {
-        /**
-         * Creates a new instance of the class.
-         *
-         * @param feed The feed to be cached.
-         * @param cachedTime When the feed was cached.
-         */
-        CachedFeedInfo(MixcloudFeed feed, long cachedTime) {
-            this.feed = feed;
-            this.cachedTime = cachedTime;
-        }
-
-        /** The cached feed. */
-        final MixcloudFeed feed;
-
-        /** When the feed was cached, as milliseconds since 1/1/1970 12:00am UTC. */
-        final long cachedTime;
+    synchronized void addToCache(String feedName, MixcloudFeed feed) {
+        this.cachedFeeds.put(feedName, feed);
     }
 
     /** The cached feeds. */
-    private final HashMap<String,CachedFeedInfo> cachedFeeds = new HashMap<>(16);
+    private final HashMap<String,MixcloudFeed> cachedFeeds = new HashMap<>(16);
 
     /** How long to cache feeds for, in seconds. */
     private final int cacheTimeSeconds;

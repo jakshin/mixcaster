@@ -19,6 +19,7 @@ package jakshin.mixcloudpodcast.http;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.Writer;
 
 /**
  * Responds to an HTTP request for a file, or part of a file.
@@ -28,10 +29,11 @@ public class FileResponder {
      * Responds to the file request.
      *
      * @param request The incoming HTTP request.
+     * @param writer A writer which can be used to output the response.
      * @param out An output stream which can be used to output the response.
      * @throws IOException
      */
-    void respond(HttpRequest request, OutputStream out) throws IOException {
+    void respond(HttpRequest request, Writer writer, OutputStream out) throws IOException {
         /*
         TODO implement
 
@@ -40,6 +42,7 @@ public class FileResponder {
         check byte range
         if range not valid:
             return 416
+        send the response headers
         read the appropriate part of the file & output in chunks
         flush
         */

@@ -81,6 +81,9 @@ public class MixcloudFeed {
         return rss;
     }
 
+    /** When the data in this feed was scraped from Mixcloud. */
+    public Date scraped;
+
     /** The feed's URL for human consumption. Assumed not to be or need to be URL-encoded. */
     public String url;
 

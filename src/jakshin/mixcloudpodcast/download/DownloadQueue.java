@@ -172,7 +172,10 @@ public final class DownloadQueue {
                 out = null;
 
                 // set the file's last-modified timestamp to match the value from Mixcloud's server
-                localPartFile.setLastModified(this.download.remoteLastModifiedDate.getTime());
+                if (!localPartFile.setLastModified(this.download.remoteLastModifiedDate.getTime())) {
+                    String errMsg = String.format("Could not set file's last-modified timestamp (%s)", this.download.localFilePath);
+                    throw new IOException(errMsg);
+                }
 
                 // rename the *.part file
                 Path localPath = Paths.get(this.download.localFilePath);

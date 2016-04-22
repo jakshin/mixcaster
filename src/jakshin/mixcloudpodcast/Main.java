@@ -18,7 +18,7 @@
 package jakshin.mixcloudpodcast;
 
 import jakshin.mixcloudpodcast.download.DownloadQueue;
-import jakshin.mixcloudpodcast.http.WebServer;
+import jakshin.mixcloudpodcast.http.HttpServer;
 import jakshin.mixcloudpodcast.mixcloud.MixcloudFeed;
 import jakshin.mixcloudpodcast.mixcloud.MixcloudScraper;
 import jakshin.mixcloudpodcast.rss.PodcastRSS;
@@ -79,7 +79,7 @@ public class Main {
     /**
      * The application's version number.
      */
-    public static final String version = "0.6.2";
+    public static final String version = "0.6.3";
 
     /**
      * Scrapes the given Mixcloud feed URL, also downloading any tracks which haven't already been downloaded.
@@ -136,7 +136,8 @@ public class Main {
                 System.out.println(msg);
             }
             else {
-                System.out.println(String.format("Downloading %d tracks ...", downloadCount));
+                String tracksStr = (downloadCount == 1) ? "track" : "tracks";
+                System.out.println(String.format("Downloading %d %s ...", downloadCount, tracksStr));
                 downloads.processQueue();
             }
         }
@@ -148,12 +149,11 @@ public class Main {
     }
 
     /**
-     * Starts a web server which listens for HTTP requests,
-     * serving podcast RSS XML and downloaded music files.
+     * Starts a minimal HTTP server which serves podcast RSS XML and downloaded music files.
      */
     private void runService() {
         System.out.println("WARNING: the service doesn't actually work yet");
-        WebServer server = new WebServer();
+        HttpServer server = new HttpServer();
         server.run();
     }
 

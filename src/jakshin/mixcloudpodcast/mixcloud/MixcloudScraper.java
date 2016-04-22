@@ -51,6 +51,7 @@ public class MixcloudScraper {
 
         // extract podcast-wide properties
         MixcloudFeed feed = new MixcloudFeed();
+        feed.scraped = new Date();
         feed.url = urlStr;
         feed.title = this.getMetaTagContent("og:title", sb);
         feed.imageUrl = this.getMetaTagContent("og:image", sb);

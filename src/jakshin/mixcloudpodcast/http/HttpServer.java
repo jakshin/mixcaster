@@ -25,14 +25,15 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 /**
- * A web server which listens for HTTP connections, then hands them off to an HttpResponse for processing.
+ * A minimal HTTP server which listens for incoming HTTP connections,
+ * then hands them off to an HttpResponse for processing on a separate thread.
  * It maintains a thread pool to serve incoming connections more quickly.
  */
-public class WebServer implements Runnable {
+public class HttpServer implements Runnable {
     /**
      * Creates a new instance of the class.
      */
-    public WebServer() {
+    public HttpServer() {
         String httpPortStr = Main.config.getProperty("http_port");
         this.port = Integer.parseInt(httpPortStr);  // already validated
 
@@ -42,7 +43,7 @@ public class WebServer implements Runnable {
     }
 
     /**
-     * Runs the web server, listening for HTTP connections on the configured port,
+     * Runs the HTTP server, listening for HTTP connections on the configured port,
      * and passing each connection off in a separate thread for processing.
      */
     @Override
@@ -59,10 +60,12 @@ public class WebServer implements Runnable {
             return;
         }
 
+        // TODO logging
+        System.out.println("Listening for HTTP connections");
+
         while (true) {
             try {
                 // listen for connections; this will block until a connection is received
-                System.out.println("Listening for HTTP connections");
                 Socket socket = ssocket.accept();
 
                 // connection received, process it on a separate thread
@@ -81,7 +84,7 @@ public class WebServer implements Runnable {
         }
     }
 
-    /** The TCP port on which the web server listens for connections. */
+    /** The TCP port on which the HTTP server listens for connections. */
     private final int port;
 
     /** The pool of threads which process HTTP requests. */
