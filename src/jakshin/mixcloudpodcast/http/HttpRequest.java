@@ -32,6 +32,7 @@ class HttpRequest {
      * @param method The request's HTTP method.
      * @param url The requested URL.
      * @param httpVersion The request's HTTP version.
+     * @throws UnsupportedEncodingException
      */
     HttpRequest(String method, String url, String httpVersion) throws UnsupportedEncodingException {
         this.httpVersion = httpVersion;

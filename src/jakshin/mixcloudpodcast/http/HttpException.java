@@ -23,11 +23,25 @@ package jakshin.mixcloudpodcast.http;
  */
 class HttpException extends Exception {
     /**
-     * Constructs a new exception with the specified detail message.
+     * Constructs a new exception with the specified HTTP response code and detail message.
+     *
+     * @param httpResponseCode The HTTP response code.
      * @param message The detail message; saved for later retrieval by the Throwable.getMessage() method.
      */
     HttpException(int httpResponseCode, String message) {
         super(message);
+        this.httpResponseCode = httpResponseCode;
+    }
+
+    /**
+     * Constructs a new exception with the specified HTTP response code, detail message, and cause.
+     *
+     * @param httpResponseCode The HTTP response code.
+     * @param message The detail message; saved for later retrieval by the Throwable.getMessage() method.
+     * @param cause The cause; saved for later retrieval by the Throwable.getCause() method.
+     */
+    HttpException(int httpResponseCode, String message, Throwable cause) {
+        super(message, cause);
         this.httpResponseCode = httpResponseCode;
     }
 

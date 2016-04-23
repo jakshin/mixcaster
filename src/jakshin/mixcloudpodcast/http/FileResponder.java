@@ -17,9 +17,12 @@
 
 package jakshin.mixcloudpodcast.http;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.Writer;
+import jakshin.mixcloudpodcast.utils.DateFormatter;
+import jakshin.mixcloudpodcast.utils.MimeTyper;
+import jakshin.mixcloudpodcast.utils.TrackLocator;
+import java.io.*;
+import java.text.ParseException;
+import java.util.Date;
 
 /**
  * Responds to an HTTP request for a file, or part of a file.
@@ -31,20 +34,59 @@ public class FileResponder {
      * @param request The incoming HTTP request.
      * @param writer A writer which can be used to output the response.
      * @param out An output stream which can be used to output the response.
+     * @throws HttpException
      * @throws IOException
      */
-    void respond(HttpRequest request, Writer writer, OutputStream out) throws IOException {
-        /*
-        TODO implement
+    void respond(HttpRequest request, Writer writer, OutputStream out) throws HttpException, IOException {
+        String localPathStr = TrackLocator.getLocalPath(request.url);
+        File localFile = new File(localPathStr);
 
-        if file doesn't exist:
-            return 404
-        check byte range
-        if range not valid:
-            return 416
-        send the response headers
-        read the appropriate part of the file & output in chunks
-        flush
-        */
+        // handle If-Modified-Since
+        Date lastModified = new Date(localFile.lastModified() / 1000 * 1000);  // truncate milliseconds for comparison
+        HttpHeaderWriter headerWriter = new HttpHeaderWriter();
+
+        try {
+            if (request.headers.containsKey("If-Modified-Since")) {
+                Date ifModifiedSince = DateFormatter.parse(request.headers.get("If-Modified-Since"));
+
+                if (ifModifiedSince.compareTo(lastModified) >= 0) {
+                    headerWriter.sendNotModifiedHeaders(writer);
+                    return;
+                }
+            }
+        }
+        catch (ParseException ex) {
+            // XXX logging
+            // continue without If-Modified-Since handling
+        }
+
+        // TODO --- check byte range; if range not valid, raise 416
+
+        // open the file for reading before we send the response headers,
+        // so that if it fails, we can send error response headers cleanly
+        try (FileInputStream in = new FileInputStream(localFile)) {
+            // send the response headers
+            String contentType = new MimeTyper().guessContentTypeFromName(localPathStr);
+            headerWriter.sendSuccessHeaders(writer, lastModified, localFile.length(), contentType);
+
+            // read the appropriate part of the file & output in chunks, if needed
+            if (!request.isHead()) {
+                final byte[] buf = new byte[100_000];
+
+                while (true) {
+                    int byteCount = in.read(buf, 0, buf.length);
+                    if (byteCount < 0) break;
+
+                    out.write(buf, 0, byteCount);
+                }
+
+                out.flush();
+            }
+
+            // the input stream is closed
+        }
+        catch (FileNotFoundException ex) {
+            throw new HttpException(404, "Not Found", ex);
+        }
     }
 }

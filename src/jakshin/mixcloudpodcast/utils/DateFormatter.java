@@ -17,6 +17,7 @@
 
 package jakshin.mixcloudpodcast.utils;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
@@ -29,6 +30,9 @@ public class DateFormatter {
     /**
      * Formats the given date.
      *
+     * Note that the date/time format used by this class doesn't include milliseconds,
+     * so formatting a date with this function will effectively discard that information.
+     *
      * @param date The date to format.
      * @return A formatted date string.
      */
@@ -36,7 +40,22 @@ public class DateFormatter {
         return formatter.format(date);
     }
 
-    /** The thingy which actually formats dates. */
+    /**
+     * Parses the given string into a Date object.
+     *
+     * Note that the date/time format understood by this class doesn't include milliseconds,
+     * so passing a Date through format() and then parse() will result in a date/time
+     * which has been truncated to the second.
+     *
+     * @param dateStr The date/time string to parse.
+     * @return A date object matching the parsed string.
+     * @throws ParseException
+     */
+    public static synchronized Date parse(String dateStr) throws ParseException {
+        return formatter.parse(dateStr);
+    }
+
+    /** The thingy which actually formats and parses dates. */
     private final static SimpleDateFormat formatter;
 
     /** Static initialization. */

@@ -29,7 +29,12 @@ import java.util.Map;
  * but it should be fine for our limited purposes here.
  */
 public class MimeTyper {
-    // TODO javadoc
+    /**
+     * Guesses a files MIME content type, based on its name.
+     *
+     * @param pathOrName The path to or name of the file.
+     * @return The file's probable MIME content type.
+     */
     public String guessContentTypeFromName(String pathOrName) {
         if (pathOrName == null) return null;
 

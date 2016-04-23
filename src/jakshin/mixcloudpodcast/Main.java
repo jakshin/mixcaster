@@ -79,7 +79,7 @@ public class Main {
     /**
      * The application's version number.
      */
-    public static final String version = "0.6.4";
+    public static final String version = "0.6.5";
 
     /**
      * Scrapes the given Mixcloud feed URL, also downloading any tracks which haven't already been downloaded.
@@ -119,7 +119,7 @@ public class Main {
                 rss = feed.createRSS(null);
             }
             catch (FileNotFoundException ex) {
-                // TODO logging
+                // XXX logging
                 System.out.println("Error: The Mixcloud server returned 404 for the feed URL");
                 return;
             }
@@ -142,7 +142,7 @@ public class Main {
             }
         }
         catch (Throwable ex) {
-            // TODO logging
+            // XXX logging
             System.out.println(String.format("Error: An unexpected error occurred (%s)", ex.getClass().getCanonicalName()));
             System.out.println(ex.getMessage());
         }
@@ -207,10 +207,10 @@ public class Main {
         // set up default values; there should be a 1-to-1 correspondence between values here and in the properties file
         Properties defaults = new Properties();
         defaults.setProperty("download_oldest_first", "false");
-        defaults.setProperty("download_threads", "3");           // must be an int in [1-50]
-        defaults.setProperty("http_cache_time_seconds", "600");  // must be an int >= 0
+        defaults.setProperty("download_threads", "3");            // must be an int in [1-50]
+        defaults.setProperty("http_cache_time_seconds", "3600");  // must be an int >= 0
         defaults.setProperty("http_hostname", "localhost");
-        defaults.setProperty("http_port", "25683");              // must be an int in [1024-65535]
+        defaults.setProperty("http_port", "25683");               // must be an int in [1024-65535]
         defaults.setProperty("music_dir", "~/Music/Mixcloud");
         defaults.setProperty("stream_url_regex", "\"stream_url\":\\s*\"([^\"]+)\"");
         defaults.setProperty("track_regex", "<span\\s+class\\s*=\\s*\"play-button\"([^>]+)>");
@@ -243,7 +243,7 @@ public class Main {
             Main.validateIntegerProperty(cfg, "http_port", 1024, 65535);
         }
         catch (IOException ex) {
-            // TODO logging
+            // XXX logging
             String errMsg = ex.getClass().getCanonicalName() + ": " + ex.getMessage();
             System.out.println("Error loading configuration properties: " + errMsg);
             return defaults;

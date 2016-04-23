@@ -22,8 +22,11 @@ import jakshin.mixcloudpodcast.download.DownloadQueue;
 import jakshin.mixcloudpodcast.mixcloud.MixcloudFeed;
 import jakshin.mixcloudpodcast.mixcloud.MixcloudScraper;
 import jakshin.mixcloudpodcast.rss.PodcastRSS;
+import jakshin.mixcloudpodcast.utils.DateFormatter;
 import java.io.IOException;
 import java.io.Writer;
+import java.text.ParseException;
+import java.util.Date;
 
 /**
  * Responds to an HTTP request for RSS XML.
@@ -34,15 +37,17 @@ public class XmlResponder {
      *
      * @param request The incoming HTTP request.
      * @param writer A writer which can be used to output the response.
+     * @throws ApplicationException
+     * @throws HttpException
      * @throws IOException
      */
-    void respond(HttpRequest request, Writer writer) throws IOException, HttpException, ApplicationException {
+    void respond(HttpRequest request, Writer writer) throws ApplicationException, HttpException, IOException {
         String feedName = this.getSecondToLastComponentOfUrl(request.url);
         if (feedName == null || feedName.isEmpty()) {
             throw new HttpException(403, "Forbidden");  // 404 would also be a fine choice
         }
 
-        System.out.println("Feed Name: " + feedName);  // TODO logging; in cache class?
+        System.out.println("Feed Name: " + feedName);  // XXX logging; in cache class?
 
         // get a feed, either from cache or by scraping
         FeedCache cache = FeedCache.getInstance();
@@ -58,6 +63,26 @@ public class XmlResponder {
             cache.addToCache(feedName, feed);
         }
 
+        // handle If-Modified-Since
+        HttpHeaderWriter headerWriter = new HttpHeaderWriter();
+
+        try {
+            if (request.headers.containsKey("If-Modified-Since")) {
+                Date ifModifiedSince = DateFormatter.parse(request.headers.get("If-Modified-Since"));
+                Date scraped = new Date(feed.scraped.getTime() / 1000 * 1000);  // truncate milliseconds for comparison
+
+                if (ifModifiedSince.compareTo(scraped) >= 0) {
+                    headerWriter.sendNotModifiedHeaders(writer);
+                    return;
+                }
+            }
+        }
+        catch (ParseException ex) {
+            // XXX logging
+            System.out.println(ex.getClass().getCanonicalName() + ": " + ex.getMessage());
+            // continue without If-Modified-Since handling
+        }
+
         // build the RSS XML
         PodcastRSS rss = feed.createRSS(request.host());
         String rssXml = rss.toString();
@@ -66,7 +91,7 @@ public class XmlResponder {
         DownloadQueue downloads = DownloadQueue.getInstance();
         int downloadCount = downloads.queueSize();
 
-        // TODO logging
+        // XXX logging
         if (downloadCount == 0) {
             String msg = feed.tracks.isEmpty() ? "No tracks to download" : "All tracks have already been downloaded";
             System.out.println(msg);
@@ -78,10 +103,10 @@ public class XmlResponder {
         }
 
         // send the response headers
-        HttpHeaderWriter headerWriter = new HttpHeaderWriter();
         headerWriter.sendSuccessHeaders(writer, feed.scraped, rssXml.length(), "application/xml");
 
-        // send the RSS XML, if needed
+        // send the RSS XML, if needed; note that we always send the whole thing,
+        // as we don't expect to receive a Range header for this type of request
         if (!request.isHead()) {
             writer.write(rssXml);
             writer.flush();

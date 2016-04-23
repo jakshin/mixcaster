@@ -17,6 +17,7 @@
 
 package jakshin.mixcloudpodcast.utils;
 
+import java.text.ParseException;
 import java.util.Date;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -56,5 +57,17 @@ public class DateFormatterTest {
         String expResult = "Fri, 22 Apr 2016 02:39:29 GMT";
         String result = DateFormatter.format(date);
         assertEquals(expResult, result);
+    }
+
+    /**
+     * Test.
+     * @throws ParseException
+     */
+    @Test
+    public void parseShouldWork() throws ParseException {
+        String dateStr = "Fri, 22 Apr 2016 02:39:29 GMT";
+        long expResult = 1461292769000L;  // no milliseconds
+        Date result = DateFormatter.parse(dateStr);
+        assertEquals(expResult, result.getTime());
     }
 }

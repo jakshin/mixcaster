@@ -29,7 +29,7 @@ import java.util.Date;
  */
 class HttpHeaderWriter {
     /**
-     * Sends HTTP success headers.
+     * Sends HTTP success headers (response code 200).
      *
      * @param writer The writer to output the headers to.
      * @param contentLastModified When the content was last modified.
@@ -37,17 +37,28 @@ class HttpHeaderWriter {
      * @param contentType The content's MIME type.
      * @throws IOException
      */
-    void sendSuccessHeaders(Writer writer, Date contentLastModified, int contentLength, String contentType) throws IOException {
+    void sendSuccessHeaders(Writer writer, Date contentLastModified, long contentLength, String contentType) throws IOException {
         this.sendHeader(writer, "HTTP/1.1 200 OK");
-        this.sendHeader(writer, "Date: %s", DateFormatter.format(new Date()));
-        this.sendHeader(writer, "Server: MixcloudPodcast/%s (%s)", Main.version, System.getProperty("os.name"));
+        this.sendCommonHeaders(writer);
+
         this.sendHeader(writer, "Last-Modified: %s", DateFormatter.format(contentLastModified));
-        this.sendHeader(writer, "ETag: %s", contentLastModified.getTime());
-        this.sendHeader(writer, "Accept-Ranges: bytes");
+        // TODO --- enable this.sendHeader(writer, "Accept-Ranges: bytes");
         this.sendHeader(writer, "Content-Length: %d", contentLength);
         this.sendHeader(writer, "Content-Type: %s", contentType);
         this.sendHeader(writer, "Connection: close");
         this.sendHeader(writer, "");
+        writer.flush();
+    }
+
+    /**
+     * Sends HTTP not-modified headers (response code 304).
+     *
+     * @param writer The writer to output the headers to.
+     * @throws IOException
+     */
+    void sendNotModifiedHeaders(Writer writer) throws IOException {
+        this.sendHeader(writer, "HTTP/1.1 304 Not Modified");
+        this.sendCommonHeaders(writer);
         writer.flush();
     }
 
@@ -59,6 +70,7 @@ class HttpHeaderWriter {
      * @param writer The writer to output the headers to.
      * @param err A Throwable which contains details about the problem.
      * @param isHeadRequest Whether the error is in response to an HTTP HEAD request.
+     * @throws IOException
      */
     void sendErrorHeadersAndBody(Writer writer, Throwable err, boolean isHeadRequest) throws IOException {
         int responseCode = 500;
@@ -70,8 +82,7 @@ class HttpHeaderWriter {
         }
 
         this.sendHeader(writer, "HTTP/1.1 %d %s", responseCode, reasonPhrase);
-        this.sendHeader(writer, "Date: %s", DateFormatter.format(new Date()));
-        this.sendHeader(writer, "Server: MixcloudPodcast/%s (%s)", Main.version, System.getProperty("os.name"));
+        this.sendCommonHeaders(writer);
 
         String messageBody = null;
         if (!isHeadRequest) {
@@ -91,6 +102,17 @@ class HttpHeaderWriter {
     }
 
     /**
+     * Sends common HTTP headers which are included in every response, success or failure.
+     *
+     * @param writer The writer to output the headers to.
+     * @throws IOException
+     */
+    private void sendCommonHeaders(Writer writer) throws IOException {
+        this.sendHeader(writer, "Date: %s", DateFormatter.format(new Date()));
+        this.sendHeader(writer, "Server: MixcloudPodcast/%s (%s)", Main.version, System.getProperty("os.name"));
+    }
+
+    /**
      * Sends an HTTP header.
      *
      * @param writer The writer to send the header with.
@@ -103,6 +125,6 @@ class HttpHeaderWriter {
         writer.write(formatted);
         writer.write("\r\n");
 
-        System.out.println("<- " + formatted); // TODO logging
+        System.out.println("<- " + formatted); // XXX logging
     }
 }

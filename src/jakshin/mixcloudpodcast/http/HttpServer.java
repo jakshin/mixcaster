@@ -55,12 +55,12 @@ public class HttpServer implements Runnable {
             ssocket = new ServerSocket(this.port);
         }
         catch (IOException ex) {
-            // TODO logging
+            // XXX logging
             System.out.println(ex.getClass().getCanonicalName() + ": " + ex.getMessage());
             return;
         }
 
-        // TODO logging
+        // XXX logging
         System.out.println("Listening for HTTP connections");
 
         while (true) {
@@ -74,11 +74,12 @@ public class HttpServer implements Runnable {
             }
             catch (SocketException ex) {
                 // the socket was closed
-                // TODO logging
+                // XXX logging
                 System.out.println(ex.getClass().getCanonicalName() + ": " + ex.getMessage());
+                ex.printStackTrace();  // XXX remove (logging instead)
             }
             catch (IOException ex) {
-                // TODO logging
+                // XXX logging
                 System.out.println(ex.getClass().getCanonicalName() + ": " + ex.getMessage());
             }
         }

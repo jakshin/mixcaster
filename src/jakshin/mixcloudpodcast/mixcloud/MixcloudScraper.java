@@ -41,11 +41,11 @@ public class MixcloudScraper {
      * @param urlStr The Mixcloud feed URL to scrape, e.g. "https://www.mixcloud.com/DJoseSolis/".
      *      Valid Mixcloud feed URLs should not be or need to be URL-encoded.
      * @return An object containing info about the feed.
-     * @throws MalformedURLException
-     * @throws IOException
      * @throws ApplicationException
+     * @throws IOException
+     * @throws MalformedURLException
      */
-    public MixcloudFeed scrape(String urlStr) throws MalformedURLException, IOException, ApplicationException {
+    public MixcloudFeed scrape(String urlStr) throws ApplicationException, IOException, MalformedURLException {
         // download the feed's web page
         StringBuilder sb = this.downloadWebPage(urlStr);
 
@@ -105,10 +105,10 @@ public class MixcloudScraper {
      *      e.g. "https://www.mixcloud.com/DJoseSolis/the-official-trance-podcast-episode-199/".
      *      Should not be or need to be URL-encoded.
      * @return The track's summary, or null if the relevant meta tag can't be found in the page.
-     * @throws MalformedURLException
      * @throws IOException
+     * @throws MalformedURLException
      */
-    private String scrapeTrackSummary(String urlStr) throws MalformedURLException, IOException {
+    private String scrapeTrackSummary(String urlStr) throws IOException, MalformedURLException {
         // download the track's web page
         StringBuilder sb = this.downloadWebPage(urlStr);
 
@@ -122,10 +122,10 @@ public class MixcloudScraper {
      * @param urlStr The URL of the web page to download.
      *      Should not be or need to be URL-encoded, since we only download Mixcloud web pages.
      * @return The web page's contents.
-     * @throws MalformedURLException
      * @throws IOException
+     * @throws MalformedURLException
      */
-    private StringBuilder downloadWebPage(String urlStr) throws MalformedURLException, IOException {
+    private StringBuilder downloadWebPage(String urlStr) throws IOException, MalformedURLException {
         HttpURLConnection conn = null;
 
         try {
@@ -200,12 +200,12 @@ public class MixcloudScraper {
      *
      * @param urlStr The music URL. Should not be or need to be URL-encoded.
      * @return Some HTTP header data associated with the URL.
-     * @throws MalformedURLException
-     * @throws IOException
      * @throws ApplicationException
+     * @throws IOException
+     * @throws MalformedURLException
      */
     private MusicUrlHeaderData getMusicUrlHeaderData(String urlStr)
-            throws MalformedURLException, IOException, ApplicationException {
+            throws ApplicationException, IOException, MalformedURLException {
         HttpURLConnection conn = null;
 
         try {

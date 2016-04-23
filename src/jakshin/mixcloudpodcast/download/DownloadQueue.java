@@ -190,9 +190,9 @@ public final class DownloadQueue {
                 System.out.println(msg);
             }
             catch (IOException ex) {
-                // TODO logging
-                System.out.println(ex.getClass().getCanonicalName() + ": " + ex.getMessage()); // TODO improve console output
-                ex.printStackTrace(); // TODO remove (logging instead)
+                // XXX logging
+                System.out.println(ex.getClass().getCanonicalName() + ": " + ex.getMessage());
+                ex.printStackTrace(); // XXX remove (logging instead)
             }
             finally {
                 removeActiveDownload(this.download);
@@ -207,7 +207,7 @@ public final class DownloadQueue {
                     }
                 }
                 catch (IOException ex) {
-                    // TODO logging
+                    // XXX logging
                 }
 
                 try {
@@ -216,7 +216,7 @@ public final class DownloadQueue {
                     }
                 }
                 catch (IOException ex) {
-                    // TODO logging
+                    // XXX logging
                 }
             }
         }
@@ -232,7 +232,7 @@ public final class DownloadQueue {
      * @return A formatted representation of the time span.
      */
     private String formatTimeSpan(int seconds) {
-        // TODO move this code into logging class
+        // XXX move this code into logging class
         int minutes = seconds / 60;
         seconds %= 60;
 

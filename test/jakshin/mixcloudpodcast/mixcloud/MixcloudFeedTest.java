@@ -52,7 +52,10 @@ public class MixcloudFeedTest {
     public void tearDown() {
     }
 
-    /** Test. */
+    /**
+     * Test.
+     * @throws MalformedURLException
+     */
     @Test
     public void creatingRssShouldWork() throws MalformedURLException {
         MixcloudFeed feed = new MixcloudFeed();

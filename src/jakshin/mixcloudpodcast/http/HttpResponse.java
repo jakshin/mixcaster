@@ -66,6 +66,10 @@ class HttpResponse implements Runnable {
                 throw new HttpException(400, "Bad Request: empty URL");
             }
 
+            // note that we don't check the Expect header, nor do we handle "100-continue";
+            // technically this violates the HTTP/1.1 spec, but doesn't seem to matter for our purposes
+            // XXX log warning if a non-empty Expect header is received
+
             // route the request to a responder
             if (this.getUrlWithoutQueryOrReference(request.url).toLowerCase(Locale.ROOT).endsWith(".xml")) {
                 // RSS XML request
@@ -78,8 +82,9 @@ class HttpResponse implements Runnable {
             }
         }
         catch (Throwable ex) {
-            // TODO logging
+            // XXX logging
             System.out.println(ex.getClass().getCanonicalName() + ": " + ex.getMessage());
+            ex.printStackTrace();  // XXX remove (logging instead)
 
             // if ex isn't an HttpException, the HTTP response headers may already have been written out, but try anyway
             try {
@@ -89,7 +94,7 @@ class HttpResponse implements Runnable {
             }
             catch (Throwable ex2) {
                 // we're pretty bad off if we can't even send the response headers; log and give up
-                // TODO logging
+                // XXX logging
                 System.out.println(ex2.getClass().getCanonicalName() + ": " + ex2.getMessage());
             }
         }
@@ -105,9 +110,10 @@ class HttpResponse implements Runnable {
      *
      * @param reader The reader from which request headers should be read.
      * @return The HTTP request.
+     * @throws HttpException
      * @throws IOException
      */
-    private HttpRequest parseRequestHeaders(BufferedReader reader) throws IOException, HttpException {
+    private HttpRequest parseRequestHeaders(BufferedReader reader) throws HttpException, IOException {
         HttpRequest request = null;
         String lastHeaderName = null;
 
@@ -115,7 +121,7 @@ class HttpResponse implements Runnable {
             String line = reader.readLine();
             if (line == null || line.isEmpty()) break;
 
-            System.out.println("-> " + line);  // TODO logging
+            System.out.println("-> " + line);  // XXX logging
 
             if (request == null) {
                 // first line
@@ -136,13 +142,13 @@ class HttpResponse implements Runnable {
                 int colon = line.indexOf(':');
 
                 if (colon > 0) {
-                    String headerName = line.substring(0, colon);
+                    String headerName = line.substring(0, colon).trim();
                     String value = line.substring(colon + 1).trim();
                     request.headers.put(headerName, value);
                     lastHeaderName = headerName;
                 }
                 else {
-                    // TODO logging
+                    // XXX logging
                 }
             }
         }
@@ -182,7 +188,7 @@ class HttpResponse implements Runnable {
         }
         catch (IOException ex) {
             // responders are expected to flush at the end of finishResponse(), making this unlikely
-            // TODO logging
+            // XXX logging
         }
     }
 
