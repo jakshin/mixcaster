@@ -72,6 +72,19 @@ class HttpRequest {
     }
 
     /**
+     * Gets the byte range for this request, or null if it's not a range retrieval request (no Range header).
+     *
+     * @return An object representing the byte range for the request, or null.
+     * @throws NumberFormatException
+     */
+    public ByteRange byteRange() throws HttpException, NumberFormatException {
+        String rangeStr = this.headers.get("Range");
+        if (rangeStr == null || rangeStr.isEmpty()) return null;
+
+        return new ByteRange(rangeStr);
+    }
+
+    /**
      * All HTTP request headers received, name -> value.
      */
     public final Map<String,String> headers = new HashMap<>(10);

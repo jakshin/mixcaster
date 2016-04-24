@@ -60,16 +60,32 @@ public class FileResponder {
             // continue without If-Modified-Since handling
         }
 
-        // TODO --- check byte range; if range not valid, raise 416
-
         // open the file for reading before we send the response headers,
         // so that if it fails, we can send error response headers cleanly
         try (FileInputStream in = new FileInputStream(localFile)) {
+            // check for a range retrieval request
+            long fileSize = localFile.length();
+            long firstByte = 0;
+            long lastByte = fileSize - 1;
+
+            ByteRange range = request.byteRange();
+
+            if (range != null) {
+                if (range.start != null) firstByte = range.start.longValue();
+                if (range.end != null) lastByte = range.end.longValue();
+
+                if (firstByte >= fileSize && (firstByte != 0 || lastByte <= 0)) {
+                    throw new HttpException(416, "Requested range not satisfiable");
+                }
+            }
+
             // send the response headers
+            // TODO --- send 206 if partial content, with Content-Range & modified Content-Length
             String contentType = new MimeTyper().guessContentTypeFromName(localPathStr);
             headerWriter.sendSuccessHeaders(writer, lastModified, localFile.length(), contentType);
 
             // read the appropriate part of the file & output in chunks, if needed
+            // TODO --- if a range was requested, send only those bytes
             if (!request.isHead()) {
                 final byte[] buf = new byte[100_000];
 
