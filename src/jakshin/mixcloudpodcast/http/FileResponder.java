@@ -62,26 +62,41 @@ public class FileResponder {
 
         // open the file for reading before we send the response headers,
         // so that if it fails, we can send error response headers cleanly
-        try (FileInputStream in = new FileInputStream(localFile)) {
+        try (RandomAccessFile in = new RandomAccessFile(localFile, "r")) {
             // check for a range retrieval request
             long fileSize = localFile.length();
             ByteRange range = request.byteRange(fileSize);
 
             // send the response headers
-            // TODO --- send 206 if partial content, with Content-Range & modified Content-Length
             String contentType = new MimeTyper().guessContentTypeFromName(localPathStr);
-            headerWriter.sendSuccessHeaders(writer, lastModified, localFile.length(), contentType);
 
-            // read the appropriate part of the file & output in chunks, if needed
-            // TODO --- if a range was requested, send only those bytes
+            if (range == null) {
+                headerWriter.sendSuccessHeaders(writer, lastModified, contentType, localFile.length());
+                range = new ByteRange(0, fileSize - 1);
+            }
+            else {
+                headerWriter.sendRangeSuccessHeaders(writer, lastModified, contentType, fileSize, range.start, range.end);
+            }
+
+            // read the appropriate part of the file & output, if needed
             if (!request.isHead()) {
+                if (range.start > 0) {
+                    // seek to the first byte of the partial request
+                    in.seek(range.start);
+                }
+
+                long bytesLeftToSend = range.size();
                 final byte[] buf = new byte[100_000];
 
                 while (true) {
                     int byteCount = in.read(buf, 0, buf.length);
                     if (byteCount < 0) break;
 
+                    if (bytesLeftToSend < byteCount) byteCount = (int) bytesLeftToSend;
                     out.write(buf, 0, byteCount);
+
+                    bytesLeftToSend -= byteCount;
+                    if (bytesLeftToSend <= 0) break;
                 }
 
                 out.flush();

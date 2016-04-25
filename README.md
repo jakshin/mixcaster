@@ -17,18 +17,40 @@ on any other OS. Java 1.7.0 or greater is required.
 
 ### What's the current status?
 
-It's currently possible to run the program on the command line, to scrape a single Mixcloud artist/feed page,
-and download all related music tracks. Downloads from Mixcloud take a while - the first ~5 MB is typically
-sent very quickly, and the rest of the download is then severely rate-limited - so multiple downloads are
-performed in parallel.
+You can run the program as a server, and it will listen for HTTP requests, serving podcast RSS feeds
+and related music files in response (once they've been scraped and downloaded from Mixcloud).
+See below for details on how to do so.
+
+You can also run the program on the command line, to scrape a single Mixcloud artist/feed page,
+and download all related music tracks.
+
+Downloads from Mixcloud take quite a while - the first ~5 MB is typically sent very quickly,
+but the rest of the download is then severely rate-limited - so multiple downloads are performed in parallel.
+This is true whether the downloads are kicked off via an HTTP request for an RSS feed,
+or by scraping a single feed on the command line.
 
 Coming up:
 
-* A minimal built-in HTTP server to serve the scraped Mixcloud data as RSS XML, and downloaded music files
-  (they must be both downloaded locally and re-served over HTTP, as Mixcloud blocks downloads from iTunes,
-  presumably based on User-Agent, and iTunes won't load file URLs)
-
 * Detailed logging
 
-* Convenient commands to install as a launchd service, allowing the program to easily be running at all times
-  (on OS X...)
+* Convenient commands to install as a launchd service, allowing the program to easily be running in the background
+  at all times (on OS X)
+
+### How do I use it?
+
+Once you've compiled the program (details on that coming soon),
+check its config file, MixcloudPodcast.properties, and make any desired changes, then run it like so:
+
+```
+java -jar MixcloudPodcast.jar -service
+```
+
+Then, you can subscribe to a local URL in iTunes, which will be mapped to a Mixcloud artist feed.
+For example, to subscribe to https://www.mixcloud.com/SomeArtist/ as a podcast,
+subscribe to this URL in iTunes: http://localhost:25683/SomeArtist/podcast.xml.
+
+When you've first subscribed, none of the feed's tracks will have been downloaded yet,
+so every podcast episode's title will end with "[DOWNLOADING, CAN'T PLAY YET]".
+Trying to play those episodes won't work - just wait awhile, and when iTunes next refreshes the podcast
+(or when you refresh it manually if you're the impatient type), some or all of the tracks will have
+finished downloading, and you'll be able to play them.

@@ -29,24 +29,49 @@ import java.util.Date;
  */
 class HttpHeaderWriter {
     /**
-     * Sends HTTP success headers (response code 200).
+     * Sends HTTP success headers for a complete response (response code 200).
      *
      * @param writer The writer to output the headers to.
      * @param contentLastModified When the content was last modified.
-     * @param contentLength The content's length.
      * @param contentType The content's MIME type.
+     * @param contentLength The content's length.
      * @throws IOException
      */
-    void sendSuccessHeaders(Writer writer, Date contentLastModified, long contentLength, String contentType) throws IOException {
+    void sendSuccessHeaders(Writer writer, Date contentLastModified, String contentType, long contentLength)
+            throws IOException {
         this.sendHeader(writer, "HTTP/1.1 200 OK");
         this.sendCommonHeaders(writer);
 
         this.sendHeader(writer, "Last-Modified: %s", DateFormatter.format(contentLastModified));
-        // TODO --- enable this.sendHeader(writer, "Accept-Ranges: bytes");
-        this.sendHeader(writer, "Content-Length: %d", contentLength);
         this.sendHeader(writer, "Content-Type: %s", contentType);
-        this.sendHeader(writer, "Connection: close");
-        this.sendHeader(writer, "");
+        this.sendHeader(writer, "Content-Length: %d", contentLength);
+
+        writer.write("\r\n");
+        writer.flush();
+    }
+
+    /**
+     * Sends HTTP success headers for a partial response to a range request (response code 206).
+     *
+     * @param writer The writer to output the headers to.
+     * @param contentLastModified When the content was last modified.
+     * @param contentType The content's MIME type.
+     * @param fullContentLength The content's full length (the length of the file, not the part being sent).
+     * @param firstByte The first byte being sent in the partial response.
+     * @param lastByte The last byte being sent in the partial response.
+     * @throws IOException
+     */
+    void sendRangeSuccessHeaders(Writer writer, Date contentLastModified, String contentType,
+            long fullContentLength, long firstByte, long lastByte) throws IOException {
+        this.sendHeader(writer, "HTTP/1.1 206 Partial Content");
+        this.sendCommonHeaders(writer);
+
+        this.sendHeader(writer, "Last-Modified: %s", DateFormatter.format(contentLastModified));
+        this.sendHeader(writer, "Content-Type: %s", contentType);
+        this.sendHeader(writer, "Content-Length: %d", (lastByte - firstByte + 1));  // the length of the partial response
+        this.sendHeader(writer, "Content-Range: bytes %d-%d/%d", firstByte, lastByte, fullContentLength);
+
+        writer.write("\r\n");
         writer.flush();
     }
 
@@ -91,8 +116,7 @@ class HttpHeaderWriter {
         }
 
         this.sendHeader(writer, "Content-Type: text/plain");
-        this.sendHeader(writer, "Connection: close");
-        this.sendHeader(writer, "");
+        writer.write("\r\n");
 
         if (messageBody != null) {
             writer.write(messageBody);
@@ -110,6 +134,8 @@ class HttpHeaderWriter {
     private void sendCommonHeaders(Writer writer) throws IOException {
         this.sendHeader(writer, "Date: %s", DateFormatter.format(new Date()));
         this.sendHeader(writer, "Server: MixcloudPodcast/%s (%s)", Main.version, System.getProperty("os.name"));
+        this.sendHeader(writer, "Connection: close");
+        this.sendHeader(writer, "Accept-Ranges: bytes");
     }
 
     /**

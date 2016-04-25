@@ -87,6 +87,12 @@ class ByteRangeParser {
             return null;  // invalid range
         }
 
+        if (start < 0 && end == 0) {
+            // ignore "-0"
+            // XXX logging
+            return null;  // invalid range
+        }
+
         // everything looks good here
         return new ByteRange(start, end);
     }

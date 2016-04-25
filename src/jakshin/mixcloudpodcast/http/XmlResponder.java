@@ -103,7 +103,7 @@ public class XmlResponder {
         }
 
         // send the response headers
-        headerWriter.sendSuccessHeaders(writer, feed.scraped, rssXml.length(), "application/xml");
+        headerWriter.sendSuccessHeaders(writer, feed.scraped, "application/xml", rssXml.length());
 
         // send the RSS XML, if needed; note that we always send the whole thing,
         // as we don't expect to receive a Range header for this type of request
