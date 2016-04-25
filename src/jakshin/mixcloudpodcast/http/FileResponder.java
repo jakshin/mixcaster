@@ -65,19 +65,7 @@ public class FileResponder {
         try (FileInputStream in = new FileInputStream(localFile)) {
             // check for a range retrieval request
             long fileSize = localFile.length();
-            long firstByte = 0;
-            long lastByte = fileSize - 1;
-
-            ByteRange range = request.byteRange();
-
-            if (range != null) {
-                if (range.start != null) firstByte = range.start.longValue();
-                if (range.end != null) lastByte = range.end.longValue();
-
-                if (firstByte >= fileSize && (firstByte != 0 || lastByte <= 0)) {
-                    throw new HttpException(416, "Requested range not satisfiable");
-                }
-            }
+            ByteRange range = request.byteRange(fileSize);
 
             // send the response headers
             // TODO --- send 206 if partial content, with Content-Range & modified Content-Length

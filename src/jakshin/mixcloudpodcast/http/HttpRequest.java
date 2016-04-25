@@ -73,15 +73,20 @@ class HttpRequest {
 
     /**
      * Gets the byte range for this request, or null if it's not a range retrieval request (no Range header).
+     * You must pass the length of the file/resource being requested,
+     * because that value is needed for calculating the actual first and last bytes which should be sent.
      *
+     * @param fileSize The length of the file/resource requested.
      * @return An object representing the byte range for the request, or null.
-     * @throws NumberFormatException
+     * @throws HttpException
      */
-    public ByteRange byteRange() throws HttpException, NumberFormatException {
+    public ByteRange byteRange(long fileSize) throws HttpException {
         String rangeStr = this.headers.get("Range");
         if (rangeStr == null || rangeStr.isEmpty()) return null;
 
-        return new ByteRange(rangeStr);
+        ByteRangeParser parser = new ByteRangeParser();
+        ByteRange range = parser.parse(rangeStr);
+        return parser.translate(range, fileSize);
     }
 
     /**

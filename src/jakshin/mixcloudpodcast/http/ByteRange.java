@@ -18,63 +18,40 @@
 package jakshin.mixcloudpodcast.http;
 
 /**
- * A representation of a byte range, which has at least a start OR an end, and maybe both.
- * The range is inclusive.
+ * A range of bytes.
  */
 class ByteRange {
     /**
-     * Creates a new instance of the class by parsing the given Range request header.
+     * Creates a new instance of the class.
      *
-     * @param byteRangeHeader An HTTP Range request header. Expected to start with "bytes=".
-     * @throws NumberFormatException
+     * @param start The start of the range, inclusive, 0-indexed.
+     * @param end The end of the range, inclusive, 0-indexed.
      */
-    ByteRange(String rangeHeader) throws HttpException, NumberFormatException {
-        if (rangeHeader == null || rangeHeader.isEmpty()) {
-            return;  // no Range header; that's okay, just leave both start and end null
-        }
-
-        // abort if we don't support the range requested
-        if (!rangeHeader.startsWith("bytes=")) {
-            // we don't understand the requested range type
-            throw new HttpException(500, String.format("Unexpected range header: %s", rangeHeader));
-        }
-
-        if (rangeHeader.contains(",")) {
-            // we don't handle requests for multiple ranges
-            throw new HttpException(500, String.format("Unsupported range header: %s", rangeHeader));
-        }
-
-        // parse the header
-        rangeHeader = rangeHeader.substring("bytes=".length());
-        int dashIndex = rangeHeader.indexOf('-');
-
-        if (dashIndex == -1 || rangeHeader.indexOf('-', dashIndex + 1) != -1) {
-            // invalid range
-            throw new HttpException(500, String.format("Invalid range header: %s", rangeHeader));
-        }
-
-        String startStr = rangeHeader.substring(0, dashIndex);
-        String endStr = rangeHeader.substring(dashIndex + 1);
-
-        if (!startStr.isEmpty()) {
-            this.start = new Long(startStr);
-        }
-
-        if (!endStr.isEmpty()) {
-            this.end = new Long(endStr);
-        }
-
-        // validate
-        if (this.start != null && this.end != null && this.start.longValue() > this.end.longValue()) {
-            // the start of the range must be before the end of the range;
-            // we allow it to be equal, i.e. retrieving just one byte
-            throw new HttpException(500, String.format("Invalid range header: %s", rangeHeader));
-        }
+    ByteRange(long start, long end) {
+        this.start = start;
+        this.end = end;
     }
 
-    /** The first byte desired, 0-indexed, or null if the range only specified the last byte desired. */
-    Long start;
+    /**
+     * Gets the size of the range, or -1 if either the start or end is not specified.
+     * @return The size of the range.
+     */
+    long size() {
+        if (this.start == -1 || this.end == -1) {
+            return -1;
+        }
 
-    /** The last byte desired, 0-indexed, or null if the range only specified the first byte desired. */
-    Long end;
+        return (end - start) + 1;
+    }
+
+    /**
+     * The start of the range, inclusive, 0-indexed. -1 if the range doesn't have a specific start,
+     * in which case "end" should actually be interpreted as the number of bytes to retrieve from the end of the file.
+     */
+    final long start;
+
+    /**
+     * The end of the range, inclusive, 0-indexed. -1 if the range doesn't have a specific end.
+     */
+    final long end;
 }
