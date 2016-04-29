@@ -21,7 +21,7 @@ import jakshin.mixcloudpodcast.download.DownloadQueue;
 import jakshin.mixcloudpodcast.http.HttpServer;
 import jakshin.mixcloudpodcast.mixcloud.MixcloudFeed;
 import jakshin.mixcloudpodcast.mixcloud.MixcloudScraper;
-import jakshin.mixcloudpodcast.rss.PodcastRSS;
+import jakshin.mixcloudpodcast.podcast.Podcast;
 import jakshin.mixcloudpodcast.utils.FileUtils;
 import java.io.*;
 import java.nio.file.*;
@@ -79,7 +79,7 @@ public class Main {
     /**
      * The application's version number.
      */
-    public static final String version = "0.7.0";
+    public static final String version = "0.7.1";
 
     /**
      * Scrapes the given Mixcloud feed URL, also downloading any tracks which haven't already been downloaded.
@@ -110,13 +110,13 @@ public class Main {
             }
 
             MixcloudFeed feed;
-            PodcastRSS rss;
+            Podcast podcast;
 
             try {
                 System.out.println(String.format("Scraping %s ...", mixcloudFeedUrl));
                 MixcloudScraper scraper = new MixcloudScraper();
                 feed = scraper.scrape(mixcloudFeedUrl);
-                rss = feed.createRSS(null);
+                podcast = feed.createPodcast(null);
             }
             catch (FileNotFoundException ex) {
                 // XXX logging
@@ -124,9 +124,9 @@ public class Main {
                 return;
             }
 
-            String rssFileName = matcher.group(1) + ".podcast.xml";
-            System.out.println(String.format("Writing podcast RSS to %s", rssFileName));
-            FileUtils.writeStringToFile(rssFileName, rss.toString(), "UTF-8");
+            String fileName = matcher.group(1) + ".podcast.xml";
+            System.out.println(String.format("Writing podcast RSS to %s", fileName));
+            FileUtils.writeStringToFile(fileName, podcast.createXml(), "UTF-8");
 
             DownloadQueue downloads = DownloadQueue.getInstance();
             int downloadCount = downloads.queueSize();

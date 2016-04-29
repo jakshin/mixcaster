@@ -15,31 +15,29 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package jakshin.mixcloudpodcast.rss;
+package jakshin.mixcloudpodcast.podcast;
 
 import jakshin.mixcloudpodcast.entities.XmlEntities;
 import jakshin.mixcloudpodcast.utils.DateFormatter;
 import java.io.*;
 import java.net.URL;
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
- * A representation of a podcast RSS feed, which can be serialized to XML.
+ * A representation of a podcast, which can be serialized to RSS XML.
  * XML format is based on info at https://itunespartner.apple.com/en/podcasts/overview.
  */
-public final class PodcastRSS {
+public final class Podcast {
     /**
-     * Returns an XML string containing the podcast's RSS feed.
+     * Creates an XML string containing the podcast's RSS feed, including all of its episodes.
      * @return RSS XML.
      */
-    @Override
-    public String toString() {
+    public String createXml() {
         // initialize, if we haven't already
         if (this.podcastXmlTemplate == null)
-            this.podcastXmlTemplate = loadResource("podcast.xml");
+            this.podcastXmlTemplate = this.loadResource("podcast.xml");
         if (this.episodeXmlTemplate == null)
-            this.episodeXmlTemplate = loadResource("podcastEpisode.xml");
+            this.episodeXmlTemplate = this.loadResource("podcastEpisode.xml");
 
         // podcast properties;
         // none of the links/URLs are expected to require URL-encoding
@@ -77,14 +75,44 @@ public final class PodcastRSS {
         return p;
     }
 
-    /** The thingy which can escape XML entities. */
-    private final XmlEntities xmlEntities = new XmlEntities();
+    /** The podcast's title. */
+    public String title;
 
-    /** The XML template for a podcast's overall feed. */
-    private StringBuilder podcastXmlTemplate;
+    /** A description of the podcast. */
+    public String description;
 
-    /** The XML template for a single episode of a podcast. */
-    private StringBuilder episodeXmlTemplate;
+    /**
+     * The podcast's web page's URL (for human consumption, not the URL of the RSS XML).
+     * Shouldn't require URL-encoding.
+     */
+    public URL link;
+
+    /** The language the podcast is in. */
+    public String language;
+
+    /** The podcast's overall author (individual episodes may have a different author. */
+    public String iTunesAuthor;
+
+    /** The podcast's category. */
+    public String iTunesCategory;
+
+    /** Whether the podcast contains explicit language. */
+    public boolean iTunesExplicit;
+
+    /**
+     * The URL of a cover image for the podcast.
+     * Shouldn't require URL-encoding.
+     */
+    public String iTunesImageUrl;
+
+    /** The podcast's owner's name. */
+    public String iTunesOwnerName;
+
+    /** The podcast's owner's email address. */
+    public String iTunesOwnerEmail;
+
+    /** Podcast episodes. */
+    public final List<PodcastEpisode> episodes = new LinkedList<>();
 
     /**
      * Loads a resource.
@@ -129,77 +157,12 @@ public final class PodcastRSS {
         return template.replace((CharSequence) tag, (CharSequence) this.xmlEntities.escape(replacement));
     }
 
-    /** The podcast's title. */
-    public String title;
+    /** The thingy which can escape XML entities. */
+    private final XmlEntities xmlEntities = new XmlEntities();
 
-    /** A description of the podcast. */
-    public String description;
+    /** The XML template for a podcast's overall feed. */
+    private StringBuilder podcastXmlTemplate;
 
-    /**
-     * The podcast's web page's URL (for human consumption, not the URL of the RSS XML).
-     * Shouldn't require URL-encoding.
-     */
-    public URL link;
-
-    /** The language the podcast is in. */
-    public String language;
-
-    /** The podcast's overall author (individual episodes may have a different author. */
-    public String iTunesAuthor;
-
-    /** The podcast's category. */
-    public String iTunesCategory;
-
-    /** Whether the podcast contains explicit language. */
-    public boolean iTunesExplicit;
-
-    /**
-     * The URL of a cover image for the podcast.
-     * Shouldn't require URL-encoding.
-     */
-    public String iTunesImageUrl;
-
-    /** The podcast's owner's name. */
-    public String iTunesOwnerName;
-
-    /** The podcast's owner's email address. */
-    public String iTunesOwnerEmail;
-
-    /** Podcast episodes. */
-    public final List<PodcastEpisode> episodes = new LinkedList<>();
-
-    /**
-     * An episode of the podcast.
-     */
-    public static class PodcastEpisode {
-        /**
-         * The URL of the episode's audio file.
-         * Shouldn't require URL-encoding.
-         */
-        public URL enclosureUrl;
-
-        /** The MIME type of the episode's audio file. */
-        public String enclosureMimeType;
-
-        /** The length in bytes of the episode's audio file. */
-        public int enclosureLengthBytes;
-
-        /**
-         * The episode's web page's URL (for human consumption, not the URL of the audio file).
-         * Shouldn't require URL-encoding.
-         */
-        public URL link;
-
-        /** The episode's publication date/time. */
-        public Date pubDate;
-
-        /** The episode's title. */
-        public String title;
-
-        /** The episode's author. */
-        public String iTunesAuthor;
-
-        /** A summary of the episode. */
-        public String iTunesSummary;
-    }
+    /** The XML template for a single episode of a podcast. */
+    private StringBuilder episodeXmlTemplate;
 }

@@ -21,7 +21,7 @@ import jakshin.mixcloudpodcast.ApplicationException;
 import jakshin.mixcloudpodcast.download.DownloadQueue;
 import jakshin.mixcloudpodcast.mixcloud.MixcloudFeed;
 import jakshin.mixcloudpodcast.mixcloud.MixcloudScraper;
-import jakshin.mixcloudpodcast.rss.PodcastRSS;
+import jakshin.mixcloudpodcast.podcast.Podcast;
 import jakshin.mixcloudpodcast.utils.DateFormatter;
 import java.io.IOException;
 import java.io.Writer;
@@ -84,8 +84,8 @@ public class XmlResponder {
         }
 
         // build the RSS XML
-        PodcastRSS rss = feed.createRSS(request.host());
-        String rssXml = rss.toString();
+        Podcast podcast = feed.createPodcast(request.host());
+        String rssXml = podcast.createXml();
 
         // kick off any downloads from Mixcloud which are now needed
         DownloadQueue downloads = DownloadQueue.getInstance();

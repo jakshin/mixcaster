@@ -92,12 +92,6 @@ public class MixcloudScraper {
         return feed;
     }
 
-    /** The thingy which can decode "m-play-info" attributes. */
-    private final MixcloudDecoder decoder = new MixcloudDecoder();
-
-    /** The thingy which can unescape HTML5 entities. */
-    private final HtmlEntities htmlEntities = new HtmlEntities();
-
     /**
      * Scrapes the track summary from the given Mixcloud track URL.
      *
@@ -363,4 +357,10 @@ public class MixcloudScraper {
             return contextUrl + urlStr;
         }
     }
+
+    /** The thingy which can decode "m-play-info" attributes. */
+    private final MixcloudDecoder decoder = new MixcloudDecoder();
+
+    /** The thingy which can unescape HTML5 entities. */
+    private final HtmlEntities htmlEntities = new HtmlEntities();
 }

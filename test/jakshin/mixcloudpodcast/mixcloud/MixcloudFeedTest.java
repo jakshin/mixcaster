@@ -17,7 +17,8 @@
 
 package jakshin.mixcloudpodcast.mixcloud;
 
-import jakshin.mixcloudpodcast.rss.PodcastRSS;
+import jakshin.mixcloudpodcast.podcast.Podcast;
+import jakshin.mixcloudpodcast.podcast.PodcastEpisode;
 import jakshin.mixcloudpodcast.utils.TrackLocator;
 import java.net.MalformedURLException;
 import java.util.Date;
@@ -29,7 +30,7 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 
 /**
- * Unit tests for the MixcloudDecoder class.
+ * Unit tests for the MixcloudFeed class.
  */
 public class MixcloudFeedTest {
     /** Scaffolding. */
@@ -57,7 +58,7 @@ public class MixcloudFeedTest {
      * @throws MalformedURLException
      */
     @Test
-    public void creatingRssShouldWork() throws MalformedURLException {
+    public void createPodcastShouldWorkWithEpisodes() throws MalformedURLException {
         MixcloudFeed feed = new MixcloudFeed();
         feed.url = "http://example.com/foo";
         feed.title = "Test";
@@ -76,16 +77,16 @@ public class MixcloudFeedTest {
         track.ownerName = "Owner";
         feed.tracks.add(track);
 
-        PodcastRSS rss = feed.createRSS(null);
-        assertEquals(feed.title, rss.title);
-        assertEquals(feed.description, rss.description);
-        assertEquals(feed.url, rss.link.toString());
-        assertEquals(feed.locale, rss.language);
-        assertEquals(feed.title, rss.iTunesAuthor);
-        assertEquals(feed.imageUrl, rss.iTunesImageUrl);
-        assertEquals(feed.title, rss.iTunesOwnerName);
+        Podcast podcast = feed.createPodcast(null);
+        assertEquals(feed.title, podcast.title);
+        assertEquals(feed.description, podcast.description);
+        assertEquals(feed.url, podcast.link.toString());
+        assertEquals(feed.locale, podcast.language);
+        assertEquals(feed.title, podcast.iTunesAuthor);
+        assertEquals(feed.imageUrl, podcast.iTunesImageUrl);
+        assertEquals(feed.title, podcast.iTunesOwnerName);
 
-        PodcastRSS.PodcastEpisode ep = rss.episodes.get(0);
+        PodcastEpisode ep = podcast.episodes.get(0);
         assertEquals(TrackLocator.getLocalUrl(null, feed.url, track.webPageUrl, track.musicUrl), ep.enclosureUrl.toString());
         assertEquals(track.musicContentType, ep.enclosureMimeType);
         assertEquals(track.musicLengthBytes, ep.enclosureLengthBytes);
@@ -94,5 +95,29 @@ public class MixcloudFeedTest {
         assertEquals(track.title + " [DOWNLOADING, CAN'T PLAY YET]", ep.title);
         assertEquals(track.ownerName, ep.iTunesAuthor);
         assertEquals(track.summary, ep.iTunesSummary);
+    }
+
+    /**
+     * Test.
+     * @throws MalformedURLException
+     */
+    @Test
+    public void createPodcastShouldWorkWithoutEpisodes() throws MalformedURLException {
+        MixcloudFeed feed = new MixcloudFeed();
+        feed.url = "http://example.com/foo";
+        feed.title = "Test";
+        feed.imageUrl = "http://example.com/foo.jpg";
+        feed.description = "Testing";
+        feed.locale = "en_US";
+
+        Podcast podcast = feed.createPodcast(null);
+        assertEquals(feed.title, podcast.title);
+        assertEquals(feed.description, podcast.description);
+        assertEquals(feed.url, podcast.link.toString());
+        assertEquals(feed.locale, podcast.language);
+        assertEquals(feed.title, podcast.iTunesAuthor);
+        assertEquals(feed.imageUrl, podcast.iTunesImageUrl);
+        assertEquals(feed.title, podcast.iTunesOwnerName);
+        assertEquals(0, podcast.episodes.size());
     }
 }

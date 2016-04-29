@@ -17,7 +17,8 @@
 
 package jakshin.mixcloudpodcast.mixcloud;
 
-import jakshin.mixcloudpodcast.rss.PodcastRSS;
+import jakshin.mixcloudpodcast.podcast.Podcast;
+import jakshin.mixcloudpodcast.podcast.PodcastEpisode;
 import jakshin.mixcloudpodcast.utils.TrackLocator;
 import java.io.File;
 import java.net.MalformedURLException;
@@ -32,31 +33,31 @@ import java.util.List;
  */
 public class MixcloudFeed {
     /**
-     * Creates a podcast RSS object from the feed.
-     * The Mixcloud-style data in the feed is mapped to podcast-style data for use in RSS.
+     * Creates a podcast object from the feed.
+     * The Mixcloud-style data in the feed is mapped to podcast-style data for use in RSS XML.
      *
      * @param localHostAndPort The local host and port from which tracks will be served (optional).
-     * @return A PodcastRSS object containing data equivalent to the feed's.
+     * @return A Podcast object containing data equivalent to the feed's.
      * @throws MalformedURLException
      */
-    public PodcastRSS createRSS(String localHostAndPort) throws MalformedURLException {
-        PodcastRSS rss = new PodcastRSS();
+    public Podcast createPodcast(String localHostAndPort) throws MalformedURLException {
+        Podcast podcast = new Podcast();
 
-        rss.title = this.title;
-        rss.description = this.description;
-        rss.link = new URL(this.url);
-        rss.language = this.locale;
+        podcast.title = this.title;
+        podcast.description = this.description;
+        podcast.link = new URL(this.url);
+        podcast.language = this.locale;
 
-        rss.iTunesAuthor = this.title;
-        rss.iTunesCategory = "Music";
-        rss.iTunesExplicit = false;
-        rss.iTunesImageUrl = this.imageUrl;
-        rss.iTunesOwnerName = this.title;
-        rss.iTunesOwnerEmail = "nobody@example.com";
+        podcast.iTunesAuthor = this.title;
+        podcast.iTunesCategory = "Music";
+        podcast.iTunesExplicit = false;
+        podcast.iTunesImageUrl = this.imageUrl;
+        podcast.iTunesOwnerName = this.title;
+        podcast.iTunesOwnerEmail = "nobody@example.com";
 
         // represent each stream/track as a podcast episode
         for (Track track : this.tracks) {
-            PodcastRSS.PodcastEpisode episode = new PodcastRSS.PodcastEpisode();
+            PodcastEpisode episode = new PodcastEpisode();
 
             String localUrlStr = TrackLocator.getLocalUrl(localHostAndPort, this.url, track.webPageUrl, track.musicUrl);
             String localPath = TrackLocator.getLocalPath(localUrlStr);
@@ -75,10 +76,10 @@ public class MixcloudFeed {
             episode.iTunesAuthor = track.ownerName;
             episode.iTunesSummary = track.summary;
 
-            rss.episodes.add(episode);
+            podcast.episodes.add(episode);
         }
 
-        return rss;
+        return podcast;
     }
 
     /** When the data in this feed was scraped from Mixcloud. */
