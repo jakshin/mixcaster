@@ -121,6 +121,7 @@ public class MixcloudScraper {
      */
     private StringBuilder downloadWebPage(String urlStr) throws IOException, MalformedURLException {
         HttpURLConnection conn = null;
+        InputStream in = null;
 
         try {
             // set up the HTTP connection
@@ -134,7 +135,6 @@ public class MixcloudScraper {
             // create the appropriate stream wrapper based on the encoding type;
             // this code will throw FileNotFoundException on 404s
             String encoding = conn.getContentEncoding();
-            InputStream in;
 
             if (encoding != null && encoding.equalsIgnoreCase("gzip")) {
                 in = new GZIPInputStream(conn.getInputStream());
@@ -170,6 +170,10 @@ public class MixcloudScraper {
         finally {
             if (conn != null) {
                 conn.disconnect();
+            }
+
+            if (in != null) {
+                in.close();
             }
         }
     }

@@ -44,22 +44,22 @@ class HttpRequest {
      * The request's HTTP version.
      * Only version 1.x is supported.
      */
-    public final String httpVersion;
+    final String httpVersion;
 
     /** The request's HTTP method. */
-    public final String method;
+    final String method;
 
     /**
      * The requested URL. This may be a complete URL starting with "http://",
      * or an absolute path, which includes no protocol, host or port information.
      */
-    public final String url;
+    final String url;
 
     /**
      * Reports whether this is a HEAD request.
      * @return Whether this is a HEAD request.
      */
-    public boolean isHead() {
+    boolean isHead() {
         return (this.method != null && this.method.equals("HEAD"));
     }
 
@@ -67,7 +67,7 @@ class HttpRequest {
      * Returns the value of the Host header, if present.
      * @return Host header value, including port (e.g. "localhost:25683"), or null if no Host header was received.
      */
-    public String host() {
+    String host() {
         return this.headers.get("Host");
     }
 
@@ -80,7 +80,7 @@ class HttpRequest {
      * @return An object representing the byte range for the request, or null.
      * @throws HttpException
      */
-    public ByteRange byteRange(long fileSize) throws HttpException {
+    ByteRange byteRange(long fileSize) throws HttpException {
         String rangeStr = this.headers.get("Range");
         if (rangeStr == null || rangeStr.isEmpty()) return null;
 
@@ -92,5 +92,5 @@ class HttpRequest {
     /**
      * All HTTP request headers received, name -> value.
      */
-    public final Map<String,String> headers = new HashMap<>(10);
+    final Map<String,String> headers = new HashMap<>(10);
 }

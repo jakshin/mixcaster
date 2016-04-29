@@ -67,20 +67,6 @@ public class FileUtilsTest {
         assertEquals(str, result);
     }
 
-    /** Helper method for some read/write tests. */
-    private String writeThenRead(String fileName, String content, String charset)
-            throws IOException, SecurityException {
-        FileUtils.writeStringToFile(fileName, content, charset);
-        String result = FileUtils.readFileIntoString(fileName, charset);
-
-        File file = new File(fileName);
-        if (!file.delete()) {
-            fail("Invalid test because a temp file couldn't be deleted");
-        }
-
-        return result;
-    }
-
     /** Test. */
     @Test (expected=FileNotFoundException.class)
     public void readingUnnamedShouldThrow() throws IOException, SecurityException {
@@ -152,5 +138,19 @@ public class FileUtilsTest {
     @Test (expected=FileNotFoundException.class)
     public void writingInNonexistentDirectoryShouldThrow() throws IOException, SecurityException {
         FileUtils.writeStringToFile("/does-not-exist/FileUtils.test", "content", "UTF-8");
+    }
+
+    /** Helper method for some read/write tests. */
+    private String writeThenRead(String fileName, String content, String charset)
+            throws IOException, SecurityException {
+        FileUtils.writeStringToFile(fileName, content, charset);
+        String result = FileUtils.readFileIntoString(fileName, charset);
+
+        File file = new File(fileName);
+        if (!file.delete()) {
+            fail("Invalid test because a temp file couldn't be deleted");
+        }
+
+        return result;
     }
 }

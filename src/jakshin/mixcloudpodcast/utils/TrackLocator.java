@@ -86,7 +86,10 @@ public class TrackLocator {
         return components[components.length - 1];
     }
 
-    /** Private constructor to prevent instantiation. */
+    /**
+     * Private constructor to prevent instantiation.
+     * This class's methods are all static, and it shouldn't be instantiated.
+     */
     private TrackLocator() {
         // nothing here
     }
