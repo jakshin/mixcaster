@@ -1,4 +1,4 @@
-# MixcloudPodcast
+# Mixcaster
 
 A "proxy" server which turns Mixcloud artist feeds into RSS-based podcasts (work in progress).
 
@@ -39,10 +39,10 @@ Coming up:
 ### How do I use it?
 
 Once you've compiled the program (details on that coming soon),
-check its config file, MixcloudPodcast.properties, and make any desired changes, then run it like so:
+check its config file, Mixcaster.properties, and make any desired changes, then run it like so:
 
 ```
-java -jar MixcloudPodcast.jar -service
+java -jar Mixcaster.jar -service
 ```
 
 Then, you can subscribe to a local URL in iTunes, which will be mapped to a Mixcloud artist feed.

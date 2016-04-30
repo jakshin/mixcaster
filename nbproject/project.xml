@@ -3,7 +3,7 @@
     <type>org.netbeans.modules.java.j2seproject</type>
     <configuration>
         <data xmlns="http://www.netbeans.org/ns/j2se-project/3">
-            <name>MixcloudPodcast</name>
+            <name>Mixcaster</name>
             <source-roots>
                 <root id="src.dir"/>
             </source-roots>
@@ -30,9 +30,9 @@
             <word>launchd</word>
             <word>list's</word>
             <word>localhost</word>
+            <word>Mixcaster</word>
             <word>Mixcloud</word>
             <word>Mixcloud's</word>
-            <word>MixcloudPodcast</word>
             <word>Mozilla</word>
             <word>offliberty</word>
             <word>og</word>
