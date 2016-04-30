@@ -17,8 +17,9 @@
 
 package jakshin.mixcloudpodcast.podcast;
 
-import java.net.MalformedURLException;
-import java.net.URL;
+import jakshin.mixcloudpodcast.Main;
+import java.io.*;
+import java.net.*;
 import java.util.Date;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -45,8 +46,18 @@ public class PodcastTest {
 
     /** Scaffolding. */
     @Before
-    public void setUp() {
+    public void setUp() throws MalformedURLException {
         this.instance = new Podcast();
+        this.instance.title = "Title";
+        this.instance.description = "Description";
+        this.instance.link = new URL("http://example.com");
+        this.instance.language = "en_US";
+        this.instance.iTunesAuthor = "Author";
+        this.instance.iTunesCategory = "Music";
+        this.instance.iTunesExplicit = true;
+        this.instance.iTunesImageUrl = "http://example.com/image.jpg";
+        this.instance.iTunesOwnerEmail = "nobody@example.com";
+        this.instance.iTunesOwnerName = "Owner";
     }
 
     /** Scaffolding. */
@@ -54,26 +65,15 @@ public class PodcastTest {
     public void tearDown() {
     }
 
-    /**
-     * Test.
-     * @throws MalformedURLException
-     */
+    /** Test. */
     @Test
-    public void createXmlShouldWorkWithEpisodes() throws MalformedURLException {
-        instance.title = "Title";
-        instance.description = "Description";
-        instance.link = new URL("http://foo");
-        instance.language = "en_US";
-        instance.iTunesAuthor = "Author";
-        instance.iTunesCategory = "Music";
-        instance.iTunesImageUrl = "";
-
+    public void createXmlShouldWorkWithEpisodes() throws IOException, MalformedURLException {
         PodcastEpisode ep = new PodcastEpisode();
-        ep.enclosureUrl = new URL("http://foo/foo.mp3");
+        ep.enclosureUrl = new URL("http://example.com/episode1.mp3");
         ep.enclosureMimeType = "audio/mpeg";
         ep.enclosureLengthBytes = 123456;
-        ep.link = new URL("http://foo/foo.html");
-        ep.pubDate = new Date(1459917701000L);
+        ep.link = new URL("http://example.com/episode1.html");
+        ep.pubDate = new Date();
         ep.title = "MP3";
         instance.episodes.add(ep);
 
@@ -104,24 +104,14 @@ public class PodcastTest {
         int index = result.indexOf("<enclosure ", itemIndex);
         assertTrue(index != -1);
 
-        // TODO --- test against http://validator.w3.org/feed/#validate_by_input
+        if (!this.validateFeed(result)) {
+            fail("The generated RSS does not validate");
+        }
     }
 
-    /**
-     * Test.
-     * @throws MalformedURLException
-     */
+    /** Test. */
     @Test
-    public void createXmlShouldWorkWithoutEpisodes() throws MalformedURLException {
-        instance.title = "Title";
-        instance.description = "Description";
-        instance.link = new URL("http://foo");
-        instance.language = "en_US";
-        instance.iTunesAuthor = "Author";
-        instance.iTunesCategory = "Music";
-        instance.iTunesExplicit = true;
-        instance.iTunesImageUrl = "";
-
+    public void createXmlShouldWorkWithoutEpisodes() throws IOException {
         String result = instance.createXml();
 
         int itemIndex = result.indexOf("<item>");
@@ -151,6 +141,75 @@ public class PodcastTest {
         int index = result.indexOf("<enclosure ", itemIndex);
         assertTrue(index == -1);
 
-        // TODO --- test against http://validator.w3.org/feed/#validate_by_input
+        if (!this.validateFeed(result)) {
+            fail("The generated RSS does not validate");
+        }
+    }
+
+    /**
+     * Utility method which validates a podcast RSS feed against http://validator.w3.org/feed/.
+     * @param rssXml The RSS XML to validate.
+     * @return Whether or not the RSS XML validates.
+     * @throws IOException
+     */
+    private boolean validateFeed(String rssXml) throws IOException {
+        HttpURLConnection conn = null;
+        InputStream in = null;
+        OutputStream out = null;
+
+        try {
+            URL url = new URL("http://validator.w3.org/feed/check.cgi");
+            conn = (HttpURLConnection) url.openConnection();
+            conn.setInstanceFollowRedirects(true);
+            conn.setRequestProperty("User-Agent", Main.config.getProperty("user_agent"));
+            conn.setRequestMethod("POST");
+            conn.setDoOutput(true);
+
+            out = conn.getOutputStream();
+            try (OutputStreamWriter writer = new OutputStreamWriter(out, "utf-8")) {
+                String encoded = URLEncoder.encode(rssXml, "utf-8");
+                writer.write("rawdata=" + encoded + "&manual=1");
+                writer.flush();
+            }
+
+            StringBuilder sb = new StringBuilder(100_000);
+
+            in = conn.getInputStream();
+            try (Reader reader = new InputStreamReader(in, "utf-8")) {
+                final char[] buf = new char[10_000];
+
+                while (true) {
+                    int charCount = reader.read(buf, 0, buf.length);
+                    if (charCount < 0) break;
+
+                    sb.append(buf, 0, charCount);
+                }
+            }
+
+            return (sb.indexOf("<h2>Congratulations!</h2>") != -1);  // <h2>Sorry</h2> on validation failure
+        }
+        finally {
+            if (conn != null) {
+                conn.disconnect();
+            }
+
+            try {
+                if (in != null) {
+                    in.close();
+                }
+            }
+            catch (IOException ex) {
+                // oh well
+            }
+
+            try {
+                if (out != null) {
+                    out.close();
+                }
+            }
+            catch (IOException ex) {
+                // oh well
+            }
+        }
     }
 }
