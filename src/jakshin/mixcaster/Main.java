@@ -19,6 +19,7 @@ package jakshin.mixcaster;
 
 import jakshin.mixcaster.download.DownloadQueue;
 import jakshin.mixcaster.http.HttpServer;
+import jakshin.mixcaster.logging.Logging;
 import jakshin.mixcaster.mixcloud.MixcloudFeed;
 import jakshin.mixcaster.mixcloud.MixcloudScraper;
 import jakshin.mixcaster.podcast.Podcast;
@@ -28,6 +29,7 @@ import java.nio.file.*;
 import java.util.Locale;
 import java.util.Properties;
 import java.util.regex.*;
+import static jakshin.mixcaster.logging.Logging.*;
 
 /**
  * The main application class, which runs on launch.
@@ -66,7 +68,8 @@ public class Main {
                 break;
             case "-usage":
             default:
-                main.printUsage();
+                main.printVersion();
+                main.printUsage(false);
                 break;
         }
     }
@@ -79,7 +82,7 @@ public class Main {
     /**
      * The application's version number.
      */
-    public static final String version = "0.7.1";
+    public static final String version = "0.7.2";
 
     /**
      * Scrapes the given Mixcloud feed URL, also downloading any tracks which haven't already been downloaded.
@@ -91,12 +94,14 @@ public class Main {
      */
     private void scrape(String mixcloudFeedUrl) {
         try {
-            System.out.println(String.format("Mixcaster v%s", Main.version));
+            // initialize logging
+            Logging.initialize(false);
+            logger.log(INFO, "Mixcaster v{0}", Main.version);
 
-            if (mixcloudFeedUrl.isEmpty()) {
-                System.out.println("Error: No Mixcloud feed URL given");
-                System.out.println();
-                this.printUsage();
+            // check our arguments
+            if (mixcloudFeedUrl == null || mixcloudFeedUrl.isEmpty()) {
+                logger.log(ERROR, "No Mixcloud feed URL given");
+                this.printUsage(true);
                 return;
             }
 
@@ -104,47 +109,53 @@ public class Main {
             Matcher matcher = re.matcher(mixcloudFeedUrl);
 
             if (!matcher.matches()) {
-                System.out.println(String.format("Error: \"%s\" is not a Mixcloud feed URL", mixcloudFeedUrl));
-                System.out.println("Mixcloud feed URLs look like https://www.mixcloud.com/FeedName/");
+                logger.log(ERROR, "\"{0}\" is not a Mixcloud feed URL", mixcloudFeedUrl);
+                this.printUsage(true);
                 return;
             }
 
+            // warn if we failed to load configuration from our properties file
+            // XXX also log this when running as a service
+            if (Main.errorLoadingProperties != null) {
+                String msg = String.format("Problem loading configuration from Mixcaster.properties (%s)",
+                        Main.errorLoadingProperties.getMessage());
+                logger.log(WARNING, msg, Main.errorLoadingProperties);
+            }
+
+            // scrape
             MixcloudFeed feed;
-            Podcast podcast;
 
             try {
-                System.out.println(String.format("Scraping %s ...", mixcloudFeedUrl));
+                logger.log(INFO, "Scraping {0} ...", mixcloudFeedUrl);
                 MixcloudScraper scraper = new MixcloudScraper();
                 feed = scraper.scrape(mixcloudFeedUrl);
-                podcast = feed.createPodcast(null);
             }
             catch (FileNotFoundException ex) {
-                // XXX logging
-                System.out.println("Error: The Mixcloud server returned 404 for the feed URL");
+                logger.log(ERROR, "The Mixcloud server returned 404 for the feed URL");
                 return;
             }
 
             String fileName = matcher.group(1) + ".podcast.xml";
-            System.out.println(String.format("Writing podcast RSS to %s", fileName));
+            logger.log(INFO, "Writing podcast RSS to {0}", fileName);
+            Podcast podcast = feed.createPodcast(null);
             FileUtils.writeStringToFile(fileName, podcast.createXml(), "UTF-8");
 
+            // process any new downloads
             DownloadQueue downloads = DownloadQueue.getInstance();
             int downloadCount = downloads.queueSize();
 
             if (downloadCount == 0) {
                 String msg = feed.tracks.isEmpty() ? "No tracks to download" : "All tracks have already been downloaded";
-                System.out.println(msg);
+                logger.log(INFO, msg);
             }
             else {
                 String tracksStr = (downloadCount == 1) ? "track" : "tracks";
-                System.out.println(String.format("Downloading %d %s ...", downloadCount, tracksStr));
+                logger.log(INFO, "Downloading {0} {1} ...", new Object[] { downloadCount, tracksStr });
                 downloads.processQueue();
             }
         }
         catch (Throwable ex) {
-            // XXX logging
-            System.out.println(String.format("Error: An unexpected error occurred (%s)", ex.getClass().getCanonicalName()));
-            System.out.println(ex.getMessage());
+            logger.log(ERROR, ex.getMessage(), ex);
         }
     }
 
@@ -184,15 +195,20 @@ public class Main {
 
     /**
      * Prints usage information.
+     * @param newLine Whether to print a line break before the usage info.
      */
-    private void printUsage() {
+    private void printUsage(boolean withLineBreak) {
         Path path = Paths.get(Main.class.getProtectionDomain().getCodeSource().getLocation().getPath());
         String jarPath = path.getFileName().toString();
         if (!jarPath.toLowerCase(Locale.ROOT).endsWith(".jar")) jarPath = "Mixcaster.jar";
 
+        if (withLineBreak) {
+            System.out.println();
+        }
+
         System.out.println("Usage: java -jar " + jarPath + " <command>\n");
         System.out.println("Available commands:");
-        System.out.println("  -scrape <url>: Scrape a single Mixcloud feed URL");
+        System.out.println("  -scrape <url>: Scrape a Mixcloud feed URL (https://www.mixcloud.com/FeedName)");
         System.out.println("  -service:      Run as a service, and accept HTTP requests for podcast feeds");
         System.out.println("  -install:      Install as a launchd service (launchd will run it with -service)");
         System.out.println("  -uninstall:    Uninstall launchd service");
@@ -243,9 +259,9 @@ public class Main {
             Main.validateIntegerProperty(cfg, "http_port", 1024, 65535);
         }
         catch (IOException ex) {
-            // XXX logging
-            String errMsg = ex.getClass().getCanonicalName() + ": " + ex.getMessage();
-            System.out.println("Error loading configuration properties: " + errMsg);
+            // our logger isn't initialized yet, so we save the exception for later logging,
+            // and carry on with defaults
+            Main.errorLoadingProperties = ex;
             return defaults;
         }
 
@@ -281,4 +297,7 @@ public class Main {
 
         return valid;
     }
+
+    /** An exception which occurred while loading our properties file, or null if things are okay. */
+    private static Exception errorLoadingProperties;
 }

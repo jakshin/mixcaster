@@ -25,6 +25,7 @@ import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import static jakshin.mixcaster.logging.Logging.*;
 
 /**
  * Downloads music files from Mixcloud.
@@ -51,11 +52,15 @@ public final class DownloadQueue {
      */
     public synchronized boolean enqueue(Download download) {
         File localFile = new File(download.localFilePath);
+        logger.log(DEBUG, "Attempting to enqueue file {0}", localFile);
+
         if (localFile.exists()) {
+            logger.log(DEBUG, "File {0} not enqueued, it has already been downloaded", localFile);
             return false;  // already downloaded
         }
 
         if (this.waitingDownloads.contains(download) || this.activeDownloads.contains(download)) {
+            logger.log(DEBUG, "File {0} is queued", localFile);
             return true;  // already queued, doesn't yet exist locally
         }
 
@@ -66,6 +71,7 @@ public final class DownloadQueue {
         this.waitingDownloads.add(download);
         Collections.sort(waitingDownloads, this.downloadComparator);
 
+        logger.log(DEBUG, "File {0} added to queue", localFile);
         return true;
     }
 
