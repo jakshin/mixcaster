@@ -18,6 +18,7 @@
 package jakshin.mixcaster.download;
 
 import jakshin.mixcaster.Main;
+import jakshin.mixcaster.utils.TimeSpanFormatter;
 import java.io.*;
 import java.net.*;
 import java.nio.file.*;
@@ -188,11 +189,13 @@ public final class DownloadQueue {
                 Files.deleteIfExists(localPath);
                 Files.move(localPartFile.toPath(), localPath, StandardCopyOption.ATOMIC_MOVE);
 
+                // XXX log download time (we don't try to handle clock changes or DST entry/exit)
                 long finished = System.currentTimeMillis();
                 long secondsTaken = (finished - started) / 1000;
+                String timeSpan = TimeSpanFormatter.formatTimeSpan((int) secondsTaken);
 
                 msg = String.format("Finished download: %s%n    => %s in %s",
-                        this.download.remoteUrl, this.download.localFilePath, formatTimeSpan((int) secondsTaken));
+                        this.download.remoteUrl, this.download.localFilePath, timeSpan);
                 System.out.println(msg);
             }
             catch (IOException ex) {
@@ -229,27 +232,6 @@ public final class DownloadQueue {
 
         /** The download. */
         private final Download download;
-    }
-
-    /**
-     * Formats a span of time, given in seconds, as h:mm:ss or m:ss (0:ss if less than one minute in length).
-     *
-     * @param seconds The time span in seconds.
-     * @return A formatted representation of the time span.
-     */
-    private String formatTimeSpan(int seconds) {
-        // XXX move this code into logging class
-        int minutes = seconds / 60;
-        seconds %= 60;
-
-        if (minutes >= 60) {
-            int hours = minutes / 60;
-            minutes %= 60;
-            return String.format("%d:%02d:%02d", hours, minutes, seconds);
-        }
-        else {
-            return String.format("%d:%02d", minutes, seconds);
-        }
     }
 
     /** The pool of download threads. */
