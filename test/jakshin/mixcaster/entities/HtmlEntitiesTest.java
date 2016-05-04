@@ -58,7 +58,7 @@ public class HtmlEntitiesTest {
         StringBuilder test = new StringBuilder(20_000);
         StringBuilder expResult = new StringBuilder(2_500);
 
-        for (Map.Entry<String,String> entry : HtmlEntities.entities.entrySet()) {
+        for (Map.Entry<String,String> entry : HtmlEntities.allEntities.entrySet()) {
             test.append(entry.getKey());
             expResult.append(entry.getValue());
         }

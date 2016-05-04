@@ -2412,5 +2412,5 @@ public class HtmlEntities {
      * HTML5 entities (entity -> character).
      * Provides a read-only view on the entityToChar collection.
      */
-    public static final Map<String,String> entities = Collections.unmodifiableMap(HtmlEntities.entityToChar);
+    public static final Map<String,String> allEntities = Collections.unmodifiableMap(HtmlEntities.entityToChar);
 }
