@@ -53,15 +53,14 @@ public final class DownloadQueue {
      */
     public synchronized boolean enqueue(Download download) {
         File localFile = new File(download.localFilePath);
-        logger.log(DEBUG, "Attempting to enqueue file {0}", localFile);
 
         if (localFile.exists()) {
-            logger.log(DEBUG, "File {0} not enqueued, it has already been downloaded", localFile);
+            logger.log(DEBUG, "File not enqueued (already downloaded): {0}", localFile);
             return false;  // already downloaded
         }
 
         if (this.waitingDownloads.contains(download) || this.activeDownloads.contains(download)) {
-            logger.log(DEBUG, "File {0} is queued", localFile);
+            logger.log(DEBUG, "File already queued: {0}", localFile);
             return true;  // already queued, doesn't yet exist locally
         }
 
@@ -72,7 +71,7 @@ public final class DownloadQueue {
         this.waitingDownloads.add(download);
         Collections.sort(waitingDownloads, this.downloadComparator);
 
-        logger.log(DEBUG, "File {0} added to queue", localFile);
+        logger.log(DEBUG, "File enqueued: {0}", localFile);
         return true;
     }
 
@@ -124,9 +123,8 @@ public final class DownloadQueue {
         /** Performs the download. */
         @Override
         public void run() {
-            String msg = String.format("Starting download: %s%n    => %s",
-                    this.download.remoteUrl, this.download.localFilePath);
-            System.out.println(msg);
+            logger.log(INFO, String.format("Starting download: %s%n    => %s",
+                    this.download.remoteUrl, this.download.localFilePath));
 
             HttpURLConnection conn = null;
             BufferedInputStream in = null;
@@ -189,19 +187,18 @@ public final class DownloadQueue {
                 Files.deleteIfExists(localPath);
                 Files.move(localPartFile.toPath(), localPath, StandardCopyOption.ATOMIC_MOVE);
 
-                // XXX log download time (we don't try to handle clock changes or DST entry/exit)
+                // log download time (we don't try to handle clock changes or DST entry/exit)
                 long finished = System.currentTimeMillis();
                 long secondsTaken = (finished - started) / 1000;
                 String timeSpan = TimeSpanFormatter.formatTimeSpan((int) secondsTaken);
 
-                msg = String.format("Finished download: %s%n    => %s in %s",
-                        this.download.remoteUrl, this.download.localFilePath, timeSpan);
-                System.out.println(msg);
+                logger.log(INFO, String.format("Finished download: %s%n    => %s in %s",
+                        this.download.remoteUrl, this.download.localFilePath, timeSpan));
             }
             catch (IOException ex) {
-                // XXX logging
-                System.out.println(ex.getClass().getCanonicalName() + ": " + ex.getMessage());
-                ex.printStackTrace(); // XXX remove (logging instead)
+                String msg = String.format("Aborted download: %s%n    => %s",
+                        this.download.remoteUrl, this.download.localFilePath);
+                logger.log(ERROR, msg, ex);
             }
             finally {
                 removeActiveDownload(this.download);
@@ -216,7 +213,7 @@ public final class DownloadQueue {
                     }
                 }
                 catch (IOException ex) {
-                    // XXX logging
+                    logger.log(WARNING, "Error closing HTTP input stream", ex);
                 }
 
                 try {
@@ -225,7 +222,7 @@ public final class DownloadQueue {
                     }
                 }
                 catch (IOException ex) {
-                    // XXX logging
+                    logger.log(WARNING, "Error closing file output stream", ex);
                 }
             }
         }
