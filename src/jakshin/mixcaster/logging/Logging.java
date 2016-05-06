@@ -17,8 +17,10 @@
 
 package jakshin.mixcaster.logging;
 
+import jakshin.mixcaster.Main;
 import java.io.File;
 import java.io.IOException;
+import java.util.Locale;
 import java.util.logging.*;
 
 /**
@@ -36,26 +38,30 @@ public class Logging {
         if (initialized) return;
         initialized = true;
 
-        // TODO log dir should be configurable
-        String logDirStr = System.getProperty("user.home") + "/Library/Logs/Mixcaster";  // no slash at end
-        File logDir = new File(logDirStr);
-
-        if (!logDir.exists() && !logDir.mkdirs()) {
-            throw new IOException(String.format("Unable to create logging directory %s", logDirStr));
-        }
-
+        // reset system defaults and set up logging to stdout
         LogManager.getLogManager().reset();
         logger.setLevel(Level.ALL);
 
         SystemOutHandler soh = new SystemOutHandler(new SystemOutFormatter(), Level.INFO);
         logger.addHandler(soh);
 
-        // TODO log count should be configurable
+        // get logging configuration
+        int logCount = Logging.getLogMaxCountConfig();
+        String logDirStr = Logging.getLogDirConfig();
+        Level logLevel = Logging.getLogLevelConfig();
+
+        // create the log directory if it doesn't already exist
+        File logDir = new File(logDirStr);
+        if (!logDir.exists() && !logDir.mkdirs()) {
+            throw new IOException(String.format("Unable to create logging directory \"%s\"", logDirStr));
+        }
+
+        // set up file logging
         FileHandler fh = (forService)
-                ? new FileHandler(logDirStr + "/service.log", 10_000, 20, true)  // TODO limit -> 1_000_000
-                : new FileHandler(logDirStr + "/scrape.log", 0, 20, false);  // one log per scrape, keep 20 logs max
+                ? new FileHandler(logDirStr + "/service.log", 1_000_000, logCount, true)  // 1 MB per log
+                : new FileHandler(logDirStr + "/scrape.log", 0, logCount, false);         // one log per scrape
         fh.setFormatter(new LogFileFormatter());
-        fh.setLevel(Level.ALL);  // TODO logging level should be configurable
+        fh.setLevel(logLevel);
         logger.addHandler(fh);
     }
 
@@ -79,6 +85,53 @@ public class Logging {
 
     /** Whether logging has been initialized or not. */
     private static boolean initialized = false;
+
+    /**
+     * Gets the log_max_count configuration setting.
+     * @return log_max_value, converted to an int.
+     */
+    private static int getLogMaxCountConfig() {
+        String countStr = Main.config.getProperty("log_max_count");
+        return Integer.parseInt(countStr);  // already validated
+    }
+
+    /**
+     * Gets the log_dir configuration setting.
+     * @return log_dir, as a string.
+     */
+    private static String getLogDirConfig() {
+        String logDirStr = Main.config.getProperty("log_dir");
+        if (logDirStr.startsWith("~/")) {
+            logDirStr = System.getProperty("user.home") + logDirStr.substring(1);
+        }
+
+        if (!logDirStr.isEmpty()) {
+            int lastIndex = logDirStr.length() - 1;
+            char last = logDirStr.charAt(lastIndex);
+
+            if (last == '/' || last == '\\') {
+                logDirStr = logDirStr.substring(0, lastIndex);  // no slash at end
+            }
+        }
+
+        return logDirStr;
+    }
+
+    /**
+     * Gets the log_level configuration setting.
+     * @return log_level, as a Level object.
+     */
+    private static Level getLogLevelConfig() {
+        String logLevelStr = Main.config.getProperty("log_level").toUpperCase(Locale.ENGLISH);  // already validated
+        if (logLevelStr.equals("ERROR")) {
+            logLevelStr = "SEVERE";
+        }
+        else if (logLevelStr.equals("DEBUG")) {
+            logLevelStr = "FINE";
+        }
+
+        return Level.parse(logLevelStr);
+    }
 
     /**
      * Private constructor to prevent instantiation.

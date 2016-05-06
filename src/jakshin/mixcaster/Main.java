@@ -82,7 +82,7 @@ public class Main {
     /**
      * The application's version number.
      */
-    public static final String version = "0.7.5";
+    public static final String version = "0.7.6";
 
     /**
      * Scrapes the given Mixcloud feed URL, also downloading any tracks which haven't already been downloaded.
@@ -162,7 +162,7 @@ public class Main {
         try {
             // initialize logging (if this fails, the program will show error info on stdout and abort)
             Logging.initialize(true);
-            logger.log(INFO, "Mixcaster v{0}", Main.version);
+            logger.log(INFO, "Mixcaster v{0} starting up", Main.version);
 
             // warn if we failed to load configuration from our properties file
             this.warnAboutConfigError();
@@ -247,6 +247,9 @@ public class Main {
         defaults.setProperty("http_cache_time_seconds", "3600");  // must be an int >= 0
         defaults.setProperty("http_hostname", "localhost");
         defaults.setProperty("http_port", "25683");               // must be an int in [1024-65535]
+        defaults.setProperty("log_max_count", "20");              // must be an int >= 0
+        defaults.setProperty("log_dir", "~/Library/Logs/Mixcaster");
+        defaults.setProperty("log_level", "ALL");
         defaults.setProperty("music_dir", "~/Music/Mixcloud");
         defaults.setProperty("stream_url_regex", "\"stream_url\":\\s*\"([^\"]+)\"");
         defaults.setProperty("track_regex", "<span\\s+class\\s*=\\s*\"play-button\"([^>]+)>");
@@ -277,6 +280,10 @@ public class Main {
             Main.validateIntegerProperty(cfg, "download_threads", 1, 50);
             Main.validateIntegerProperty(cfg, "http_cache_time_seconds", 0, Integer.MAX_VALUE);
             Main.validateIntegerProperty(cfg, "http_port", 1024, 65535);
+            Main.validateIntegerProperty(cfg, "log_max_count", 0, Integer.MAX_VALUE);
+
+            // validate string properties
+            Main.validateStringProperty(cfg, "log_level", new String[] { "ERROR", "WARNING", "INFO", "DEBUG", "ALL" });
         }
         catch (IOException ex) {
             // our logger isn't initialized yet, so we save the exception for later logging,
@@ -289,7 +296,7 @@ public class Main {
     }
 
     /**
-     * Validates that the given property is a string representing an integer within the given range,
+     * Validates that the given property contains a string representing an integer within the given range,
      * removing it from the properties object if it is not.
      *
      * @param cfg The properties object.
@@ -308,6 +315,34 @@ public class Main {
         }
         catch (NumberFormatException ex) {
             valid = false;
+        }
+
+        if (!valid) {
+            // remove the errant value from the properties file, so the hard-coded valid default will be used
+            cfg.remove(propertyName);
+        }
+
+        return valid;
+    }
+
+    /**
+     * Validates that the given property contains a string which is recognized as meaningful,
+     * removing it from the properties object if it is not.
+     *
+     * @param cfg The properties object.
+     * @param propertyName The name of the property to check.
+     * @param validValues A list of valid potential values.
+     * @return Whether or not the property's value was valid.
+     */
+    private static boolean validateStringProperty(Properties cfg, String propertyName, String[] validValues) {
+        String value = cfg.getProperty(propertyName);
+        boolean valid = false;  // pessimism
+
+        for (String validValue : validValues) {
+            if (validValue.equalsIgnoreCase(value)) {
+                valid = true;
+                break;
+            }
         }
 
         if (!valid) {
