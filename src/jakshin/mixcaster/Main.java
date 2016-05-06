@@ -82,7 +82,7 @@ public class Main {
     /**
      * The application's version number.
      */
-    public static final String version = "0.7.4";
+    public static final String version = "0.7.5";
 
     /**
      * Scrapes the given Mixcloud feed URL, also downloading any tracks which haven't already been downloaded.
@@ -94,7 +94,7 @@ public class Main {
      */
     private void scrape(String mixcloudFeedUrl) {
         try {
-            // initialize logging
+            // initialize logging (if this fails, the program will show error info on stdout and abort)
             Logging.initialize(false);
             logger.log(INFO, "Mixcaster v{0}", Main.version);
 
@@ -115,12 +115,7 @@ public class Main {
             }
 
             // warn if we failed to load configuration from our properties file
-            // XXX also log this when running as a service
-            if (Main.errorLoadingProperties != null) {
-                String msg = String.format("Problem loading configuration from Mixcaster.properties (%s)",
-                        Main.errorLoadingProperties.getMessage());
-                logger.log(WARNING, msg, Main.errorLoadingProperties);
-            }
+            this.warnAboutConfigError();
 
             // scrape
             MixcloudFeed feed;
@@ -163,8 +158,22 @@ public class Main {
      */
     private void runService() {
         System.out.println("WARNING: the service doesn't actually work yet");
-        HttpServer server = new HttpServer();
-        server.run();
+
+        try {
+            // initialize logging (if this fails, the program will show error info on stdout and abort)
+            Logging.initialize(true);
+            logger.log(INFO, "Mixcaster v{0}", Main.version);
+
+            // warn if we failed to load configuration from our properties file
+            this.warnAboutConfigError();
+
+            // run the service
+            HttpServer server = new HttpServer();
+            server.run();
+        }
+        catch (Throwable ex) {
+            logger.log(ERROR, ex.getMessage(), ex);
+        }
     }
 
     /**
@@ -213,6 +222,18 @@ public class Main {
         System.out.println("  -uninstall:    Uninstall launchd service");
         System.out.println("  -version:      Show version information and exit");
         System.out.println("  -usage:        Show this usage information and exit");
+    }
+
+    /**
+     * Logs a warning if we failed to load configuration settings from our properties file.
+     * To be useful, this should be called after the logger has been initialized, obviously.
+     */
+    private void warnAboutConfigError() {
+        if (Main.errorLoadingProperties != null) {
+            String msg = String.format("Problem loading configuration from Mixcaster.properties (%s)",
+                    Main.errorLoadingProperties.getMessage());
+            logger.log(WARNING, msg, Main.errorLoadingProperties);
+        }
     }
 
     /**

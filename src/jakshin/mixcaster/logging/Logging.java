@@ -47,16 +47,16 @@ public class Logging {
         LogManager.getLogManager().reset();
         logger.setLevel(Level.ALL);
 
-        // TODO log count shoud be configurable
+        SystemOutHandler soh = new SystemOutHandler(new SystemOutFormatter(), Level.INFO);
+        logger.addHandler(soh);
+
+        // TODO log count should be configurable
         FileHandler fh = (forService)
                 ? new FileHandler(logDirStr + "/service.log", 10_000, 20, true)  // TODO limit -> 1_000_000
                 : new FileHandler(logDirStr + "/scrape.log", 0, 20, false);  // one log per scrape, keep 20 logs max
         fh.setFormatter(new LogFileFormatter());
         fh.setLevel(Level.ALL);  // TODO logging level should be configurable
         logger.addHandler(fh);
-
-        SystemOutHandler soh = new SystemOutHandler(new SystemOutFormatter(), Level.INFO);
-        logger.addHandler(soh);
     }
 
     /**
