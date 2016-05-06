@@ -82,7 +82,7 @@ public class Main {
     /**
      * The application's version number.
      */
-    public static final String version = "0.7.3";
+    public static final String version = "0.7.4";
 
     /**
      * Scrapes the given Mixcloud feed URL, also downloading any tracks which haven't already been downloaded.
@@ -126,7 +126,6 @@ public class Main {
             MixcloudFeed feed;
 
             try {
-                logger.log(INFO, "Scraping {0} ...", mixcloudFeedUrl);
                 MixcloudScraper scraper = new MixcloudScraper();
                 feed = scraper.scrape(mixcloudFeedUrl);
             }
@@ -155,7 +154,7 @@ public class Main {
             }
         }
         catch (Throwable ex) {
-            logger.log(ERROR, ex.getMessage(), ex);
+            logger.log(ERROR, "Scrape failed", ex);
         }
     }
 

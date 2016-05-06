@@ -21,6 +21,7 @@ import jakshin.mixcaster.*;
 import jakshin.mixcaster.download.Download;
 import jakshin.mixcaster.download.DownloadQueue;
 import jakshin.mixcaster.entities.HtmlEntities;
+import jakshin.mixcaster.utils.TimeSpanFormatter;
 import jakshin.mixcaster.utils.TrackLocator;
 import java.io.*;
 import java.net.*;
@@ -28,6 +29,7 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.regex.*;
 import java.util.zip.*;
+import static jakshin.mixcaster.logging.Logging.*;
 
 /**
  * Scrapes info from Mixcloud artist and track pages.
@@ -46,6 +48,9 @@ public class MixcloudScraper {
      * @throws MalformedURLException
      */
     public MixcloudFeed scrape(String urlStr) throws ApplicationException, IOException, MalformedURLException {
+        logger.log(INFO, "Scraping {0} ...", urlStr);
+        long started = System.currentTimeMillis();
+
         // download the feed's web page
         StringBuilder sb = this.downloadWebPage(urlStr);
 
@@ -89,6 +94,12 @@ public class MixcloudScraper {
             feed.tracks.add(track);
         }
 
+        // log, with time taken (we don't try to handle clock changes or DST entry/exit)
+        long finished = System.currentTimeMillis();
+        long secondsTaken = (finished - started) / 1000;
+        String timeSpan = TimeSpanFormatter.formatTimeSpan((int) secondsTaken);
+        logger.log(INFO, "Finished scraping {0} in {1}", new Object[] { urlStr, timeSpan });
+
         return feed;
     }
 
@@ -124,6 +135,8 @@ public class MixcloudScraper {
         InputStream in = null;
 
         try {
+            logger.log(DEBUG, "Downloading URL: {0}", urlStr);
+
             // set up the HTTP connection
             URL url = new URL(urlStr);
             conn = (HttpURLConnection) url.openConnection();
@@ -207,6 +220,8 @@ public class MixcloudScraper {
         HttpURLConnection conn = null;
 
         try {
+            logger.log(DEBUG, "Getting HEAD of URL: {0}", urlStr);
+
             URL url = new URL(urlStr);
             conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("HEAD");
