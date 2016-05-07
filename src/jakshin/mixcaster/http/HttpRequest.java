@@ -72,12 +72,12 @@ class HttpRequest {
     }
 
     /**
-     * Gets the byte range for this request, or null if it's not a range retrieval request (no Range header).
+     * Gets the translated byte range for this request, or null if it's not a range retrieval request (no Range header).
      * You must pass the length of the file/resource being requested,
      * because that value is needed for calculating the actual first and last bytes which should be sent.
      *
      * @param fileSize The length of the file/resource requested.
-     * @return An object representing the byte range for the request, or null.
+     * @return An object representing the byte range for the request, with translation already performed, or null.
      * @throws HttpException
      */
     ByteRange byteRange(long fileSize) throws HttpException {

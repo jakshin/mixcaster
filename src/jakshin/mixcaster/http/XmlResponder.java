@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.io.Writer;
 import java.text.ParseException;
 import java.util.Date;
+import static jakshin.mixcaster.logging.Logging.*;
 
 /**
  * Responds to an HTTP request for RSS XML.
@@ -47,7 +48,7 @@ public class XmlResponder {
             throw new HttpException(403, "Forbidden");  // 404 would also be a fine choice
         }
 
-        System.out.println("Feed Name: " + feedName);  // XXX logging; in cache class?
+        logger.log(INFO, "Serving RSS XML for feed: {0}", feedName);
 
         // get a feed, either from cache or by scraping
         FeedCache cache = FeedCache.getInstance();
@@ -57,10 +58,13 @@ public class XmlResponder {
             // kick off a scraper
             String mixcloudFeedUrl = String.format("https://www.mixcloud.com/%s/", feedName);
             MixcloudScraper scraper = new MixcloudScraper();
-            feed = scraper.scrape(mixcloudFeedUrl);
+            feed = scraper.scrape(mixcloudFeedUrl);  // TODO handle FileNotFoundException as 404
 
             // cache the MixcloudFeed instance
             cache.addToCache(feedName, feed);
+        }
+        else {
+            logger.log(INFO, "Feed retrieved from cache: {0}", feedName);
         }
 
         // handle If-Modified-Since
@@ -78,9 +82,9 @@ public class XmlResponder {
             }
         }
         catch (ParseException ex) {
-            // XXX logging
-            System.out.println(ex.getClass().getCanonicalName() + ": " + ex.getMessage());
-            // continue without If-Modified-Since handling
+            // log and continue without If-Modified-Since handling
+            String msg = String.format("Invalid If-Modifed-Since header: %s", request.headers.get("If-Modified-Since"));
+            logger.log(WARNING, msg, ex);
         }
 
         // build the RSS XML
@@ -91,14 +95,13 @@ public class XmlResponder {
         DownloadQueue downloads = DownloadQueue.getInstance();
         int downloadCount = downloads.queueSize();
 
-        // XXX logging
         if (downloadCount == 0) {
             String msg = feed.tracks.isEmpty() ? "No tracks to download" : "All tracks have already been downloaded";
-            System.out.println(msg);
+            logger.log(INFO, msg);
         }
         else {
             String tracksStr = (downloadCount == 1) ? "track" : "tracks";
-            System.out.println(String.format("Starting download of %d %s", downloadCount, tracksStr));
+            logger.log(INFO, String.format("Starting download of %d %s", downloadCount, tracksStr));
             downloads.processQueue();
         }
 

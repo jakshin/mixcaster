@@ -17,6 +17,8 @@
 
 package jakshin.mixcaster.http;
 
+import static jakshin.mixcaster.logging.Logging.*;
+
 /**
  * A thingy which understands how to parse HTTP Range headers,
  * and also how to translate a logical range into a specific range of bytes for a given file size.
@@ -27,7 +29,7 @@ class ByteRangeParser {
      * The returned range represents the logical range requested,
      * and therefore may have -1 in either start or end, but not both.
      *
-     * @param rangeHeader The HTTP Range header.
+     * @param rangeHeader The HTTP Range header's value (expected to be like "bytes=...").
      * @return A logical byte range.
      * @throws HttpException
      */
@@ -37,7 +39,7 @@ class ByteRangeParser {
         }
 
         if (!rangeHeader.startsWith("bytes=")) {
-            // XXX logging
+            logger.log(WARNING, "Unknown range type in Range header: {0}", rangeHeader);
             return null;  // we don't understand the requested range type
         }
 
@@ -51,7 +53,7 @@ class ByteRangeParser {
         int dashIndex = rangeHeader.indexOf('-');
 
         if (dashIndex == -1 || rangeHeader.indexOf('-', dashIndex + 1) != -1) {
-            // XXX logging
+            logger.log(WARNING, "Invalid Range header: {0}", rangeHeader);
             return null;  // invalid range
         }
 
@@ -59,7 +61,7 @@ class ByteRangeParser {
         String endStr = rangeHeader.substring(dashIndex + 1).trim();
 
         if (startStr.isEmpty() && endStr.isEmpty()) {
-            // XXX logging
+            logger.log(WARNING, "Invalid Range header: {0}", rangeHeader);
             return null;  // invalid range, consisting of just "-"
         }
 
@@ -76,20 +78,20 @@ class ByteRangeParser {
             }
         }
         catch (NumberFormatException ex) {
-            // XXX logging
+            logger.log(WARNING, "Invalid number in Range header: {0}", rangeHeader);
             return null;  // invalid range
         }
 
         // validate
         if (start >= 0 && end >= 0 && start > end) {
             // the start of the range must be at or before the end of the range
-            // XXX logging
+            logger.log(WARNING, "Invalid Range header: {0}", rangeHeader);
             return null;  // invalid range
         }
 
         if (start < 0 && end == 0) {
             // ignore "-0"
-            // XXX logging
+            logger.log(WARNING, "Invalid Range header: {0}", rangeHeader);
             return null;  // invalid range
         }
 
@@ -112,6 +114,7 @@ class ByteRangeParser {
         if (fileSize == 0) {
             // Apache 2.2 ignores Range request headers when a 0-length file is requested;
             // that seems like it might be contrary to the RFC, but eh, let's do the same anyway
+            logger.log(DEBUG, "Ignoring Range header in a request for an empty file");
             return null;
         }
 

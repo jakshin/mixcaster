@@ -23,6 +23,7 @@ import jakshin.mixcaster.utils.TrackLocator;
 import java.io.*;
 import java.text.ParseException;
 import java.util.Date;
+import static jakshin.mixcaster.logging.Logging.*;
 
 /**
  * Responds to an HTTP request for a file, or part of a file.
@@ -41,6 +42,8 @@ public class FileResponder {
         String localPathStr = TrackLocator.getLocalPath(request.url);
         File localFile = new File(localPathStr);
 
+        logger.log(INFO, "Serving file: {0}", localPathStr);
+
         // handle If-Modified-Since
         Date lastModified = new Date(localFile.lastModified() / 1000 * 1000);  // truncate milliseconds for comparison
         HttpHeaderWriter headerWriter = new HttpHeaderWriter();
@@ -56,8 +59,9 @@ public class FileResponder {
             }
         }
         catch (ParseException ex) {
-            // XXX logging
-            // continue without If-Modified-Since handling
+            // log and continue without If-Modified-Since handling
+            String msg = String.format("Invalid If-Modifed-Since header: %s", request.headers.get("If-Modified-Since"));
+            logger.log(WARNING, msg, ex);
         }
 
         // open the file for reading before we send the response headers,

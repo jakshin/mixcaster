@@ -22,6 +22,7 @@ import jakshin.mixcaster.utils.DateFormatter;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.Date;
+import static jakshin.mixcaster.logging.Logging.*;
 
 /**
  * A thingy which knows how to write HTTP headers.
@@ -39,13 +40,19 @@ class HttpHeaderWriter {
      */
     void sendSuccessHeaders(Writer writer, Date contentLastModified, String contentType, long contentLength)
             throws IOException {
-        this.sendHeader(writer, "HTTP/1.1 200 OK");
-        this.sendCommonHeaders(writer);
+        StringBuilder out = new StringBuilder(500);
+        StringBuilder log = new StringBuilder(500);
 
-        this.sendHeader(writer, "Last-Modified: %s", DateFormatter.format(contentLastModified));
-        this.sendHeader(writer, "Content-Type: %s", contentType);
-        this.sendHeader(writer, "Content-Length: %d", contentLength);
+        this.addHeader(out, log, "HTTP/1.1 200 OK");
+        this.addCommonHeaders(out, log);
 
+        this.addHeader(out, log, "Last-Modified: %s", DateFormatter.format(contentLastModified));
+        this.addHeader(out, log, "Content-Type: %s", contentType);
+        this.addHeader(out, log, "Content-Length: %d", contentLength);
+
+        logger.log(DEBUG, "Sending HTTP response headers{0}", log);
+
+        writer.write(out.toString());
         writer.write("\r\n");
         writer.flush();
     }
@@ -63,14 +70,20 @@ class HttpHeaderWriter {
      */
     void sendRangeSuccessHeaders(Writer writer, Date contentLastModified, String contentType,
             long fullContentLength, long firstByte, long lastByte) throws IOException {
-        this.sendHeader(writer, "HTTP/1.1 206 Partial Content");
-        this.sendCommonHeaders(writer);
+        StringBuilder out = new StringBuilder(500);
+        StringBuilder log = new StringBuilder(500);
 
-        this.sendHeader(writer, "Last-Modified: %s", DateFormatter.format(contentLastModified));
-        this.sendHeader(writer, "Content-Type: %s", contentType);
-        this.sendHeader(writer, "Content-Length: %d", (lastByte - firstByte + 1));  // the length of the partial response
-        this.sendHeader(writer, "Content-Range: bytes %d-%d/%d", firstByte, lastByte, fullContentLength);
+        this.addHeader(out, log, "HTTP/1.1 206 Partial Content");
+        this.addCommonHeaders(out, log);
 
+        this.addHeader(out, log, "Last-Modified: %s", DateFormatter.format(contentLastModified));
+        this.addHeader(out, log, "Content-Type: %s", contentType);
+        this.addHeader(out, log, "Content-Length: %d", (lastByte - firstByte + 1));  // the length of the partial response
+        this.addHeader(out, log, "Content-Range: bytes %d-%d/%d", firstByte, lastByte, fullContentLength);
+
+        logger.log(DEBUG, "Sending HTTP response headers for range request{0}", log);
+
+        writer.write(out.toString());
         writer.write("\r\n");
         writer.flush();
     }
@@ -82,8 +95,16 @@ class HttpHeaderWriter {
      * @throws IOException
      */
     void sendNotModifiedHeaders(Writer writer) throws IOException {
-        this.sendHeader(writer, "HTTP/1.1 304 Not Modified");
-        this.sendCommonHeaders(writer);
+        StringBuilder out = new StringBuilder(500);
+        StringBuilder log = new StringBuilder(500);
+
+        this.addHeader(out, log, "HTTP/1.1 304 Not Modified");
+        this.addCommonHeaders(out, log);
+
+        logger.log(DEBUG, "Sending HTTP not-modified response headers{0}", log);
+
+        writer.write(out.toString());
+        writer.write("\r\n");
         writer.flush();
     }
 
@@ -106,16 +127,23 @@ class HttpHeaderWriter {
             reasonPhrase = err.getMessage();
         }
 
-        this.sendHeader(writer, "HTTP/1.1 %d %s", responseCode, reasonPhrase);
-        this.sendCommonHeaders(writer);
+        StringBuilder out = new StringBuilder(500);
+        StringBuilder log = new StringBuilder(500);
+
+        this.addHeader(out, log, "HTTP/1.1 %d %s", responseCode, reasonPhrase);
+        this.addCommonHeaders(out, log);
 
         String messageBody = null;
         if (!isHeadRequest) {
             messageBody = err.getClass().getCanonicalName() + ": " + err.getMessage() + "\r\n";
-            this.sendHeader(writer, "Content-Length: %d", messageBody.length());
+            this.addHeader(out, log, "Content-Length: %d", messageBody.length());
         }
 
-        this.sendHeader(writer, "Content-Type: text/plain");
+        this.addHeader(out, log, "Content-Type: text/plain");
+
+        logger.log(DEBUG, "Sending HTTP error response headers{0}", log);
+
+        writer.write(out.toString());
         writer.write("\r\n");
 
         if (messageBody != null) {
@@ -126,31 +154,38 @@ class HttpHeaderWriter {
     }
 
     /**
-     * Sends common HTTP headers which are included in every response, success or failure.
+     * Add common HTTP headers which are included in every response, success or failure,
+     * to both of the passed StringBuilders (one formatted for sending to the client, one formatted for logging).
      *
-     * @param writer The writer to output the headers to.
-     * @throws IOException
+     * @param out Collects the headers formatted for sending to the client.
+     * @param log Collects the headers formatted for logging.
      */
-    private void sendCommonHeaders(Writer writer) throws IOException {
-        this.sendHeader(writer, "Date: %s", DateFormatter.format(new Date()));
-        this.sendHeader(writer, "Server: Mixcaster/%s (%s)", Main.version, System.getProperty("os.name"));
-        this.sendHeader(writer, "Connection: close");
-        this.sendHeader(writer, "Accept-Ranges: bytes");
+    private void addCommonHeaders(StringBuilder out, StringBuilder log) {
+        this.addHeader(out, log, "Date: %s", DateFormatter.format(new Date()));
+        this.addHeader(out, log, "Server: Mixcaster/%s (%s)", Main.version, System.getProperty("os.name"));
+        this.addHeader(out, log, "Connection: close");
+        this.addHeader(out, log, "Accept-Ranges: bytes");
     }
 
     /**
-     * Sends an HTTP header.
+     * Adds an HTTP header to both of the passed StringBuilders
+     * (one formatted for sending to the client, one formatted for logging).
      *
-     * @param writer The writer to send the header with.
+     * @param out Collects the headers formatted for sending to the client.
+     * @param log Collects the headers formatted for logging.
      * @param format The header's format string.
      * @param params Any parameters needed to perform formatting on the format string.
-     * @throws IOException
      */
-    private void sendHeader(Writer writer, String format, Object... params) throws IOException {
-        String formatted = String.format(format, params);
-        writer.write(formatted);
-        writer.write("\r\n");
+    private void addHeader(StringBuilder out, StringBuilder log, String format, Object... params) {
+        String header = (params.length > 0) ? String.format(format, params) : format;
 
-        System.out.println("<- " + formatted); // XXX logging
+        out.append(header);
+        out.append("\r\n");
+
+        log.append(HttpHeaderWriter.headerPrefix);
+        log.append(header);
     }
+
+    /** The prefix used to put each logged header on its own line. */
+    private static final String headerPrefix = String.format("%n    <- ");
 }

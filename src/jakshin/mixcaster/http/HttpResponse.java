@@ -19,7 +19,9 @@ package jakshin.mixcaster.http;
 
 import java.io.*;
 import java.net.Socket;
+import java.util.LinkedList;
 import java.util.Locale;
+import static jakshin.mixcaster.logging.Logging.*;
 
 /**
  * Provides a response to a single incoming HTTP request, first parsing headers to understand the request,
@@ -57,18 +59,25 @@ class HttpResponse implements Runnable {
             if (request.httpVersion == null || !request.httpVersion.contains("/1.")) {
                 throw new HttpException(505, String.format("HTTP Version %s not supported", request.httpVersion));
             }
-
-            if (request.method == null || (!request.method.equals("GET") && !request.method.equals("HEAD"))) {
+            else if (request.method == null || (!request.method.equals("GET") && !request.method.equals("HEAD"))) {
                 throw new HttpException(405, String.format("Method %s Not Allowed", request.method));
             }
-
-            if (request.url == null || request.url.isEmpty()) {
+            else if (request.url == null || request.url.isEmpty()) {
                 throw new HttpException(400, "Bad Request: empty URL");
             }
 
-            // note that we don't check the Expect header, nor do we handle "100-continue";
+            // note that we don't handle the Expect header, nor do we handle "100-continue";
             // technically this violates the HTTP/1.1 spec, but doesn't seem to matter for our purposes
-            // XXX log warning if a non-empty Expect header is received
+            String expect = request.headers.get("Expect");
+            if (expect != null && !expect.isEmpty()) {
+                logger.log(WARNING, "Expect header received but not handled: {0}", expect);
+            }
+
+            // we don't handle the If-Range header, either
+            String ifRange = request.headers.get("If-Range");
+            if (ifRange != null && !ifRange.isEmpty()) {
+                logger.log(WARNING, "If-Range header received but not handled: {0}", ifRange);
+            }
 
             // route the request to a responder
             if (this.getUrlWithoutQueryOrReference(request.url).toLowerCase(Locale.ROOT).endsWith(".xml")) {
@@ -82,9 +91,7 @@ class HttpResponse implements Runnable {
             }
         }
         catch (Throwable ex) {
-            // XXX logging
-            System.out.println(ex.getClass().getCanonicalName() + ": " + ex.getMessage());
-            ex.printStackTrace();  // XXX remove (logging instead)
+            logger.log(ERROR, ex.getMessage(), ex);
 
             // if ex isn't an HttpException, the HTTP response headers may already have been written out, but try anyway
             try {
@@ -94,14 +101,13 @@ class HttpResponse implements Runnable {
             }
             catch (Throwable ex2) {
                 // we're pretty bad off if we can't even send the response headers; log and give up
-                // XXX logging
-                System.out.println(ex2.getClass().getCanonicalName() + ": " + ex2.getMessage());
+                logger.log(ERROR, "Failed to send HTTP error response headers", ex2);
             }
         }
         finally {
-            this.closeAThing(reader);
-            this.closeAThing(writer);
-            this.closeAThing(out);
+            this.closeAThing(reader, "the socket's reader");
+            this.closeAThing(writer, "the socket's writer");
+            this.closeAThing(out, "the socket's output stream");
         }
     }
 
@@ -117,11 +123,14 @@ class HttpResponse implements Runnable {
         HttpRequest request = null;
         String lastHeaderName = null;
 
+        StringBuilder loggedHeaders = new StringBuilder(500);
+        LinkedList<String> unparsableHeaders = new LinkedList<>();
+
         while (true) {
             String line = reader.readLine();
             if (line == null || line.isEmpty()) break;
 
-            System.out.println("-> " + line);  // XXX logging
+            loggedHeaders.append(String.format("%n    -> %s", line));
 
             if (request == null) {
                 // first line
@@ -148,9 +157,14 @@ class HttpResponse implements Runnable {
                     lastHeaderName = headerName;
                 }
                 else {
-                    // XXX logging
+                    unparsableHeaders.add(line);
                 }
             }
+        }
+
+        logger.log(DEBUG, "Received HTTP request headers{0}", loggedHeaders);
+        for (String header : unparsableHeaders) {
+            logger.log(WARNING, "Unparsable HTTP request header: {0}", header);
         }
 
         return request;
@@ -178,9 +192,11 @@ class HttpResponse implements Runnable {
 
     /**
      * Convenience method which closes something which can be closed.
+     *
      * @param thing The thing to be closed.
+     * @param description A description of the thing which will be closed.
      */
-    private void closeAThing(Closeable thing) {
+    private void closeAThing(Closeable thing, String description) {
         if (thing == null) return;
 
         try {
@@ -188,7 +204,8 @@ class HttpResponse implements Runnable {
         }
         catch (IOException ex) {
             // responders are expected to flush at the end of finishResponse(), making this unlikely
-            // XXX logging
+            String msg = String.format("Failed to close %s", description);
+            logger.log(WARNING, msg, ex);
         }
     }
 

@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import static jakshin.mixcaster.logging.Logging.*;
 
 /**
  * A minimal HTTP server which listens for incoming HTTP connections,
@@ -55,13 +56,13 @@ public class HttpServer implements Runnable {
             ssocket = new ServerSocket(this.port);
         }
         catch (IOException ex) {
-            // XXX logging
-            System.out.println(ex.getClass().getCanonicalName() + ": " + ex.getMessage());
+            String msg = String.format("HTTP server failed to bind to TCP port %d", this.port);
+            logger.log(ERROR, msg, ex);
             return;
         }
 
-        // XXX logging
-        System.out.println("Listening for HTTP connections");
+        String msg = String.format("Listening for HTTP connections on port %d", this.port);
+        logger.log(INFO, msg);
 
         while (true) {
             try {
@@ -74,13 +75,10 @@ public class HttpServer implements Runnable {
             }
             catch (SocketException ex) {
                 // the socket was closed
-                // XXX logging
-                System.out.println(ex.getClass().getCanonicalName() + ": " + ex.getMessage());
-                ex.printStackTrace();  // XXX remove (logging instead)
+                logger.log(ERROR, ex.getMessage(), ex);
             }
             catch (IOException ex) {
-                // XXX logging
-                System.out.println(ex.getClass().getCanonicalName() + ": " + ex.getMessage());
+                logger.log(ERROR, ex.getMessage(), ex);
             }
         }
     }

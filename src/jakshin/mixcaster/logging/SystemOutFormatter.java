@@ -48,6 +48,7 @@ class SystemOutFormatter extends Formatter {
             Throwable thrown = record.getThrown();
             if (thrown != null) {
                 sb.append(this.formatThrowable(thrown, false));
+                sb.append(String.format("%n"));
             }
 
             return sb.toString();

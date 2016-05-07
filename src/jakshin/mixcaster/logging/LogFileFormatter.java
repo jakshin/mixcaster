@@ -45,6 +45,17 @@ class LogFileFormatter extends Formatter {
         String msg = this.formatMessage(record);
         if (msg == null || msg.isEmpty()) return msg;
 
+        // handle embedded newlines
+        msg = msg.trim();
+        String extra = null;
+
+        int index = msg.indexOf('\n');
+        if (index != -1) {
+            extra = msg.substring(index + 1);  // no trim, so any indent is preserved
+            msg = msg.substring(0, index).trim();
+        }
+
+        // format the log entry
         StringBuilder sb = new StringBuilder(200);
 
         long logged = record.getMillis();
@@ -64,11 +75,15 @@ class LogFileFormatter extends Formatter {
         sb.append(levelStr);
         sb.append('\t');
 
-        // XXX handle embedded newlines?
-        sb.append(msg.trim());
+        sb.append(msg);
         sb.append('\t');
 
         sb.append(String.format("[thread %d]%n", record.getThreadID()));
+
+        if (extra != null && !extra.isEmpty()) {
+            sb.append(extra);
+            sb.append(LogFileFormatter.lineBreak);
+        }
 
         Throwable thrown = record.getThrown();
         if (thrown != null) {
@@ -107,4 +122,7 @@ class LogFileFormatter extends Formatter {
 
     /** The thingy which formats dates. */
     private final SimpleDateFormat dateFormatter;
+
+    /** The line break string which is appropriate for this platform. */
+    private static final String lineBreak = String.format("%n");
 }
