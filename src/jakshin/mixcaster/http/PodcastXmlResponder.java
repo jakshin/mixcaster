@@ -23,6 +23,7 @@ import jakshin.mixcaster.mixcloud.MixcloudFeed;
 import jakshin.mixcaster.mixcloud.MixcloudScraper;
 import jakshin.mixcaster.podcast.Podcast;
 import jakshin.mixcaster.utils.DateFormatter;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.Writer;
 import java.text.ParseException;
@@ -32,7 +33,7 @@ import static jakshin.mixcaster.logging.Logging.*;
 /**
  * Responds to an HTTP request for RSS XML.
  */
-public class XmlResponder {
+public class PodcastXmlResponder {
     /**
      * Responds to the RSS XML request.
      *
@@ -45,7 +46,9 @@ public class XmlResponder {
     void respond(HttpRequest request, Writer writer) throws ApplicationException, HttpException, IOException {
         String feedName = this.getSecondToLastComponentOfUrl(request.url);
         if (feedName == null || feedName.isEmpty()) {
-            throw new HttpException(403, "Forbidden");  // 404 would also be a fine choice
+            // 404 would also be fine, but we use 403 instead, to distinguish between an unexpected local podcast.xml URL,
+            // and a local URL which looks okay but which doesn't map to a valid Mixcloud feed (handled below)
+            throw new HttpException(403, "Forbidden");
         }
 
         logger.log(INFO, "Serving RSS XML for feed: {0}", feedName);
@@ -55,13 +58,19 @@ public class XmlResponder {
         MixcloudFeed feed = cache.getFromCache(feedName);
 
         if (feed == null) {
-            // kick off a scraper
-            String mixcloudFeedUrl = String.format("https://www.mixcloud.com/%s/", feedName);
-            MixcloudScraper scraper = new MixcloudScraper();
-            feed = scraper.scrape(mixcloudFeedUrl);  // TODO handle FileNotFoundException as 404
+            try {
+                // kick off a scraper
+                String mixcloudFeedUrl = String.format("https://www.mixcloud.com/%s/", feedName);
+                MixcloudScraper scraper = new MixcloudScraper();
+                feed = scraper.scrape(mixcloudFeedUrl);
 
-            // cache the MixcloudFeed instance
-            cache.addToCache(feedName, feed);
+                // cache the MixcloudFeed instance
+                cache.addToCache(feedName, feed);
+            }
+            catch (FileNotFoundException ex) {
+                // Mixcloud returned 404 for the feed URL; pass it along
+                throw new HttpException(404, "Not Found", ex);
+            }
         }
         else {
             logger.log(INFO, "Feed retrieved from cache: {0}", feedName);

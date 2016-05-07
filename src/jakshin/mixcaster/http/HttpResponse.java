@@ -56,7 +56,7 @@ class HttpResponse implements Runnable {
             // parse and check the request
             request = this.parseRequestHeaders(reader);
 
-            if (request.httpVersion == null || !request.httpVersion.contains("/1.")) {
+            if (request.httpVersion == null || !request.httpVersion.contains("HTTP/1.")) {
                 throw new HttpException(505, String.format("HTTP Version %s not supported", request.httpVersion));
             }
             else if (request.method == null || (!request.method.equals("GET") && !request.method.equals("HEAD"))) {
@@ -80,9 +80,9 @@ class HttpResponse implements Runnable {
             }
 
             // route the request to a responder
-            if (this.getUrlWithoutQueryOrReference(request.url).toLowerCase(Locale.ROOT).endsWith(".xml")) {
+            if (this.getUrlWithoutQueryOrReference(request.url).toLowerCase(Locale.ROOT).endsWith("/podcast.xml")) {
                 // RSS XML request
-                new XmlResponder().respond(request, writer);
+                new PodcastXmlResponder().respond(request, writer);
             }
             else {
                 // any other request must be for a file
@@ -91,7 +91,14 @@ class HttpResponse implements Runnable {
             }
         }
         catch (Throwable ex) {
-            logger.log(ERROR, ex.getMessage(), ex);
+            // log non-5xx HTTP exceptions as INFO, and all others as ERROR
+            if (ex instanceof HttpException && ((HttpException) ex).httpResponseCode < 500) {
+                String msg = String.format("HTTP error: %d %s", ((HttpException) ex).httpResponseCode, ex.getMessage());
+                logger.log(INFO, msg);
+            }
+            else {
+                logger.log(ERROR, ex.getMessage(), ex);
+            }
 
             // if ex isn't an HttpException, the HTTP response headers may already have been written out, but try anyway
             try {

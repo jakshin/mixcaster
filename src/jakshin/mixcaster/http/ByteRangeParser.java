@@ -132,7 +132,7 @@ class ByteRangeParser {
             return new ByteRange(start, fileSize - 1);
         }
         else {
-            // shouldn't happen, because of validation in parse()
+            // this shouldn't happen, because of validation in parse(), so we treat it as an internal error
             throw new HttpException(500, String.format("Invalid byte range %d-%d", range.start, range.end));
         }
     }
