@@ -58,32 +58,40 @@ public class MixcloudScraper {
         MixcloudFeed feed = new MixcloudFeed();
         feed.scraped = new Date();
         feed.url = urlStr;
-        feed.title = this.getMetaTagContent("og:title", sb);
-        feed.imageUrl = this.getMetaTagContent("og:image", sb);
-        feed.description = this.getMetaTagContent("og:description", sb);
-        feed.locale = this.getMetaTagContent("og:locale", sb);
+        feed.title = this.getMetaTagContent("og:title", sb, urlStr);
+        feed.imageUrl = this.getMetaTagContent("og:image", sb, urlStr);
+        feed.description = this.getMetaTagContent("og:description", sb, urlStr);
+        feed.locale = this.getMetaTagContent("og:locale", sb, urlStr);
 
         // extract all tracks, i.e. podcast episodes;
         // Mixcloud lists tracks most-recent-first, so that's the order in which they'll be added to the feed
+        int trackCount = 0;
         Pattern re = Pattern.compile(Main.config.getProperty("track_regex"));
         Matcher matcher = re.matcher(sb);
 
         while (matcher.find()) {
             String tag = matcher.group();
 
-            String trackWebPageUrl = this.makeUrlAbsolute(this.getAttributeValue("m-url", tag), urlStr);
-            String musicUrl = this.decoder.decode(this.getAttributeValue("m-play-info", tag));
+            String mPlayInfo = this.getAttributeValue("m-play-info", tag, urlStr);
+            String musicUrl = this.decoder.decode(mPlayInfo);
+
+            if (musicUrl == null) {
+                String msg = String.format("Unable to decode m-play-info%n    %s%n    from %s", mPlayInfo, urlStr);
+                logger.log(WARNING, msg);
+            }
+
+            String trackWebPageUrl = this.makeUrlAbsolute(this.getAttributeValue("m-url", tag, urlStr), urlStr);
             MusicUrlHeaderData data = this.getMusicUrlHeaderData(musicUrl);
 
             MixcloudFeed.Track track = new MixcloudFeed.Track();
-            track.title = this.getAttributeValue("m-title", tag);
+            track.title = this.getAttributeValue("m-title", tag, urlStr);
             track.summary = this.scrapeTrackSummary(trackWebPageUrl);
             track.webPageUrl = trackWebPageUrl;
             track.musicUrl = musicUrl;
             track.musicContentType = data.contentType;
             track.musicLengthBytes = data.contentLengthBytes;
             track.musicLastModifiedDate = data.lastModifiedDate;
-            track.ownerName = this.getAttributeValue("m-owner-name", tag);
+            track.ownerName = this.getAttributeValue("m-owner-name", tag, urlStr);
 
             String localUrl = TrackLocator.getLocalUrl(null, feed.url, track.webPageUrl, track.musicUrl);
             String localPath = TrackLocator.getLocalPath(localUrl);
@@ -92,6 +100,7 @@ public class MixcloudScraper {
             DownloadQueue.getInstance().enqueue(download);
 
             feed.tracks.add(track);
+            trackCount++;
         }
 
         // log, with time taken (we don't try to handle clock changes or DST entry/exit)
@@ -99,6 +108,9 @@ public class MixcloudScraper {
         long secondsTaken = (finished - started) / 1000;
         String timeSpan = TimeSpanFormatter.formatTimeSpan((int) secondsTaken);
         logger.log(INFO, "Finished scraping {0} in {1}", new Object[] { urlStr, timeSpan });
+
+        String tracksStr = (trackCount == 1) ? "track" : "tracks";
+        logger.log(INFO, "Found {0} {1} in the feed", new Object[] { trackCount, tracksStr });
 
         return feed;
     }
@@ -118,7 +130,7 @@ public class MixcloudScraper {
         StringBuilder sb = this.downloadWebPage(urlStr);
 
         // extract the track's summary
-        return this.getMetaTagContent("og:description", sb);
+        return this.getMetaTagContent("og:description", sb, urlStr);
     }
 
     /**
@@ -287,14 +299,20 @@ public class MixcloudScraper {
      *
      * @param property The meta tag's name, i.e. the `property` attribute value to search for.
      * @param html The HTML to search.
-     * @return The meta tag's value, i.e. the value of its `content` attribute.
+     * @param urlStr The URL from which the HTML was retrieved (only used for logging).
+     * @return The meta tag's value, i.e. the value of its `content` attribute, or null.
      */
-    private String getMetaTagContent(String property, CharSequence html) {
+    private String getMetaTagContent(String property, CharSequence html, String urlStr) {
         // Mixcloud uses double quotes around HTML attribute values
         String regexStr = "<meta\\s+property\\s*=\\s*\"" + property + "\"\\s+content\\s*=\\s*\"([^\"]+)\"";
 
         String content = this.getRegexMatch(regexStr, html, 1);
-        if (content == null) return null;
+
+        if (content == null) {
+            String msg = String.format("Meta tag with property=\"%s\" not found%n    in %s", property, urlStr);
+            logger.log(WARNING, msg);
+            return null;
+        }
 
         String normalized = this.normalizeLineBreaks(content.trim());
         return this.htmlEntities.unescape(normalized);
@@ -306,14 +324,23 @@ public class MixcloudScraper {
      *
      * @param property The attribute's name.
      * @param html The HTML tag to search.
-     * @return The attribute's value.
+     * @param urlStr The URL from which the HTML tag was retrieved (only used for logging).
+     * @return The attribute's value, or null.
      */
-    private String getAttributeValue(String attributeName, CharSequence htmlTag) {
+    private String getAttributeValue(String attributeName, CharSequence htmlTag, String urlStr) {
         // Mixcloud uses double quotes around HTML attribute values
         String regexStr = attributeName + "\\s*=\\s*\"([^\"]+)\"";
 
         String value = this.getRegexMatch(regexStr, htmlTag, 1);
-        if (value == null) return null;
+
+        if (value == null) {
+            String replacement = String.format("\"%n\t");
+            String tag = htmlTag.toString().replaceAll("\"\\s+", replacement);
+            String msg = String.format("Attribute \"%s\" not found%n    in tag %s%n    from %s",
+                    attributeName, tag, urlStr);
+            logger.log(WARNING, msg);
+            return null;
+        }
 
         String normalized = this.normalizeLineBreaks(value.trim());
         return this.htmlEntities.unescape(normalized);

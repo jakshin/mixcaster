@@ -68,8 +68,13 @@ class SystemOutFormatter extends Formatter {
     private String formatThrowable(Throwable ex, boolean isCause) {
         StringBuilder sb = new StringBuilder(500);
 
+        String msg = ex.getMessage();
+        if (msg != null) {
+            msg = msg.trim();
+        }
+
         String prefix = (isCause) ? "Caused by: " : "";
-        sb.append(String.format("%n%s%s: %s%n", prefix, ex.getClass().getCanonicalName(), ex.getMessage().trim()));
+        sb.append(String.format("%n%s%s: %s%n", prefix, ex.getClass().getCanonicalName(), msg));
 
         StackTraceElement[] stack = ex.getStackTrace();
         for (StackTraceElement el : stack) {
