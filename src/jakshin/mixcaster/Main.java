@@ -82,7 +82,7 @@ public class Main {
     /**
      * The application's version number.
      */
-    public static final String version = "0.7.9";
+    public static final String version = "0.8.0";
 
     /**
      * Scrapes the given Mixcloud feed URL, also downloading any tracks which haven't already been downloaded.
@@ -157,8 +157,6 @@ public class Main {
      * Starts a minimal HTTP server which serves podcast RSS XML and downloaded music files.
      */
     private void runService() {
-        System.out.println("WARNING: the service doesn't actually work yet");
-
         try {
             // initialize logging (if this fails, the program will show error info on stdout and abort)
             Logging.initialize(true);

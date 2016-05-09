@@ -76,8 +76,8 @@ public class MixcloudScraper {
             String musicUrl = this.decoder.decode(mPlayInfo);
 
             if (musicUrl == null) {
-                String msg = String.format("Unable to decode m-play-info%n    %s%n    from %s", mPlayInfo, urlStr);
-                logger.log(WARNING, msg);
+                String msg = String.format("Unable to decode m-play-info from %s", urlStr);
+                throw new ApplicationException(msg, mPlayInfo);
             }
 
             String trackWebPageUrl = this.makeUrlAbsolute(this.getAttributeValue("m-url", tag, urlStr), urlStr);

@@ -17,6 +17,7 @@
 
 package jakshin.mixcaster.logging;
 
+import jakshin.mixcaster.ApplicationException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
@@ -111,6 +112,16 @@ class LogFileFormatter extends Formatter {
 
         String prefix = (isCause) ? "    CAUSE: " : "    ERROR: ";
         sb.append(String.format("%s%s: %s%n", prefix, ex.getClass().getCanonicalName(), msg));
+
+        if (ex instanceof ApplicationException) {
+            String additionalInfo = ((ApplicationException) ex).additionalInfo;
+            if (additionalInfo != null && !additionalInfo.isEmpty()) {
+                sb.append("    (");
+                sb.append(additionalInfo);
+                sb.append(")");
+                sb.append(lineBreak);
+            }
+        }
 
         StackTraceElement[] stack = ex.getStackTrace();
         for (StackTraceElement el : stack) {

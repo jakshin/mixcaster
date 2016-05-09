@@ -90,6 +90,20 @@ class HttpRequest {
     }
 
     /**
+     * Reports whether this request appears to have come from iTunes.
+     * The determination is based on the User-Agent header, so can easily be spoofed.
+     *
+     * @return Whether this request appears to have come from iTunes.
+     */
+    boolean isFromITunes() {
+        String userAgent = this.headers.get("User-Agent");
+        if (userAgent == null) return false;
+
+        // e.g. iTunes/12.3.3 (Macintosh; OS X 10.9.5) AppleWebKit/537.78.2
+        return userAgent.contains("iTunes/");
+    }
+
+    /**
      * All HTTP request headers received, name -> value.
      */
     final Map<String,String> headers = new HashMap<>(10);

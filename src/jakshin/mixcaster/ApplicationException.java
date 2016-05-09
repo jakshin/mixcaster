@@ -27,8 +27,23 @@ public class ApplicationException extends Exception {
      */
     public ApplicationException(String message) {
         super(message);
+        this.additionalInfo = null;
     }
 
+    /**
+     * Constructs a new exception with the specified detail message and additional information.
+     *
+     * @param message The detail message; saved for later retrieval by the Throwable.getMessage() method.
+     * @param additionalInfo Additional info which may be helpful if logged, etc.
+     */
+    public ApplicationException(String message, String additionalInfo) {
+        super(message);
+        this.additionalInfo = additionalInfo;
+    }
+
+    /** Additional information about the exception. May be null. */
+    public final String additionalInfo;
+
     /** Serialization version number. */
-    private static final long serialVersionUID = 1L;  // update this whenever the class definition changes
+    private static final long serialVersionUID = 2L;  // update this whenever the class definition changes
 }

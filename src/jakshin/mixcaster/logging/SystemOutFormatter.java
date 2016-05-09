@@ -17,6 +17,7 @@
 
 package jakshin.mixcaster.logging;
 
+import jakshin.mixcaster.ApplicationException;
 import java.util.logging.*;
 
 /**
@@ -48,7 +49,7 @@ class SystemOutFormatter extends Formatter {
             Throwable thrown = record.getThrown();
             if (thrown != null) {
                 sb.append(this.formatThrowable(thrown, false));
-                sb.append(String.format("%n"));
+                sb.append(lineBreak);
             }
 
             return sb.toString();
@@ -76,6 +77,16 @@ class SystemOutFormatter extends Formatter {
         String prefix = (isCause) ? "Caused by: " : "";
         sb.append(String.format("%n%s%s: %s%n", prefix, ex.getClass().getCanonicalName(), msg));
 
+        if (ex instanceof ApplicationException) {
+            String additionalInfo = ((ApplicationException) ex).additionalInfo;
+            if (additionalInfo != null && !additionalInfo.isEmpty()) {
+                sb.append("    (");
+                sb.append(additionalInfo);
+                sb.append(")");
+                sb.append(lineBreak);
+            }
+        }
+
         StackTraceElement[] stack = ex.getStackTrace();
         for (StackTraceElement el : stack) {
             sb.append(String.format("    at %s%n", el.toString()));
@@ -88,4 +99,7 @@ class SystemOutFormatter extends Formatter {
 
         return sb.toString();
     }
+
+    /** The line break string which is appropriate for this platform. */
+    private static final String lineBreak = String.format("%n");
 }

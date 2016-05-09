@@ -37,7 +37,8 @@ class MixcloudDecoder {
         if (playInfo == null) return null;
 
         // found in https://github.com/jackyNIX/xbmc-mixcloud-plugin/blob/master/default.py
-        String magic = "pleasedontdownloadourmusictheartistswontgetpaid";  // yes, I do feel a little guilty.. :-/
+        // yes, I do feel a little guilty.. :-/ if Mixcloud exposed an API to say "song was played", I'd happily use it
+        String magic = "pleasedontdownloadourmusictheartistswontgetpaid";
 
         String decoded = this.base64Decode(playInfo);
         StringBuilder sb = new StringBuilder(decoded.length());

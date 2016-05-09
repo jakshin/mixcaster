@@ -19,6 +19,7 @@ package jakshin.mixcaster.http;
 
 import java.io.*;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.LinkedList;
 import java.util.Locale;
 import static jakshin.mixcaster.logging.Logging.*;
@@ -91,20 +92,33 @@ class HttpResponse implements Runnable {
             }
         }
         catch (Throwable ex) {
-            // log non-5xx HTTP exceptions as INFO, and all others as ERROR
-            if (ex instanceof HttpException && ((HttpException) ex).httpResponseCode < 500) {
-                String msg = String.format("HTTP error: %d %s", ((HttpException) ex).httpResponseCode, ex.getMessage());
+            HttpException httpException = (ex instanceof HttpException) ? (HttpException) ex : null;
+            boolean sendResponseHeaders = true;
+
+            if (httpException != null && httpException.httpResponseCode < 500) {
+                // log non-5xx HTTP exceptions as INFO
+                String msg = String.format("HTTP error: %d %s", httpException.httpResponseCode, ex.getMessage());
                 logger.log(INFO, msg);
+            }
+            else if (request != null && request.isFromITunes() &&
+                    ex instanceof SocketException && "Broken pipe".equalsIgnoreCase(ex.getMessage())) {
+                // while streaming a podcast episode without downloading it, iTunes isses range and non-range requests,
+                // and regularly closes the socket before it's received all bytes requested;
+                // this appears to be normal behavior, so log it as such (HTTP headers have already been sent)
+                logger.log(INFO, "iTunes closed the connection early");
+                sendResponseHeaders = false;
             }
             else {
                 logger.log(ERROR, ex.getMessage(), ex);
             }
 
-            // if ex isn't an HttpException, the HTTP response headers may already have been written out, but try anyway
+            // send HTTP response headers, if appropriate
             try {
-                boolean isHeadRequest = (request == null) ? false : request.isHead();
-                HttpHeaderWriter headerWriter = new HttpHeaderWriter();
-                headerWriter.sendErrorHeadersAndBody(writer, ex, isHeadRequest);
+                if (sendResponseHeaders) {
+                    boolean isHeadRequest = (request == null) ? false : request.isHead();
+                    HttpHeaderWriter headerWriter = new HttpHeaderWriter();
+                    headerWriter.sendErrorHeadersAndBody(writer, ex, isHeadRequest);
+                }
             }
             catch (Throwable ex2) {
                 // we're pretty bad off if we can't even send the response headers; log and give up

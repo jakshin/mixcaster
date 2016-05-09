@@ -71,6 +71,10 @@ public class FileResponder {
             long fileSize = localFile.length();
             ByteRange range = request.byteRange(fileSize);
 
+            if (range != null) {
+                logger.log(INFO, "Serving bytes {0} - {1}", new Object[] { range.start, range.end });
+            }
+
             // send the response headers
             String contentType = new MimeTyper().guessContentTypeFromName(localPathStr);
 

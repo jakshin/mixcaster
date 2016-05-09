@@ -45,6 +45,7 @@ public class PodcastXmlResponder {
      */
     void respond(HttpRequest request, Writer writer) throws ApplicationException, HttpException, IOException {
         String feedName = this.getSecondToLastComponentOfUrl(request.url);
+        
         if (feedName == null || feedName.isEmpty()) {
             // 404 would also be fine, but we use 403 instead, to distinguish between an unexpected local podcast.xml URL,
             // and a local URL which looks okay but which doesn't map to a valid Mixcloud feed (handled below)
