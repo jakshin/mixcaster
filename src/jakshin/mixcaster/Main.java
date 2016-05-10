@@ -82,7 +82,7 @@ public class Main {
     /**
      * The application's version number.
      */
-    public static final String version = "0.8.0";
+    public static final String version = "0.8.1";
 
     /**
      * Scrapes the given Mixcloud feed URL, also downloading any tracks which haven't already been downloaded.

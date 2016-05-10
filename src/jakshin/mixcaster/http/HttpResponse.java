@@ -81,9 +81,16 @@ class HttpResponse implements Runnable {
             }
 
             // route the request to a responder
-            if (this.getUrlWithoutQueryOrReference(request.url).toLowerCase(Locale.ROOT).endsWith("/podcast.xml")) {
+            String normalizedUrl = this.getUrlWithoutQueryOrReference(request.url).toLowerCase(Locale.ROOT);
+
+            if (normalizedUrl.endsWith("/podcast.xml")) {
                 // RSS XML request
                 new PodcastXmlResponder().respond(request, writer);
+            }
+            else if (normalizedUrl.endsWith("/favicon.ico")) {
+                // favicon request
+                out = new BufferedOutputStream(this.socket.getOutputStream(), 16_000);
+                new FavIconResponder().respond(request, writer, out);
             }
             else {
                 // any other request must be for a file
