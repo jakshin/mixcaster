@@ -44,8 +44,8 @@ public class PodcastXmlResponder {
      * @throws IOException
      */
     void respond(HttpRequest request, Writer writer) throws ApplicationException, HttpException, IOException {
-        String feedName = this.getSecondToLastComponentOfUrl(request.url);
-        
+        String feedName = this.getSecondToLastComponentOfPath(request.path);
+
         if (feedName == null || feedName.isEmpty()) {
             // 404 would also be fine, but we use 403 instead, to distinguish between an unexpected local podcast.xml URL,
             // and a local URL which looks okay but which doesn't map to a valid Mixcloud feed (handled below)
@@ -127,13 +127,13 @@ public class PodcastXmlResponder {
     }
 
     /**
-     * Gets the second-to-last component of a URL. For example: http://foo/bar/ => foo.
+     * Gets the second-to-last component of a path. For example: /foo/bar/bar/ => bar.
      *
-     * @param url The URL.
-     * @return The URL's second-to-last component, or null if it doesn't have one.
+     * @param pathStr The path.
+     * @return The path's second-to-last component, or null if it doesn't have one.
      */
-    private String getSecondToLastComponentOfUrl(String url) {
-        String[] components = url.split("/");  // trailing empty string not included
+    private String getSecondToLastComponentOfPath(String pathStr) {
+        String[] components = pathStr.split("/");  // trailing empty string not included
         if (components.length < 2) return null;
         return components[components.length - 2];
     }

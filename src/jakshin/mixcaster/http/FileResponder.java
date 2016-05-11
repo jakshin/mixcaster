@@ -39,7 +39,7 @@ public class FileResponder {
      * @throws IOException
      */
     void respond(HttpRequest request, Writer writer, OutputStream out) throws HttpException, IOException {
-        String localPathStr = TrackLocator.getLocalPath(request.url);
+        String localPathStr = TrackLocator.getLocalPath(request.path);
         File localFile = new File(localPathStr);
 
         logger.log(INFO, "Serving file: {0}", localPathStr);

@@ -81,13 +81,13 @@ class HttpResponse implements Runnable {
             }
 
             // route the request to a responder
-            String normalizedUrl = this.getUrlWithoutQueryOrReference(request.url).toLowerCase(Locale.ROOT);
+            String normalizedPathStr = request.path.toLowerCase(Locale.ROOT);
 
-            if (normalizedUrl.endsWith("/podcast.xml")) {
+            if (normalizedPathStr.endsWith("/podcast.xml")) {
                 // RSS XML request
                 new PodcastXmlResponder().respond(request, writer);
             }
-            else if (normalizedUrl.endsWith("/favicon.ico")) {
+            else if (normalizedPathStr.endsWith("/favicon.ico")) {
                 // favicon request
                 out = new BufferedOutputStream(this.socket.getOutputStream(), 16_000);
                 new FavIconResponder().respond(request, writer, out);
@@ -196,26 +196,6 @@ class HttpResponse implements Runnable {
         }
 
         return request;
-    }
-
-    /**
-     * Gets a version of the URL stripped of any query string or reference/anchor.
-     *
-     * @param url The URL to strip.
-     * @return The stripped URL.
-     */
-    private String getUrlWithoutQueryOrReference(String url) {
-        int index = url.indexOf('?');
-        if (index != -1) {
-            url = url.substring(0, index);
-        }
-
-        index = url.indexOf('#');
-        if (index != -1) {
-            url = url.substring(0, index);
-        }
-
-        return url;
     }
 
     /**

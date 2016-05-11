@@ -30,14 +30,31 @@ class HttpRequest {
      * Creates a new instance of the class.
      *
      * @param method The request's HTTP method.
-     * @param url The requested URL.
+     * @param url The requested URL, as received from the client (i.e. not URL-decoded).
      * @param httpVersion The request's HTTP version.
      * @throws UnsupportedEncodingException
      */
     HttpRequest(String method, String url, String httpVersion) throws UnsupportedEncodingException {
         this.httpVersion = httpVersion;
         this.method = method;
-        this.url = URLDecoder.decode(url, "UTF-8");
+        this.url = url;
+
+        // populate the URL-decoded path
+        String pathStr = url;
+
+        if (pathStr.startsWith("http://")) {
+            // strip protocol & host if present
+            int index = pathStr.indexOf('/', "http://".length() + 1);
+            pathStr = (index == -1) ? "/" : pathStr.substring(index);
+        }
+
+        int index = pathStr.indexOf('?');
+        if (index > 0) {
+            // strip any query string present
+            pathStr = pathStr.substring(0, index);
+        }
+
+        this.path = URLDecoder.decode(pathStr, "UTF-8");
     }
 
     /**
@@ -52,8 +69,15 @@ class HttpRequest {
     /**
      * The requested URL. This may be a complete URL starting with "http://",
      * or an absolute path, which includes no protocol, host or port information.
+     * No URL-decoding is performed on this value, it's as-is from the client.
      */
     final String url;
+
+    /**
+     * The requested path.
+     * This will be an absolute path, URL-decoded.
+     */
+    final String path;
 
     /**
      * Reports whether this is a HEAD request.
@@ -105,6 +129,7 @@ class HttpRequest {
 
     /**
      * All HTTP request headers received, name -> value.
+     * Populated during parsing in HttpResponse.
      */
     final Map<String,String> headers = new HashMap<>(10);
 }
