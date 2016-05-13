@@ -17,6 +17,7 @@
 
 package jakshin.mixcaster.http;
 
+import jakshin.mixcaster.Main;
 import jakshin.mixcaster.utils.DateFormatter;
 import java.io.*;
 import java.text.ParseException;
@@ -24,25 +25,23 @@ import java.util.Date;
 import static jakshin.mixcaster.logging.Logging.*;
 
 /**
- * Responds to an HTTP request for a favicon. Our favicon.ico is stored as a resource;
- * it came from http://www.softicons.com/social-media-icons/cloud-social-icons-by-graphics-vibe/rss-icon,
- * and was converted to ICO format using http://tools.dynamicdrive.com/favicon/.
+ * Responds to an HTTP request in the root of the site with a banner page.
+ * Our banner page is stored as a resource.
  */
-class FavIconResponder {
+class BannerResponder {
     /**
-     * Responds to the favicon request.
+     * Responds to the request with a banner page.
      *
      * @param request The incoming HTTP request.
      * @param writer A writer which can be used to output the response.
-     * @param out An output stream which can be used to output the response.
      * @throws IOException
      * @throws ParseException
      */
-    void respond(HttpRequest request, Writer writer, OutputStream out) throws IOException, ParseException {
-        logger.log(INFO, "Serving favicon.ico");
+    void respond(HttpRequest request, Writer writer) throws IOException, ParseException {
+        logger.log(INFO, "Serving banner page");
 
         // handle If-Modified-Since
-        Date lastModified = DateFormatter.parse("Sun, 08 May 2016 03:00:00 GMT");  // favicon.ico creation, no milliseconds
+        Date lastModified = DateFormatter.parse("Thu, 12 May 2016 03:00:00 GMT");  // banner.html creation, no milliseconds
         HttpHeaderWriter headerWriter = new HttpHeaderWriter();
 
         try {
@@ -61,45 +60,48 @@ class FavIconResponder {
             logger.log(WARNING, msg, ex);
         }
 
-        // read the icon resource into a buffer, if we haven't already done so;
-        // we do this in its own step so that we can send a Content-Length response header, and cache the icon
-        synchronized (FavIconResponder.iconBufferLock) {
-            if (FavIconResponder.iconBuffer == null) {
-                logger.log(DEBUG, "Loading favicon.ico resource");
-                ByteArrayOutputStream buffer = new ByteArrayOutputStream(16_000);  // a bit larger than favicon.ico
+        // read the resource into a buffer, if we haven't already done so;
+        // we do this in its own step so that we can send a Content-Length response header, and cache
+        synchronized (BannerResponder.resourceBufferLock) {
+            if (BannerResponder.resourceBuffer == null) {
+                logger.log(DEBUG, "Loading banner.html resource");
+                StringBuilder sb = new StringBuilder(41_000);  // a bit larger than banner.html
 
-                try (InputStream in = this.getClass().getResourceAsStream("favicon.ico")) {
-                    final byte[] buf = new byte[2000];
+                try (InputStream in = this.getClass().getResourceAsStream("banner.html")) {
+                    final char[] buf = new char[1024];
 
-                    while (true) {
-                        int count = in.read(buf);
-                        if (count < 0) break;
+                    try (Reader reader = new InputStreamReader(in, "UTF-8")) {
+                        while (true) {
+                            int count = reader.read(buf, 0, buf.length);
+                            if (count < 0) break;
 
-                        buffer.write(buf, 0, count);
+                            sb.append(buf, 0, count);
+                        }
                     }
                 }
 
-                FavIconResponder.iconBuffer = buffer;
+                String buffer = sb.toString().replace("{{version}}", Main.version);
+                BannerResponder.resourceBuffer = buffer;
             }
             else {
-                logger.log(DEBUG, "Retrieved favicon.ico from cache");
+                logger.log(DEBUG, "Retrieved banner.html from cache");
             }
         }
 
         // send the response headers;
         // we don't expect to receive a Range header for this type of request
-        headerWriter.sendSuccessHeaders(writer, lastModified, "image/x-icon", FavIconResponder.iconBuffer.size());
+        headerWriter.sendSuccessHeaders(writer, lastModified, "text/html", BannerResponder.resourceBuffer.length());
 
-        // send the icon, if needed
+        // send the resource, if needed
         if (!request.isHead()) {
-            FavIconResponder.iconBuffer.writeTo(out);
-            out.flush();
+            writer.write(BannerResponder.resourceBuffer);
+            writer.flush();
         }
     }
 
-    /** A buffer where we cache the icon resource on first use. */
-    private static ByteArrayOutputStream iconBuffer;
+    /** A buffer where we cache the resource on first use. */
+    private static String resourceBuffer;
 
-    /** An object on which we synchronize writes to iconBuffer. */
-    private static final Object iconBufferLock = new Object();
+    /** An object on which we synchronize writes to resourceBuffer. */
+    private static final Object resourceBufferLock = new Object();
 }

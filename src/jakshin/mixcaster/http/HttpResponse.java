@@ -51,8 +51,9 @@ class HttpResponse implements Runnable {
 
         try {
             // initialize
-            writer = new BufferedWriter(new OutputStreamWriter(this.socket.getOutputStream(), "UTF-8"), 100_000);
             reader = new BufferedReader(new InputStreamReader(this.socket.getInputStream(), "ISO-8859-1"));
+            writer = new BufferedWriter(new OutputStreamWriter(this.socket.getOutputStream(), "UTF-8"), 100_000);
+            out = new BufferedOutputStream(this.socket.getOutputStream(), 100_000);
 
             // parse and check the request
             request = this.parseRequestHeaders(reader);
@@ -83,18 +84,20 @@ class HttpResponse implements Runnable {
             // route the request to a responder
             String normalizedPathStr = request.path.toLowerCase(Locale.ROOT);
 
-            if (normalizedPathStr.endsWith("/podcast.xml")) {
+            if (normalizedPathStr.equals("/")) {
+                // request at the root of the site; serve a banner page
+                new BannerResponder().respond(request, writer);
+            }
+            else if (normalizedPathStr.endsWith("/podcast.xml")) {
                 // RSS XML request
                 new PodcastXmlResponder().respond(request, writer);
             }
             else if (normalizedPathStr.endsWith("/favicon.ico")) {
                 // favicon request
-                out = new BufferedOutputStream(this.socket.getOutputStream(), 16_000);
                 new FavIconResponder().respond(request, writer, out);
             }
             else {
-                // any other request must be for a file
-                out = new BufferedOutputStream(this.socket.getOutputStream(), 100_000);
+                // any other request must be for a file or folder
                 new FileResponder().respond(request, writer, out);
             }
         }
