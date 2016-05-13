@@ -109,6 +109,43 @@ class HttpHeaderWriter {
     }
 
     /**
+     * Sends HTTP headers for a redirect response (response code 301),
+     * along with a minimal message body noting the resource's new location.
+     *
+     * @param writer The writer to output the headers to.
+     * @param newLocationUrl The URL to redirect to.
+     * @param isHeadRequest Whether the error is in response to an HTTP HEAD request.
+     * @throws IOException
+     */
+    void sendRedirectHeadersAndBody(Writer writer, String newLocationUrl, boolean isHeadRequest) throws IOException {
+        StringBuilder out = new StringBuilder(500);
+        StringBuilder log = new StringBuilder(500);
+
+        this.addHeader(out, log, "HTTP/1.1 301 Moved Permanently");
+        this.addCommonHeaders(out, log);
+
+        this.addHeader(out, log, "Location: %s", newLocationUrl);
+        this.addHeader(out, log, "Content-Type: text/plain");
+
+        String messageBody = null;
+        if (!isHeadRequest) {
+            messageBody = "Moved to " + newLocationUrl + "\r\n";
+            this.addHeader(out, log, "Content-Length: %d", messageBody.length());
+        }
+
+        logger.log(DEBUG, "Sending HTTP redirect response headers{0}", log);
+
+        writer.write(out.toString());
+        writer.write("\r\n");
+
+        if (messageBody != null) {
+            writer.write(messageBody);
+        }
+
+        writer.flush();
+    }
+
+    /**
      * Sends HTTP error headers, along with a semi-helpful message body.
      * If the Throwable is an HttpException, its response code and message will be used;
      * otherwise, a 500 error will be sent with a generic message.
@@ -133,13 +170,13 @@ class HttpHeaderWriter {
         this.addHeader(out, log, "HTTP/1.1 %d %s", responseCode, reasonPhrase);
         this.addCommonHeaders(out, log);
 
+        this.addHeader(out, log, "Content-Type: text/plain");
+
         String messageBody = null;
         if (!isHeadRequest) {
             messageBody = err.getClass().getCanonicalName() + ": " + err.getMessage() + "\r\n";
             this.addHeader(out, log, "Content-Length: %d", messageBody.length());
         }
-
-        this.addHeader(out, log, "Content-Type: text/plain");
 
         logger.log(DEBUG, "Sending HTTP error response headers{0}", log);
 

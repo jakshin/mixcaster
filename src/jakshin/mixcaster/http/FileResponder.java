@@ -40,13 +40,20 @@ public class FileResponder {
      */
     void respond(HttpRequest request, Writer writer, OutputStream out) throws HttpException, IOException {
         String localPathStr = TrackLocator.getLocalPath(request.path);
-        File localFile = new File(localPathStr);
-
         logger.log(INFO, "Serving file: {0}", localPathStr);
+
+        File localFile = new File(localPathStr);
+        HttpHeaderWriter headerWriter = new HttpHeaderWriter();
+
+        // if the file is actually a folder, redirect
+        if (localFile.isDirectory()) {
+            if (localPathStr.charAt(localPathStr.length() - 1) != '/') localPathStr += "/";
+            headerWriter.sendRedirectHeadersAndBody(writer, localPathStr, request.isHead());
+            return;
+        }
 
         // handle If-Modified-Since
         Date lastModified = new Date(localFile.lastModified() / 1000 * 1000);  // truncate milliseconds for comparison
-        HttpHeaderWriter headerWriter = new HttpHeaderWriter();
 
         try {
             if (request.headers.containsKey("If-Modified-Since")) {

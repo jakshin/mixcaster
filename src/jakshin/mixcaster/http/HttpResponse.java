@@ -96,8 +96,12 @@ class HttpResponse implements Runnable {
                 // favicon request
                 new FavIconResponder().respond(request, writer, out);
             }
+            else if (normalizedPathStr.endsWith("/")) {
+                // folder request
+                new FolderResponder().respond(request, writer);
+            }
             else {
-                // any other request must be for a file or folder
+                // any other request must be for a file (or a folder, with no terminating slash in the URL)
                 new FileResponder().respond(request, writer, out);
             }
         }
