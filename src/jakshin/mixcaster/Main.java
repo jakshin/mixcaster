@@ -19,6 +19,7 @@ package jakshin.mixcaster;
 
 import jakshin.mixcaster.download.DownloadQueue;
 import jakshin.mixcaster.http.HttpServer;
+import jakshin.mixcaster.install.Installer;
 import jakshin.mixcaster.logging.Logging;
 import jakshin.mixcaster.mixcloud.MixcloudFeed;
 import jakshin.mixcaster.mixcloud.MixcloudScraper;
@@ -82,7 +83,7 @@ public class Main {
     /**
      * The application's version number.
      */
-    public static final String version = "0.8.4";
+    public static final String version = "0.9.0";
 
     /**
      * Scrapes the given Mixcloud feed URL, also downloading any tracks which haven't already been downloaded.
@@ -176,20 +177,20 @@ public class Main {
 
     /**
      * Installs a launchd service definition.
-     * The service is started immediately.
+     * The service is started immediately, via launchd.
      */
     private void installService() {
-        // TODO implement installation
-        System.out.println("Not implemented yet");
+        Installer installer = new Installer();
+        installer.install();
     }
 
     /**
      * Uninstalls the launchd service definition.
-     * The service is stopped if it's running.
+     * The service is stopped if it's running, via launchd.
      */
     private void uninstallService() {
-        // TODO implement uninstallation
-        System.out.println("Not implemented yet");
+        Installer installer = new Installer();
+        installer.uninstall();
     }
 
     /**
@@ -216,8 +217,8 @@ public class Main {
         System.out.println("Available commands:");
         System.out.println("  -scrape <url>: Scrape a Mixcloud feed URL (https://www.mixcloud.com/FeedName)");
         System.out.println("  -service:      Run as a service, and accept HTTP requests for podcast feeds");
-        System.out.println("  -install:      Install as a launchd service (launchd will run it with -service)");
-        System.out.println("  -uninstall:    Uninstall launchd service");
+        System.out.println("  -install:      Install as a launchd user agent (launchd will run it with -service)");
+        System.out.println("  -uninstall:    Uninstall launchd user agent");
         System.out.println("  -version:      Show version information and exit");
         System.out.println("  -usage:        Show this usage information and exit");
     }
