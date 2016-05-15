@@ -21,6 +21,7 @@ import jakshin.mixcaster.Main;
 import jakshin.mixcaster.utils.DateFormatter;
 import java.io.IOException;
 import java.io.Writer;
+import java.text.ParseException;
 import java.util.Date;
 import static jakshin.mixcaster.logging.Logging.*;
 
@@ -106,6 +107,38 @@ class HttpHeaderWriter {
         writer.write(out.toString());
         writer.write("\r\n");
         writer.flush();
+    }
+
+    /**
+     * Sends HTTP not-modified headers (response code 304), if they are needed.
+     * Returns an indicator of whether the headers were needed, meaning that they satisfied the request,
+     * and further processing should be aborted.
+     *
+     * @param request The HTTP request, from which the If-Modified-Since header is obtained.
+     * @param writer The writer to output the headers to, if they are needed.
+     * @param resourceLastModified The date/time at which the resource being requested was last modified.
+     * @return Whether not-modified headers were output in order to satisfy the request.
+     * @throws IOException
+     */
+    public boolean sendNotModifiedHeadersIfNeeded(HttpRequest request, Writer writer, Date resourceLastModified)
+            throws IOException {
+        try {
+            if (request.headers.containsKey("If-Modified-Since")) {
+                Date ifModifiedSince = DateFormatter.parse(request.headers.get("If-Modified-Since"));
+
+                if (ifModifiedSince.compareTo(resourceLastModified) >= 0) {
+                    new HttpHeaderWriter().sendNotModifiedHeaders(writer);
+                    return true;  // not-modified headers sent, response has been satisfied
+                }
+            }
+        }
+        catch (ParseException ex) {
+            // log and continue without If-Modified-Since handling
+            String msg = String.format("Invalid If-Modifed-Since header: %s", request.headers.get("If-Modified-Since"));
+            logger.log(WARNING, msg, ex);
+        }
+
+        return false;  // response was not satisfied
     }
 
     /**

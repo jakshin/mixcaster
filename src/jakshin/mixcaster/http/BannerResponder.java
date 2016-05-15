@@ -41,23 +41,11 @@ class BannerResponder {
         logger.log(INFO, "Serving banner page");
 
         // handle If-Modified-Since
-        Date lastModified = DateFormatter.parse("Thu, 12 May 2016 03:00:00 GMT");  // banner.html creation, no milliseconds
         HttpHeaderWriter headerWriter = new HttpHeaderWriter();
+        Date lastModified = DateFormatter.parse("Thu, 12 May 2016 03:00:00 GMT");  // banner.html creation, no milliseconds
 
-        try {
-            if (request.headers.containsKey("If-Modified-Since")) {
-                Date ifModifiedSince = DateFormatter.parse(request.headers.get("If-Modified-Since"));
-
-                if (ifModifiedSince.compareTo(lastModified) >= 0) {
-                    headerWriter.sendNotModifiedHeaders(writer);
-                    return;
-                }
-            }
-        }
-        catch (ParseException ex) {
-            // log and continue without If-Modified-Since handling
-            String msg = String.format("Invalid If-Modifed-Since header: %s", request.headers.get("If-Modified-Since"));
-            logger.log(WARNING, msg, ex);
+        if (headerWriter.sendNotModifiedHeadersIfNeeded(request, writer, lastModified)) {
+            return;  // the request was satisfied via not-modified response headers
         }
 
         // read the resource into a buffer, if we haven't already done so;

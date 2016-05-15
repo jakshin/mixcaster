@@ -17,11 +17,9 @@
 
 package jakshin.mixcaster.http;
 
-import jakshin.mixcaster.utils.DateFormatter;
 import jakshin.mixcaster.utils.MimeTyper;
 import jakshin.mixcaster.utils.TrackLocator;
 import java.io.*;
-import java.text.ParseException;
 import java.util.Date;
 import static jakshin.mixcaster.logging.Logging.*;
 
@@ -42,8 +40,8 @@ public class FileResponder {
         String localPathStr = TrackLocator.getLocalPath(request.path);
         logger.log(INFO, "Serving file: {0}", localPathStr);
 
-        File localFile = new File(localPathStr);
         HttpHeaderWriter headerWriter = new HttpHeaderWriter();
+        File localFile = new File(localPathStr);
 
         // if the file is actually a folder, redirect
         if (localFile.isDirectory()) {
@@ -55,20 +53,8 @@ public class FileResponder {
         // handle If-Modified-Since
         Date lastModified = new Date(localFile.lastModified() / 1000 * 1000);  // truncate milliseconds for comparison
 
-        try {
-            if (request.headers.containsKey("If-Modified-Since")) {
-                Date ifModifiedSince = DateFormatter.parse(request.headers.get("If-Modified-Since"));
-
-                if (ifModifiedSince.compareTo(lastModified) >= 0) {
-                    headerWriter.sendNotModifiedHeaders(writer);
-                    return;
-                }
-            }
-        }
-        catch (ParseException ex) {
-            // log and continue without If-Modified-Since handling
-            String msg = String.format("Invalid If-Modifed-Since header: %s", request.headers.get("If-Modified-Since"));
-            logger.log(WARNING, msg, ex);
+        if (headerWriter.sendNotModifiedHeadersIfNeeded(request, writer, lastModified)) {
+            return;  // the request was satisfied via not-modified response headers
         }
 
         // open the file for reading before we send the response headers,

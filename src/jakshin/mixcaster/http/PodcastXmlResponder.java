@@ -22,11 +22,9 @@ import jakshin.mixcaster.download.DownloadQueue;
 import jakshin.mixcaster.mixcloud.MixcloudFeed;
 import jakshin.mixcaster.mixcloud.MixcloudScraper;
 import jakshin.mixcaster.podcast.Podcast;
-import jakshin.mixcaster.utils.DateFormatter;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.Writer;
-import java.text.ParseException;
 import java.util.Date;
 import static jakshin.mixcaster.logging.Logging.*;
 
@@ -79,22 +77,10 @@ public class PodcastXmlResponder {
 
         // handle If-Modified-Since
         HttpHeaderWriter headerWriter = new HttpHeaderWriter();
+        Date scraped = new Date(feed.scraped.getTime() / 1000 * 1000);  // truncate milliseconds for comparison
 
-        try {
-            if (request.headers.containsKey("If-Modified-Since")) {
-                Date ifModifiedSince = DateFormatter.parse(request.headers.get("If-Modified-Since"));
-                Date scraped = new Date(feed.scraped.getTime() / 1000 * 1000);  // truncate milliseconds for comparison
-
-                if (ifModifiedSince.compareTo(scraped) >= 0) {
-                    headerWriter.sendNotModifiedHeaders(writer);
-                    return;
-                }
-            }
-        }
-        catch (ParseException ex) {
-            // log and continue without If-Modified-Since handling
-            String msg = String.format("Invalid If-Modifed-Since header: %s", request.headers.get("If-Modified-Since"));
-            logger.log(WARNING, msg, ex);
+        if (headerWriter.sendNotModifiedHeadersIfNeeded(request, writer, scraped)) {
+            return;  // the request was satisfied via not-modified response headers
         }
 
         // build the RSS XML
@@ -116,7 +102,7 @@ public class PodcastXmlResponder {
         }
 
         // send the response headers
-        headerWriter.sendSuccessHeaders(writer, feed.scraped, "application/xml", rssXml.length());
+        headerWriter.sendSuccessHeaders(writer, scraped, "application/xml", rssXml.length());
 
         // send the RSS XML, if needed; note that we always send the whole thing,
         // as we don't expect to receive a Range header for this type of request
