@@ -45,8 +45,12 @@ public class FileResponder {
 
         // if the file is actually a folder, redirect
         if (localFile.isDirectory()) {
-            if (localPathStr.charAt(localPathStr.length() - 1) != '/') localPathStr += "/";
-            headerWriter.sendRedirectHeadersAndBody(writer, localPathStr, request.isHead());
+            logger.log(INFO, "File {0} is actually a folder, redirecting", localPathStr);
+
+            String folderPathStr = request.path;
+            if (!folderPathStr.endsWith("/")) folderPathStr += "/";
+
+            headerWriter.sendRedirectHeadersAndBody(writer, folderPathStr, request.isHead());
             return;
         }
 
