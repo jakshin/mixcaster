@@ -44,7 +44,9 @@ class LogFileFormatter extends Formatter {
     @Override
     public String format(LogRecord record) {
         String msg = this.formatMessage(record);
-        if (msg == null || msg.isEmpty()) return msg;
+        if (msg == null || msg.isEmpty()) {
+            msg = "-";
+        }
 
         // handle embedded newlines
         msg = msg.trim();

@@ -34,7 +34,9 @@ class SystemOutFormatter extends Formatter {
     @Override
     public String format(LogRecord record) {
         String msg = this.formatMessage(record);
-        if (msg == null || msg.isEmpty()) return msg;
+        if (msg == null || msg.isEmpty()) {
+            msg = "-";
+        }
 
         Level level = record.getLevel();
         String prefix = (level == Level.WARNING) ? "Warning: " : "";
