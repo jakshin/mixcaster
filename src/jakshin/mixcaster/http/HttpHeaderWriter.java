@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.io.Writer;
 import java.text.ParseException;
 import java.util.Date;
+import java.util.Map;
 import static jakshin.mixcaster.logging.Logging.*;
 
 /**
@@ -41,6 +42,22 @@ class HttpHeaderWriter {
      */
     void sendSuccessHeaders(Writer writer, Date contentLastModified, String contentType, long contentLength)
             throws IOException {
+        this.sendSuccessHeaders(writer, contentLastModified, contentType, contentLength, null);
+    }
+
+    /**
+     * Sends HTTP success headers for a complete response (response code 200),
+     * with the given additional headers.
+     *
+     * @param writer The writer to output the headers to.
+     * @param contentLastModified When the content was last modified.
+     * @param contentType The content's MIME type.
+     * @param contentLength The content's length.
+     * @param additionalHeaders Additional headers to send.
+     * @throws IOException
+     */
+    void sendSuccessHeaders(Writer writer, Date contentLastModified, String contentType, long contentLength,
+            Map<String,String> additionalHeaders) throws IOException {
         StringBuilder out = new StringBuilder(500);
         StringBuilder log = new StringBuilder(500);
 
@@ -50,6 +67,12 @@ class HttpHeaderWriter {
         this.addHeader(out, log, "Last-Modified: %s", DateFormatter.format(contentLastModified));
         this.addHeader(out, log, "Content-Type: %s", contentType);
         this.addHeader(out, log, "Content-Length: %d", contentLength);
+
+        if (additionalHeaders != null) {
+            for (Map.Entry<String,String> header : additionalHeaders.entrySet()) {
+                this.addHeader(out, log, String.format("%s: %s", header.getKey(), header.getValue()));
+            }
+        }
 
         logger.log(DEBUG, "Sending HTTP response headers{0}", log);
 

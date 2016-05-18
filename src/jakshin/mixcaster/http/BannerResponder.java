@@ -21,7 +21,9 @@ import jakshin.mixcaster.Main;
 import jakshin.mixcaster.utils.DateFormatter;
 import java.io.*;
 import java.text.ParseException;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import static jakshin.mixcaster.logging.Logging.*;
 
 /**
@@ -42,7 +44,7 @@ class BannerResponder {
 
         // handle If-Modified-Since
         HttpHeaderWriter headerWriter = new HttpHeaderWriter();
-        Date lastModified = DateFormatter.parse("Thu, 12 May 2016 03:00:00 GMT");  // banner.html creation, no milliseconds
+        Date lastModified = this.getBannerLastModifiedDate();
 
         if (headerWriter.sendNotModifiedHeadersIfNeeded(request, writer, lastModified)) {
             return;  // the request was satisfied via not-modified response headers
@@ -76,15 +78,50 @@ class BannerResponder {
             }
         }
 
+        int length = BannerResponder.resourceBuffer.length();
+
         // send the response headers;
         // we don't expect to receive a Range header for this type of request
-        headerWriter.sendSuccessHeaders(writer, lastModified, "text/html", BannerResponder.resourceBuffer.length());
+        LinkedHashMap<String,String> additionalHeaders = new LinkedHashMap<>(1);
+        additionalHeaders.put("Cache-Control", "no-cache");
+
+        headerWriter.sendSuccessHeaders(writer, lastModified, "text/html", length, additionalHeaders);
 
         // send the resource, if needed
         if (!request.isHead()) {
             writer.write(BannerResponder.resourceBuffer);
             writer.flush();
         }
+    }
+
+    /**
+     * Gets the banner page's last-modified date/time.
+     * We start with the banner.html resource's original creation time, then add some time
+     * based on the program's current version, so it changes slightly with each new version.
+     *
+     * @return The banner page's last-modified date/time.
+     * @throws ParseException
+     */
+    private Date getBannerLastModifiedDate() throws ParseException {
+        Date lastModified = DateFormatter.parse("Thu, 12 May 2016 03:00:00 GMT");  // banner.html creation, no milliseconds
+
+        String[] version = Main.version.split("\\.");
+        int major = Integer.parseInt(version[0]);
+        int minor = (version.length >= 2) ? Integer.parseInt(version[1]) : 0;
+        int patch = (version.length >= 3) ? Integer.parseInt(version[2]) : 0;
+
+        // add hours for major version, minutes for minor version, and seconds for patch version; adding this time,
+        // combined with our use of the no-cache header above, causes browsers to send an If-Modified-Since request,
+        // so if Mixcaster's version has changed since the browser's last hit to the banner page,
+        // the page will be retrieved again and the new version will be displayed in the banner
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(lastModified);
+
+        cal.add(Calendar.HOUR_OF_DAY, major);
+        cal.add(Calendar.MINUTE, minor);
+        cal.add(Calendar.SECOND, patch);
+
+        return cal.getTime();
     }
 
     /** A buffer where we cache the resource on first use. */
