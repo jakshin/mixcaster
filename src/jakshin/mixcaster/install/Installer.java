@@ -30,8 +30,9 @@ import java.util.Locale;
 public final class Installer {
     /**
      * Installs the service, and starts it via launchd.
+     * @return A code indicating success (0) or failure (1 or 2).
      */
-    public void install() {
+    public int install() {
         this.log("Installing the Mixcaster service...");
 
         try {
@@ -39,7 +40,7 @@ public final class Installer {
 
             if (jarPath == null) {
                 this.log("Error: Installation must be performed using the jar file, not in an IDE");
-                return;
+                return 1;
             }
 
             this.log("%nCreating the service's launchd configuration file...");
@@ -64,23 +65,26 @@ public final class Installer {
 
             int result = this.loadLaunchdAgent(plistFile);
 
-            if (result == 0) {
-                this.log("Loaded the service");
-                this.log("%nSuccess: The Mixcaster service was installed and started");
-            }
-            else {
+            if (result != 0) {
                 this.log("Error: Failed to load the service (%d)", result);
+                return 2;
             }
+
+            this.log("Loaded the service");
+            this.log("%nSuccess: The Mixcaster service was installed and started");
+            return 0;
         }
         catch (IOException | InterruptedException ex) {
             this.logFailure("Installation", ex);
+            return 2;
         }
     }
 
     /**
      * Uninstalls the service, after stopping it via launchd.
+     * @return A code indicating success (0) or failure (1 or 2).
      */
-    public void uninstall() {
+    public int uninstall() {
         this.log("Uninstalling the Mixcaster service...");
         File plistFile = new File(this.getPlistPath());
 
@@ -93,30 +97,32 @@ public final class Installer {
             else {
                 int result = this.removeLaunchdAgent();
 
-                if (result == 0) {
-                    this.log("Removed the service");
-                }
-                else {
+                if (result != 0) {
                     this.log("Warning: Failed to remove the service (%d)", result);
                     this.log("Uninstallation will continue, but you may need to reboot to stop the service");
+                }
+                else {
+                    this.log("Removed the service");
                 }
             }
 
             this.log("%nRemoving the service's launchd configuration file...");
             boolean exists = plistFile.exists();
 
-            if (!exists || plistFile.delete()) {
-                String msg = (exists) ? "Removed %s" : "File %s doesn't exist";
-                this.log(msg, plistFile);
-
-                this.log("%nSuccess: The Mixcaster service was uninstalled");
-            }
-            else {
+            if (exists && !plistFile.delete()) {
                 this.log("Error: Failed to remove %s", plistFile);
+                return 2;
             }
+
+            String msg = (exists) ? "Removed %s" : "File %s doesn't exist";
+            this.log(msg, plistFile);
+
+            this.log("%nSuccess: The Mixcaster service was uninstalled");
+            return 0;
         }
         catch (IOException | InterruptedException ex) {
             this.logFailure("Uninstallation", ex);
+            return 2;
         }
     }
 

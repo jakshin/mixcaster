@@ -51,18 +51,20 @@ public class Main {
             if (args.length > 1) option = args[1].trim();
         }
 
+        int exitCode = 0;
+
         switch (cmd) {
             case "-scrape":
-                main.scrape(option);  // option = URL to scrape
+                exitCode = main.scrape(option);  // option = URL to scrape
                 break;
             case "-service":
                 main.runService();
                 break;
             case "-install":
-                main.installService();
+                exitCode = main.installService();
                 break;
             case "-uninstall":
-                main.uninstallService();
+                exitCode = main.uninstallService();
                 return;
             case "-version":
                 main.printVersion();
@@ -72,6 +74,10 @@ public class Main {
                 main.printVersion();
                 main.printUsage(false);
                 break;
+        }
+
+        if (exitCode != 0) {
+            System.exit(exitCode);
         }
     }
 
@@ -83,7 +89,7 @@ public class Main {
     /**
      * The application's version number.
      */
-    public static final String version = "0.9.3";
+    public static final String version = "0.9.4";
 
     /**
      * Scrapes the given Mixcloud feed URL, also downloading any tracks which haven't already been downloaded.
@@ -92,8 +98,9 @@ public class Main {
      * in the current working directory.
      *
      * @param mixcloudFeedUrl The Mixcloud feed URL to scrape.
+     * @return A code indicating success (0) or failure (1 or 2).
      */
-    private void scrape(String mixcloudFeedUrl) {
+    private int scrape(String mixcloudFeedUrl) {
         try {
             // initialize logging (if this fails, the program will show error info on stdout and abort)
             Logging.initialize(false);
@@ -103,7 +110,7 @@ public class Main {
             if (mixcloudFeedUrl == null || mixcloudFeedUrl.isEmpty()) {
                 logger.log(ERROR, "No Mixcloud feed URL given");
                 this.printUsage(true);
-                return;
+                return 1;
             }
 
             Pattern re = Pattern.compile("^https://www.mixcloud.com/([a-z_-]+)/?$", Pattern.CASE_INSENSITIVE);
@@ -112,7 +119,7 @@ public class Main {
             if (!matcher.matches()) {
                 logger.log(ERROR, "\"{0}\" is not a Mixcloud feed URL", mixcloudFeedUrl);
                 this.printUsage(true);
-                return;
+                return 1;
             }
 
             // warn if we failed to load configuration from our properties file
@@ -127,7 +134,7 @@ public class Main {
             }
             catch (FileNotFoundException ex) {
                 logger.log(ERROR, "The Mixcloud server returned 404 for the feed URL");
-                return;
+                return 1;
             }
 
             String fileName = matcher.group(1) + ".podcast.xml";
@@ -148,9 +155,12 @@ public class Main {
                 logger.log(INFO, "Downloading {0} {1} ...", new Object[] { downloadCount, tracksStr });
                 downloads.processQueue();
             }
+
+            return 0;
         }
         catch (Throwable ex) {
             logger.log(ERROR, "Scrape failed", ex);
+            return 2;
         }
     }
 
@@ -178,19 +188,23 @@ public class Main {
     /**
      * Installs a launchd service definition.
      * The service is started immediately, via launchd.
+     *
+     * @return A code indicating success (0) or failure (1 or 2).
      */
-    private void installService() {
+    private int installService() {
         Installer installer = new Installer();
-        installer.install();
+        return installer.install();
     }
 
     /**
      * Uninstalls the launchd service definition.
      * The service is stopped if it's running, via launchd.
+     *
+     * @return A code indicating success (0) or failure (1 or 2).
      */
-    private void uninstallService() {
+    private int uninstallService() {
         Installer installer = new Installer();
-        installer.uninstall();
+        return installer.uninstall();
     }
 
     /**
