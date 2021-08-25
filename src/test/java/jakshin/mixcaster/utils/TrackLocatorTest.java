@@ -81,4 +81,16 @@ public class TrackLocatorTest {
         String result = TrackLocator.getLocalPath("/Foo/ep1.m4a");
         assertEquals(expResult, result);
     }
+
+    /** Test. */
+    @Test
+    public void getLocalPathShouldBeSecure() {
+        Main.config.setProperty("music_dir", "/music");
+        String[] urls = {"", ".", "..", "../..", "..//..", "//..//", "foo/..", "../foo/..", "..//foo//.." };
+
+        for (var url : urls) {
+            String result = TrackLocator.getLocalPath(url);
+            assertEquals("/music", result);
+        }
+    }
 }

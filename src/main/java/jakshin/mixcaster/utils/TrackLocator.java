@@ -50,7 +50,7 @@ public class TrackLocator {
         // and normalize it to remove ".." entries, before combining it with localMusicDir
         if (!localUrl.isEmpty() && localUrl.charAt(0) != '/') localUrl = "/" + localUrl;
         Path normalized = Paths.get(localUrl).normalize();
-        return Paths.get(localMusicDir, normalized.toString().substring(1)).toString();
+        return Paths.get(localMusicDir, normalized.toString()).toString();
     }
 
     /**
