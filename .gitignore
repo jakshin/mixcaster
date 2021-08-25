@@ -1,8 +1,6 @@
-build/
-dist/
-nbproject/private/
-
-jacocoverage.report.xml
-jacoco.exec*
-
 *.podcast.xml
+.DS_Store
+/.gradle
+/build/
+/coverage/
+/snyk

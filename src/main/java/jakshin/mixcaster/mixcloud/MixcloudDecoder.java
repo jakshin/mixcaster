@@ -20,7 +20,7 @@ package jakshin.mixcaster.mixcloud;
 import jakshin.mixcaster.Main;
 import java.nio.charset.StandardCharsets;
 import java.util.regex.*;
-import javax.xml.bind.DatatypeConverter;
+import java.util.Base64;
 
 /**
  * Decodes data scraped from Mixcloud.
@@ -71,7 +71,7 @@ class MixcloudDecoder {
      * @return The decoded string.
      */
     private String base64Decode(String base64) {
-        byte[] bytes = DatatypeConverter.parseBase64Binary(base64);
+        byte[] bytes = Base64.getDecoder().decode(base64);
         return new String(bytes, StandardCharsets.UTF_8);
     }
 }

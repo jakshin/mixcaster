@@ -1,0 +1,37 @@
+plugins {
+    id 'java'
+
+    // The Snyk plugin defines two tasks: snyk-test, snyk-monitor
+    // https://snyk.io/blog/gradle-plugin-by-snyk-gradle-dependencies-scanning/
+    id 'io.snyk.gradle.plugin.snykplugin' version '0.4'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.2'
+    // testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.2'
+    testImplementation('junit:junit:4.13.2')
+}
+
+test {
+    useJUnit()
+}
+
+jar {
+    // noinspection GroovyAssignabilityCheck
+    manifest {
+        attributes(
+            'Main-Class': 'jakshin.mixcaster.Main'
+        )
+    }
+}
+
+snyk {
+    // Also need to set the $SNYK_TOKEN environment variable
+    severity = 'low'
+    autoDownload = true
+    autoUpdate = true
+}
