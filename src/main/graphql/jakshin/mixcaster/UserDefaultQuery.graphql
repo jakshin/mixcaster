@@ -1,0 +1,12 @@
+query UserDefaultQuery(
+    $lookup: UserLookup!
+) {
+    user: userLookup(lookup: $lookup) {
+        profileNavigation {
+            defaultView {
+                __typename
+            }
+        }
+        id
+    }
+}

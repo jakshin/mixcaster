@@ -17,7 +17,11 @@
 
 package jakshin.mixcaster.logging;
 
-import jakshin.mixcaster.ApplicationException;
+import jakshin.mixcaster.mixcloud.MixcloudException;
+import jakshin.mixcaster.mixcloud.MixcloudPlaylistException;
+import jakshin.mixcaster.mixcloud.MixcloudUserException;
+import org.jetbrains.annotations.NotNull;
+
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
@@ -81,7 +85,7 @@ class LogFileFormatter extends Formatter {
         sb.append(msg);
         sb.append('\t');
 
-        sb.append(String.format("[thread %d]%n", record.getThreadID()));
+        sb.append(String.format("[thread %d]%n", record.getLongThreadID()));
 
         if (extra != null && !extra.isEmpty()) {
             sb.append(extra);
@@ -104,7 +108,8 @@ class LogFileFormatter extends Formatter {
      * @param isCause Whether this Throwable is the cause of another.
      * @return A string containing the formatted Throwable.
      */
-    private String formatThrowable(Throwable ex, boolean isCause) {
+    @NotNull
+    private String formatThrowable(@NotNull Throwable ex, boolean isCause) {
         StringBuilder sb = new StringBuilder(500);
 
         String msg = ex.getMessage();
@@ -113,17 +118,25 @@ class LogFileFormatter extends Formatter {
         }
 
         String prefix = (isCause) ? "    CAUSE: " : "    ERROR: ";
-        sb.append(String.format("%s%s: %s%n", prefix, ex.getClass().getCanonicalName(), msg));
+        sb.append(String.format("%s%s: %s", prefix, ex.getClass().getCanonicalName(), msg));
 
-        if (ex instanceof ApplicationException) {
-            String additionalInfo = ((ApplicationException) ex).additionalInfo;
-            if (additionalInfo != null && !additionalInfo.isEmpty()) {
-                sb.append("    (");
-                sb.append(additionalInfo);
-                sb.append(")");
-                sb.append(lineBreak);
+        if (ex instanceof MixcloudUserException) {
+            String username = ((MixcloudUserException) ex).username;
+            sb.append(" (").append(username).append(")");
+        }
+        else if (ex instanceof MixcloudPlaylistException) {
+            String username = ((MixcloudPlaylistException) ex).username;
+            String playlist = ((MixcloudPlaylistException) ex).playlist;
+            sb.append(" (").append(username).append(", ").append(playlist).append(")");
+        }
+        else if (ex instanceof MixcloudException) {
+            String url = ((MixcloudException) ex).url;
+            if (url != null && !url.isBlank()) {
+                sb.append(" (at URL: ").append(url).append(")");
             }
         }
+
+        sb.append(lineBreak);
 
         StackTraceElement[] stack = ex.getStackTrace();
         for (StackTraceElement el : stack) {

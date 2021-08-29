@@ -29,48 +29,42 @@ import static org.junit.Assert.*;
  * Unit tests for the Download class.
  */
 public class DownloadTest {
-    /** Scaffolding. */
     @BeforeClass
     public static void setUpClass() {
     }
 
-    /** Scaffolding. */
     @AfterClass
     public static void tearDownClass() {
     }
 
-    /** Scaffolding. */
     @Before
     public void setUp() {
     }
 
-    /** Scaffolding. */
     @After
     public void tearDown() {
     }
 
-    /** Test. */
     @Test
     public void equalsShouldWork() {
         Date date = new Date();
         Download baseline = new Download("remoteUrl", 42, date, "localFile");
         Download same = new Download("remoteUrl", 42, date, "localFile");
-        assertEquals(true, baseline.equals(same));
+        assertEquals(baseline, same);
 
         Download diff1 = new Download("~~remoteUrl~~", 42, date, "localFile");
         Download diff2 = new Download("remoteUrl", 43, date, "localFile");
         Download diff3 = new Download("remoteUrl", 42, new Date(date.getTime() + 1), "localFile");
         Download diff4 = new Download("remoteUrl", 42, date, "~~localFile~~");
-        assertEquals(false, baseline.equals(diff1));
-        assertEquals(false, baseline.equals(diff2));
-        assertEquals(false, baseline.equals(diff3));
-        assertEquals(false, baseline.equals(diff4));
+        assertEquals(baseline, diff1);  // remoteUrl isn't compared
+        assertNotEquals(baseline, diff2);
+        assertNotEquals(baseline, diff3);
+        assertNotEquals(baseline, diff4);
 
-        assertEquals(false, baseline.equals(null));
-        assertEquals(false, baseline.equals(new Object()));
+        assertNotEquals(null, baseline);
+        assertNotEquals(baseline, new Object());
     }
 
-    /** Test. */
     @Test
     public void hashCodeShouldReturnTheSameValueForLikeInstances() {
         Date date = new Date();

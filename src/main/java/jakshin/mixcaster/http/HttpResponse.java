@@ -17,9 +17,11 @@
 
 package jakshin.mixcaster.http;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.*;
 import java.net.Socket;
-import java.net.SocketException;
+import java.nio.charset.StandardCharsets;
 import java.util.LinkedList;
 import java.util.Locale;
 import static jakshin.mixcaster.logging.Logging.*;
@@ -51,8 +53,8 @@ class HttpResponse implements Runnable {
 
         try {
             // initialize
-            reader = new BufferedReader(new InputStreamReader(this.socket.getInputStream(), "ISO-8859-1"));
-            writer = new BufferedWriter(new OutputStreamWriter(this.socket.getOutputStream(), "UTF-8"), 100_000);
+            reader = new BufferedReader(new InputStreamReader(this.socket.getInputStream(), StandardCharsets.ISO_8859_1));
+            writer = new BufferedWriter(new OutputStreamWriter(this.socket.getOutputStream(), StandardCharsets.UTF_8), 100_000);
             out = new BufferedOutputStream(this.socket.getOutputStream(), 100_000);
 
             // parse and check the request
@@ -68,7 +70,7 @@ class HttpResponse implements Runnable {
                 throw new HttpException(400, "Bad Request: empty URL");
             }
 
-            // note that we don't handle the Expect header, nor do we handle "100-continue";
+            // note that we don't handle the "Expect" header, nor do we handle "100-continue";
             // technically this violates the HTTP/1.1 spec, but doesn't seem to matter for our purposes
             String expect = request.headers.get("Expect");
             if (expect != null && !expect.isEmpty()) {
@@ -88,9 +90,9 @@ class HttpResponse implements Runnable {
                 // request at the root of the site; serve a banner page
                 new BannerResponder().respond(request, writer);
             }
-            else if (normalizedPathStr.endsWith("/podcast.xml")) {
+            else if (normalizedPathStr.endsWith(".xml")) {
                 // RSS XML request
-                new PodcastXmlResponder().respond(request, writer);
+                new PodcastXmlResponder().respond(request, writer, out);
             }
             else if (normalizedPathStr.endsWith("/favicon.ico")) {
                 // favicon request
@@ -98,7 +100,7 @@ class HttpResponse implements Runnable {
             }
             else if (normalizedPathStr.endsWith("/")) {
                 // folder request
-                new FolderResponder().respond(request, writer);
+                new FolderResponder().respond(request, writer, out);
             }
             else {
                 // any other request must be for a file (or a folder, with no terminating slash in the URL)
@@ -106,37 +108,34 @@ class HttpResponse implements Runnable {
             }
         }
         catch (Throwable ex) {
-            HttpException httpException = (ex instanceof HttpException) ? (HttpException) ex : null;
-            boolean sendResponseHeaders = true;
-
-            if (httpException != null && httpException.httpResponseCode < 500) {
-                // log non-5xx HTTP exceptions as INFO
-                String msg = String.format("HTTP error: %d %s", httpException.httpResponseCode, ex.getMessage());
-                logger.log(INFO, msg);
-            }
-            else if (request != null && request.isFromITunes() &&
-                    ex instanceof SocketException && "Broken pipe".equalsIgnoreCase(ex.getMessage())) {
-                // while streaming a podcast episode without downloading it, iTunes isses range and non-range requests,
-                // and regularly closes the socket before it's received all bytes requested;
-                // this appears to be normal behavior, so log it as such (HTTP headers have already been sent)
-                logger.log(INFO, "iTunes closed the connection early");
-                sendResponseHeaders = false;
-            }
-            else {
-                logger.log(ERROR, ex.getMessage(), ex);
-            }
-
-            // send HTTP response headers, if appropriate
             try {
-                if (sendResponseHeaders) {
-                    boolean isHeadRequest = (request == null) ? false : request.isHead();
-                    HttpHeaderWriter headerWriter = new HttpHeaderWriter();
-                    headerWriter.sendErrorHeadersAndBody(writer, ex, isHeadRequest);
+                HttpException httpException = (ex instanceof HttpException) ? (HttpException) ex : null;
+                String message = ex.getMessage();
+
+                if (httpException != null && httpException.httpResponseCode < 500) {
+                    // log non-5xx HTTP exceptions as INFO
+                    String msg = String.format("HTTP error: %d %s", httpException.httpResponseCode, message);
+                    logger.log(INFO, msg);
+                }
+                else {
+                    logger.log(ERROR, message, ex);
                 }
             }
-            catch (Throwable ex2) {
-                // we're pretty bad off if we can't even send the response headers; log and give up
-                logger.log(ERROR, "Failed to send HTTP error response headers", ex2);
+            catch (Throwable sadness) {
+                // ugh, we can't log our error
+                System.err.format("Unable to log an exception in HttpResponse: %s%n", ex);
+                System.err.format("We weren't able to log it because: %s%n", sadness);
+            }
+
+            // send an error response
+            try {
+                boolean isHeadRequest = request != null && request.isHead();
+                HttpHeaderWriter headerWriter = new HttpHeaderWriter();
+                headerWriter.sendErrorHeadersAndBody(writer, ex, isHeadRequest);
+            }
+            catch (Throwable misery) {
+                // log and give up
+                logger.log(ERROR, "Couldn't send HTTP error response", misery);
             }
         }
         finally {
@@ -151,10 +150,8 @@ class HttpResponse implements Runnable {
      *
      * @param reader The reader from which request headers should be read.
      * @return The HTTP request.
-     * @throws HttpException
-     * @throws IOException
      */
-    private HttpRequest parseRequestHeaders(BufferedReader reader) throws HttpException, IOException {
+    private HttpRequest parseRequestHeaders(@NotNull BufferedReader reader) throws HttpException, IOException {
         HttpRequest request = null;
         String lastHeaderName = null;
 

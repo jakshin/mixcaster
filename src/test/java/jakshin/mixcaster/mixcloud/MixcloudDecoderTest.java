@@ -30,55 +30,34 @@ import static org.junit.Assert.*;
 public class MixcloudDecoderTest {
     private MixcloudDecoder instance;
 
-    /** Scaffolding. */
     public MixcloudDecoderTest() {
         this.instance = null;
     }
 
-    /** Scaffolding. */
     @BeforeClass
     public static void setUpClass() {
     }
 
-    /** Scaffolding. */
     @AfterClass
     public static void tearDownClass() {
     }
 
-    /** Scaffolding. */
     @Before
     public void setUp() {
         this.instance = new MixcloudDecoder();
     }
 
-    /** Scaffolding. */
     @After
     public void tearDown() {
     }
 
-    /** Test. */
     @Test
-    public void decodeShouldWork() {
-        String playInfo = "C04WFQEABQIxARYDVVRMTQkQGwUBV1pcGhcGDQQMQ0NHHh0LFAMBAQNLFx8MRgdfAVEAXFNQQF5bU0BF" +
-                        "QQpABAZZFl8LFhFdTkAKAwJfTVkXRl4UCVkSVgMWRlNRAhJCCFUSR0hPTB0ATU1OX1xVXV9DRF5GX0lBHB" +
-                        "wIDUcrGRoaFCgcCwcUDBsePgAAUlZFQzJSUVdeRyFZWiteVyJJWzAzXVgyWltGRVNUMDBZQEw1M1tXNUUY";
-        String expResult = "https://stream17.mixcloud.com/c/m4a/64/0/7/2/f/eb6c-fcb4-4bfc-90d2-cf7f1fb628fb.m4a";
-        String result = instance.decode(playInfo);
+    public void decodeUrlShouldWork() {
+        String url = "ITItPyZtbmEnIDogID9sZz49KzcjKDAwfiImKWs8KywhNip4LWMidSVpZHtiKWZrbHpgNGt8I2l8eG" +
+                     "J2emd5fHZwYXlwNTZmeXp+cWQ0JHlxdC14fHopezZxPyYmeRIoAwQEFjItfwANCHAKHgoyBTI3AAU=";
+        String expResult = "https://stream8.mixcloud.com/secure/c/m4a/64/d/3/6/a/" +
+                           "5e03-5743-4313-9fb5-5940de050b63.m4a?sig=TzLII_jn3OXL9LGEgRsyTQ";
+        String result = instance.decodeUrl(url);
         assertEquals(expResult, result);
-    }
-
-    /** Test. */
-    @Test
-    public void decodeShouldReturnNullOnFailure() {
-        String playInfo = "invalid";
-        String result = instance.decode(playInfo);
-        assertEquals(null, result);
-    }
-
-    /** Test. */
-    @Test
-    public void decodeShouldReturnNullOnNullInput() {
-        String result = instance.decode(null);
-        assertEquals(null, result);
     }
 }

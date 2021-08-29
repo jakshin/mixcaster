@@ -17,50 +17,33 @@
 
 package jakshin.mixcaster.mixcloud;
 
-import jakshin.mixcaster.Main;
+import org.jetbrains.annotations.NotNull;
+
 import java.nio.charset.StandardCharsets;
-import java.util.regex.*;
 import java.util.Base64;
 
 /**
- * Decodes data scraped from Mixcloud.
+ * Decodes Mixcloud data.
  */
 class MixcloudDecoder {
     /**
-     * Decodes the "play info" data scraped from Mixcloud.
-     * If this stops working http://offliberty.com might still work.
+     * Decodes an encoded URL returned by Mixcloud's GraphQL server.
      *
-     * @param playInfo The "play info" scraped from Mixcloud's m-play-info attribute.
-     * @return A string containing the stream URL, i.e. the URL from which the track can be downloaded.
+     * @param encoded The encoded URL, from a "streamInfo".
+     * @return The decoded URL.
      */
-    String decode(String playInfo) {
-        if (playInfo == null) return null;
-
-        // found in https://github.com/jackyNIX/xbmc-mixcloud-plugin/blob/master/default.py
-        // yes, I do feel a little guilty.. :-/ if Mixcloud exposed an API to say "song was played", I'd happily use it
-        String magic = "pleasedontdownloadourmusictheartistswontgetpaid";
-
-        String decoded = this.base64Decode(playInfo);
+    @NotNull
+    String decodeUrl(@NotNull String encoded) {
+        String decoded = this.base64Decode(encoded);
         StringBuilder sb = new StringBuilder(decoded.length());
 
         for (int i = 0; i < decoded.length(); ++i) {
-            int n1 = (int) decoded.charAt(i);
-            int n2 = (int) magic.charAt(i % magic.length());
-            char ch = (char) (n1 ^ n2);
-            sb.append(ch);
+            int n1 = decoded.charAt(i);
+            int n2 = KEY.charAt(i % KEY.length());
+            sb.append((char) (n1 ^ n2));
         }
 
-        // e.g. {"stream_url": "https://stream19.mixcloud.com/c/m4a/64/c/b/2/5/4969-e079-4ce5-8b50-95b7364beedf.m4a", ...}
-        // it doesn't appear that the stream URL will ever be or need to be URL-encoded
-        String regexStr = Main.config.getProperty("stream_url_regex");
-        Pattern re = Pattern.compile(regexStr, Pattern.CASE_INSENSITIVE);
-        Matcher matcher = re.matcher(sb);
-
-        if (matcher.find()) {
-            return matcher.group(1);
-        }
-
-        return null;
+        return sb.toString();
     }
 
     /**
@@ -70,8 +53,15 @@ class MixcloudDecoder {
      * @param base64 The Base64-encoded string.
      * @return The decoded string.
      */
+    @NotNull
     private String base64Decode(String base64) {
         byte[] bytes = Base64.getDecoder().decode(base64);
         return new String(bytes, StandardCharsets.UTF_8);
     }
+
+    /**
+     * From https://github.com/ytdl-org/youtube-dl/blob/master/youtube_dl/extractor/mixcloud.py
+     * and https://github.com/jackyNIX/xbmc-mixcloud-plugin/blob/master/default.py.
+     */
+    private static final String KEY = "IFYOUWANTTHEARTISTSTOGETPAIDDONOTDOWNLOADFROMMIXCLOUD";
 }

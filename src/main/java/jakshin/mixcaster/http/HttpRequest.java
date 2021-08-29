@@ -17,8 +17,11 @@
 
 package jakshin.mixcaster.http;
 
-import java.io.UnsupportedEncodingException;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -32,29 +35,37 @@ class HttpRequest {
      * @param method The request's HTTP method.
      * @param url The requested URL, as received from the client (i.e. not URL-decoded).
      * @param httpVersion The request's HTTP version.
-     * @throws UnsupportedEncodingException
      */
-    HttpRequest(String method, String url, String httpVersion) throws UnsupportedEncodingException {
+    HttpRequest(@NotNull String method, @NotNull String url, @NotNull String httpVersion) {
         this.httpVersion = httpVersion;
         this.method = method;
         this.url = url;
+        this.path = decodePath(url);
+        this.headers = new HashMap<>();
+    }
 
-        // populate the URL-decoded path
-        String pathStr = url;
+    /**
+     * Creates a new instance which is a clone of another instance.
+     *
+     * @param other The other instance to clone.
+     * @param overrideUrl URL which overrides the other instance's (optional).
+     */
+    @SuppressWarnings("unchecked")
+    HttpRequest(@NotNull final HttpRequest other, @Nullable final String overrideUrl) {
+        this.httpVersion = other.httpVersion;
+        this.method = other.method;
 
-        if (pathStr.startsWith("http://")) {
-            // strip protocol & host if present
-            int index = pathStr.indexOf('/', "http://".length() + 1);
-            pathStr = (index == -1) ? "/" : pathStr.substring(index);
+        if (overrideUrl != null && !overrideUrl.isBlank()) {
+            this.url = overrideUrl;
+            this.path = decodePath(overrideUrl);
+        }
+        else {
+            this.url = other.url;
+            this.path = other.path;
         }
 
-        int index = pathStr.indexOf('?');
-        if (index > 0) {
-            // strip any query string present
-            pathStr = pathStr.substring(0, index);
-        }
-
-        this.path = URLDecoder.decode(pathStr, "UTF-8");
+        // this is line is why we suppress unchecked warnings
+        this.headers = (HashMap<String,String>) ((HashMap<String,String>) other.headers).clone();
     }
 
     /**
@@ -80,6 +91,12 @@ class HttpRequest {
     final String path;
 
     /**
+     * All HTTP request headers received, name -> value.
+     * Populated during parsing in HttpResponse, or via the clone constructor.
+     */
+    final Map<String,String> headers;
+
+    /**
      * Reports whether this is a HEAD request.
      * @return Whether this is a HEAD request.
      */
@@ -96,14 +113,14 @@ class HttpRequest {
     }
 
     /**
-     * Gets the translated byte range for this request, or null if it's not a range retrieval request (no Range header).
-     * You must pass the length of the file/resource being requested,
+     * Gets the translated byte range for this request, or null if it's not a range retrieval request
+     * (i.e. it has no Range header). You must pass the length of the file/resource being requested,
      * because that value is needed for calculating the actual first and last bytes which should be sent.
      *
      * @param fileSize The length of the file/resource requested.
      * @return An object representing the byte range for the request, with translation already performed, or null.
-     * @throws HttpException
      */
+    @Nullable
     ByteRange byteRange(long fileSize) throws HttpException {
         String rangeStr = this.headers.get("Range");
         if (rangeStr == null || rangeStr.isEmpty()) return null;
@@ -114,22 +131,52 @@ class HttpRequest {
     }
 
     /**
-     * Reports whether this request appears to have come from iTunes.
+     * Reports whether this request appears to have come from Apple's Podcasts or iTunes apps.
      * The determination is based on the User-Agent header, so can easily be spoofed.
      *
-     * @return Whether this request appears to have come from iTunes.
+     * @return Whether this request appears to have come from Apple's Podcasts or iTunes apps.
      */
-    boolean isFromITunes() {
+    boolean isFromAppleApp() {
         String userAgent = this.headers.get("User-Agent");
         if (userAgent == null) return false;
 
+        // e.g. Podcasts/1575.1.2 CFNetwork/1240.0.4 Darwin/20.6.0
+        if (userAgent.startsWith("Podcasts/")) return true;
+
+        // e.g. AppleCoreMedia/1.0.0.20G165 (Macintosh; U; Intel Mac OS X 11_6; en_us)
+        // apps other than Apple Podcasts also use this user agent string, which is NBD to us
+        // see https://podnews.net/article/applecoremedia-user-agent
+        if (userAgent.startsWith("AppleCoreMedia/")) return true;
+
         // e.g. iTunes/12.3.3 (Macintosh; OS X 10.9.5) AppleWebKit/537.78.2
-        return userAgent.contains("iTunes/");
+        return userAgent.startsWith("iTunes/");
     }
 
     /**
-     * All HTTP request headers received, name -> value.
-     * Populated during parsing in HttpResponse.
+     * Abstracts and URL-decodes a path from the given URL, which may or may not begin with protocol/host,
+     * but which must otherwise be absolute (i.e. begin with a slash, if not protocol & host).
+     *
+     * @param url The URL containing the path.
+     * @return The URL-decoded path.
      */
-    final Map<String,String> headers = new HashMap<>(10);
+    @NotNull
+    private String decodePath(@NotNull String url) {
+        String pathStr = url;
+
+        if (pathStr.startsWith("http://")) {
+            // strip protocol & host if present
+            int index = pathStr.indexOf('/', "http://".length() + 1);
+            pathStr = (index == -1) ? "/" : pathStr.substring(index);
+        }
+
+        int index = pathStr.indexOf('?');
+        if (index > 0) {
+            // strip the query string
+            pathStr = pathStr.substring(0, index);
+        }
+
+        // because we URL-decode here, slashes received encoded will be handled just like unencoded slashes;
+        // no further URL-decoding should be done, even (especially) if the path contains percent signs
+        return URLDecoder.decode(pathStr, StandardCharsets.UTF_8);
+    }
 }

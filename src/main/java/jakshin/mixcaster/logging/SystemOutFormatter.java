@@ -17,7 +17,7 @@
 
 package jakshin.mixcaster.logging;
 
-import jakshin.mixcaster.ApplicationException;
+import org.jetbrains.annotations.NotNull;
 import java.util.logging.*;
 
 /**
@@ -68,7 +68,8 @@ class SystemOutFormatter extends Formatter {
      * @param isCause Whether this Throwable is the cause of another.
      * @return A string containing the formatted Throwable.
      */
-    private String formatThrowable(Throwable ex, boolean isCause) {
+    @NotNull
+    private String formatThrowable(@NotNull Throwable ex, boolean isCause) {
         StringBuilder sb = new StringBuilder(500);
 
         String msg = ex.getMessage();
@@ -78,16 +79,6 @@ class SystemOutFormatter extends Formatter {
 
         String prefix = (isCause) ? "Caused by: " : "";
         sb.append(String.format("%n%s%s: %s%n", prefix, ex.getClass().getCanonicalName(), msg));
-
-        if (ex instanceof ApplicationException) {
-            String additionalInfo = ((ApplicationException) ex).additionalInfo;
-            if (additionalInfo != null && !additionalInfo.isEmpty()) {
-                sb.append("    (");
-                sb.append(additionalInfo);
-                sb.append(")");
-                sb.append(lineBreak);
-            }
-        }
 
         StackTraceElement[] stack = ex.getStackTrace();
         for (StackTraceElement el : stack) {

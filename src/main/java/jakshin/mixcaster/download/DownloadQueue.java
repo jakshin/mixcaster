@@ -19,6 +19,8 @@ package jakshin.mixcaster.download;
 
 import jakshin.mixcaster.Main;
 import jakshin.mixcaster.utils.TimeSpanFormatter;
+import org.jetbrains.annotations.NotNull;
+
 import java.io.*;
 import java.net.*;
 import java.nio.file.*;
@@ -45,13 +47,13 @@ public final class DownloadQueue {
     }
 
     /**
-     * Attempts to add a download to the queue.
-     * If the file has already been downloaded, it's not added to the queue.
+     * Adds a download to the queue, unless the file has already been queued or downloaded.
+     * Each time this is called, processQueue() must also be called, sooner or later.
      *
      * @param download The download to enqueue.
-     * @return Whether the download was added to the queue; if not added, it's already been downloaded.
+     * @return Whether the download was added to the queue.
      */
-    public synchronized boolean enqueue(Download download) {
+    public synchronized boolean enqueue(@NotNull Download download) {
         File localFile = new File(download.localFilePath);
 
         if (localFile.exists()) {
@@ -61,7 +63,7 @@ public final class DownloadQueue {
 
         if (this.waitingDownloads.contains(download) || this.activeDownloads.contains(download)) {
             logger.log(DEBUG, "File already queued: {0}", localFile);
-            return true;  // already queued, doesn't yet exist locally
+            return false;  // already queued, doesn't yet exist locally
         }
 
         // if this method is called while the queue is already being processed,
@@ -69,7 +71,7 @@ public final class DownloadQueue {
         // because they'll already have been added to the thread pool and removed from waitingDownloads;
         // could maybe address that by using PriorityBlockingQueue instead of LinkedBlockingQueue (which is FIFO)
         this.waitingDownloads.add(download);
-        Collections.sort(waitingDownloads, this.downloadComparator);
+        waitingDownloads.sort(this.downloadComparator);
 
         logger.log(DEBUG, "File enqueued: {0}", localFile);
         return true;
@@ -92,12 +94,19 @@ public final class DownloadQueue {
      * Processes the download queue.
      * We don't automatically start downloading as items are added to the queue
      * so that the sorting logic can first be applied across the whole set of downloads.
+     *
+     * @param exitWhenEmpty Whether to exit, via System.exit(), when the queue is empty.
      */
-    public synchronized void processQueue() {
+    public synchronized void processQueue(boolean exitWhenEmpty) {
         Download download;
         while ((download = this.waitingDownloads.poll()) != null) {
             this.activeDownloads.add(download);
             this.pool.execute(new DownloadRunnable(download));
+        }
+
+        if (exitWhenEmpty) {
+            this.exitWhenEmpty = true;
+            this.exitIfEmpty();
         }
     }
 
@@ -109,6 +118,21 @@ public final class DownloadQueue {
      */
     private synchronized void removeActiveDownload(Download download) {
         this.activeDownloads.remove(download);
+
+        if (this.exitWhenEmpty) {
+            this.exitIfEmpty();
+        }
+    }
+
+    /**
+     * Exits if the queue is empty. This should only be called if exitWhenEmpty is true,
+     * and only from synchronized methods (it's not synchronized itself).
+     */
+    private void exitIfEmpty() {
+        if (this.activeDownloads.size() == 0 && this.waitingDownloads.size() == 0) {
+            logger.log(DEBUG, "The download queue is empty, exiting as requested");
+            System.exit(0);
+        }
     }
 
     /**
@@ -145,7 +169,7 @@ public final class DownloadQueue {
                 // open the HTTP connection; this code will throw FileNotFoundException on 404s
                 in = new BufferedInputStream(conn.getInputStream());
 
-                // download the track to a *.part file
+                // download to a *.part file
                 File localPartFile = new File(this.download.localFilePath + ".part");
                 File localDir = localPartFile.getParentFile();
 
@@ -171,13 +195,20 @@ public final class DownloadQueue {
                         out.flush();
                         out.getFD().sync();
                     }
+
+                    // show some progress info every so often, directly to stdout, so we don't clutter logs
+                    if (percentComplete % 10 == 0 && progressShownAtPercent < percentComplete && percentComplete < 100) {
+                        String name = new File(download.localFilePath).getName();
+                        System.out.printf("  %d%% %s%n", percentComplete, name);
+                        progressShownAtPercent = percentComplete;
+                    }
                 }
 
                 out.close();
                 out = null;
 
                 // set the file's last-modified timestamp to match the value from Mixcloud's server
-                if (!localPartFile.setLastModified(this.download.remoteLastModifiedDate.getTime())) {
+                if (!localPartFile.setLastModified(this.download.remoteLastModified.getTime())) {
                     String errMsg = String.format("Could not set file's last-modified timestamp (%s)", this.download.localFilePath);
                     throw new IOException(errMsg);
                 }
@@ -229,6 +260,9 @@ public final class DownloadQueue {
 
         /** The download. */
         private final Download download;
+
+        /** Keeping track of when we've shown progress on stdout. */
+        private int progressShownAtPercent = 0;
     }
 
     /** The pool of download threads. */
@@ -243,6 +277,9 @@ public final class DownloadQueue {
     /** The queue of URLs being downloaded. */
     private final LinkedList<Download> activeDownloads = new LinkedList<>();
 
+    /** Whether to call System.exit() after finishing processing the queue. */
+    private boolean exitWhenEmpty = false;
+
     /** The single instance of this class. */
     private static DownloadQueue instance = null;
 
@@ -252,10 +289,10 @@ public final class DownloadQueue {
         int threads = Integer.parseInt(downloadThreadsStr);  // already validated
 
         // "threads" threads max (1-50), wait 5s before killing idle threads, don't retain any idle threads
-        this.pool = new ThreadPoolExecutor(threads, threads, 5L, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>());
+        this.pool = new ThreadPoolExecutor(threads, threads, 5L, TimeUnit.SECONDS, new LinkedBlockingQueue<>());
         this.pool.allowCoreThreadTimeOut(true);
 
-        boolean downloadOldestFirst = Boolean.valueOf(Main.config.getProperty("download_oldest_first"));
+        boolean downloadOldestFirst = Boolean.parseBoolean(Main.config.getProperty("download_oldest_first"));
         this.downloadComparator = new DownloadComparator(downloadOldestFirst);
     }
 }

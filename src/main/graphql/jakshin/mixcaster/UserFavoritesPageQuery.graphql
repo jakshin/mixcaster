@@ -1,0 +1,64 @@
+query UserFavoritesPageQuery(
+    $count: Int!
+    $cursor: String
+    $userID: ID!
+) {
+    user(id: $userID) {
+        ...UserFavoritesPage_user_1G22uz
+        id
+    }
+}
+
+fragment UserFavoritesPage_user_1G22uz on User {
+    id
+    displayName
+    username
+    favorites(first: $count, after: $cursor) {
+        edges {
+            cursor
+            node {
+                id
+                slug
+                name
+                description
+
+                isAwaitingAudio
+                isDraft
+                isExclusive
+                isExclusivePreviewOnly
+                isLiveRecording
+                isPlayable
+                isPublic
+                isScheduled
+                isUnlisted
+
+                publishDate
+                restrictedReason
+
+                audioLength
+                picture {
+                    urlRoot
+                }
+
+                owner {
+                    id
+                    displayName
+                    username
+                }
+
+                streamInfo {
+                    hlsUrl
+                    dashUrl
+                    url
+                    uuid
+                }
+
+                __typename
+            }
+        }
+        pageInfo {
+            endCursor
+            hasNextPage
+        }
+    }
+}

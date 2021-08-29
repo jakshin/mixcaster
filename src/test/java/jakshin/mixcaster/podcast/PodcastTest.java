@@ -20,6 +20,7 @@ package jakshin.mixcaster.podcast;
 import jakshin.mixcaster.Main;
 import java.io.*;
 import java.net.*;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -34,47 +35,50 @@ import static org.junit.Assert.*;
 public class PodcastTest {
     private Podcast instance = new Podcast();
 
-    /** Scaffolding. */
     @BeforeClass
     public static void setUpClass() {
     }
 
-    /** Scaffolding. */
     @AfterClass
     public static void tearDownClass() {
     }
 
-    /** Scaffolding. */
     @Before
-    public void setUp() throws MalformedURLException {
+    public void setUp() throws URISyntaxException {
         this.instance = new Podcast();
-        this.instance.title = "Title";
-        this.instance.description = "Description";
-        this.instance.link = new URL("http://example.com");
+        this.instance.userID = "foo";
+        this.instance.link = new URI("http://example.com");
         this.instance.language = "en_US";
+        this.instance.title = "Title";
+        this.instance.description = "Podcast description";
+
         this.instance.iTunesAuthor = "Author";
         this.instance.iTunesCategory = "Music";
         this.instance.iTunesExplicit = true;
-        this.instance.iTunesImageUrl = "http://example.com/image.jpg";
+        this.instance.iTunesImageUrl = new URI("http://example.com/image.jpg");
         this.instance.iTunesOwnerEmail = "nobody@example.com";
         this.instance.iTunesOwnerName = "Owner";
     }
 
-    /** Scaffolding. */
     @After
     public void tearDown() {
     }
 
-    /** Test. */
     @Test
-    public void createXmlShouldWorkWithEpisodes() throws IOException, MalformedURLException {
+    public void createXmlShouldWorkWithEpisodes() throws IOException, URISyntaxException {
         PodcastEpisode ep = new PodcastEpisode();
-        ep.enclosureUrl = new URL("http://example.com/episode1.mp3");
-        ep.enclosureMimeType = "audio/mpeg";
+        ep.description = "Episode description";
+        ep.enclosureLastModified = new Date();
         ep.enclosureLengthBytes = 123456;
-        ep.link = new URL("http://example.com/episode1.html");
+        ep.enclosureMimeType = "audio/mpeg";
+        ep.enclosureMixcloudUrl = new URI("https://stream11.mixcloud.com/secure/c/m4a/episode1.m4a?sig=foobar");
+        ep.enclosureUrl = new URI("http://example.com/episode1.m4a");
+        ep.link = new URI("https://www.mixcloud.com/somebody/episode1.html");
         ep.pubDate = new Date();
-        ep.title = "MP3";
+        ep.title = "Episode 1";
+        ep.iTunesAuthor = "Somebody";
+        ep.iTunesDuration = 2345;
+        ep.iTunesImageUrl = new URI("http://example.com/image.jpg");
         instance.episodes.add(ep);
 
         String result = instance.createXml();
@@ -82,8 +86,9 @@ public class PodcastTest {
         int itemIndex = result.indexOf("<item>");
         assertTrue(itemIndex > 0);
 
-        String[] podcastTags = new String[] { "title", "description", "link", "language",
-            "itunes:author", "itunes:explicit", "itunes:owner", "itunes:name", "itunes:email", "itunes:summary" };
+        // podcast tags should be present, before the first <item> tag
+        String[] podcastTags = new String[] { "title", "link", "language", "description",
+                "itunes:author", "itunes:explicit", "itunes:owner", "itunes:name", "itunes:email" };
         for (String tag : podcastTags) {
             int index = result.indexOf("<" + tag + ">");
             assertTrue(index != -1 && index < itemIndex);
@@ -95,30 +100,36 @@ public class PodcastTest {
             assertTrue(index != -1 && index < itemIndex);
         }
 
-        String[] episodeTags = new String[] { "guid", "link", "pubDate", "title", "itunes:author", "itunes:summary" };
+        // episode tags should be present, after the first <item> tag
+        String[] episodeTags = new String[] { "title", "link", "guid", "pubDate", "description",
+                "itunes:author", "itunes:duration" };
         for (String tag : episodeTags) {
             int index = result.indexOf("<" + tag + ">", itemIndex);
             assertTrue(index != -1);
         }
 
-        int index = result.indexOf("<enclosure ", itemIndex);
-        assertTrue(index != -1);
+        String[] episodeTags2 = new String[] { "enclosure", "itunes:image" };
+        for (String tag : episodeTags2) {
+            int index = result.indexOf("<" + tag + " ", itemIndex);
+            assertTrue(index != -1);
+        }
 
+        // the feed should validate (requires a network connection)
         if (!this.validateFeed(result)) {
             fail("The generated RSS does not validate");
         }
     }
 
-    /** Test. */
     @Test
     public void createXmlShouldWorkWithoutEpisodes() throws IOException {
         String result = instance.createXml();
 
         int itemIndex = result.indexOf("<item>");
-        assertTrue(itemIndex == -1);
+        assertEquals(-1, itemIndex);
 
-        String[] podcastTags = new String[] { "title", "description", "link", "language",
-            "itunes:author", "itunes:explicit", "itunes:owner", "itunes:name", "itunes:email", "itunes:summary" };
+        // podcast tags should be present
+        String[] podcastTags = new String[] { "title", "link", "language", "description",
+                "itunes:author", "itunes:explicit", "itunes:owner", "itunes:name", "itunes:email" };
         for (String tag : podcastTags) {
             int index = result.indexOf("<" + tag + ">");
             assertTrue(index != -1);
@@ -130,17 +141,18 @@ public class PodcastTest {
             assertTrue(index != -1);
         }
 
-        // title, link, itunes:author and itunes:summary also belong to the podcast itself,
-        // so we don't check for their non-existence here
-        String[] episodeTags = new String[] { "guid", "pubDate" };
+        // episode tags shouldn't be present; we don't check for the non-existence of tags
+        // the podcast itself also has: title, link, description, itunes:author and itunes:image
+        String[] episodeTags = new String[] { "guid", "pubDate", "itunes:duration" };
         for (String tag : episodeTags) {
             int index = result.indexOf("<" + tag + ">", itemIndex);
-            assertTrue(index == -1);
+            assertEquals(-1, index);
         }
 
         int index = result.indexOf("<enclosure ", itemIndex);
-        assertTrue(index == -1);
+        assertEquals(-1, index);
 
+        // the feed should validate (requires a network connection)
         if (!this.validateFeed(result)) {
             fail("The generated RSS does not validate");
         }
@@ -148,10 +160,11 @@ public class PodcastTest {
 
     /**
      * Utility method which validates a podcast RSS feed against http://validator.w3.org/feed/.
+     *
      * @param rssXml The RSS XML to validate.
-     * @return Whether or not the RSS XML validates.
-     * @throws IOException
+     * @return Whether the RSS XML validates or not.
      */
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     private boolean validateFeed(String rssXml) throws IOException {
         HttpURLConnection conn = null;
         InputStream in = null;
@@ -166,8 +179,8 @@ public class PodcastTest {
             conn.setDoOutput(true);
 
             out = conn.getOutputStream();
-            try (OutputStreamWriter writer = new OutputStreamWriter(out, "utf-8")) {
-                String encoded = URLEncoder.encode(rssXml, "utf-8");
+            try (OutputStreamWriter writer = new OutputStreamWriter(out, StandardCharsets.UTF_8)) {
+                String encoded = URLEncoder.encode(rssXml, StandardCharsets.UTF_8);
                 writer.write("rawdata=" + encoded + "&manual=1");
                 writer.flush();
             }
@@ -175,7 +188,7 @@ public class PodcastTest {
             StringBuilder sb = new StringBuilder(100_000);
 
             in = conn.getInputStream();
-            try (Reader reader = new InputStreamReader(in, "utf-8")) {
+            try (Reader reader = new InputStreamReader(in, StandardCharsets.UTF_8)) {
                 final char[] buf = new char[10_000];
 
                 while (true) {
@@ -188,6 +201,10 @@ public class PodcastTest {
 
             return (sb.indexOf("<h2>Congratulations!</h2>") != -1);  // <h2>Sorry</h2> on validation failure
         }
+        catch (IOException ex) {
+            // ignore temporary problems with W3C's feed validation service
+            return ex.getMessage().contains("HTTP response code: 503");
+        }
         finally {
             if (conn != null) {
                 conn.disconnect();
@@ -199,7 +216,7 @@ public class PodcastTest {
                 }
             }
             catch (IOException ex) {
-                // oh well
+                // oh, well
             }
 
             try {
@@ -208,7 +225,7 @@ public class PodcastTest {
                 }
             }
             catch (IOException ex) {
-                // oh well
+                // oh, well
             }
         }
     }

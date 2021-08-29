@@ -1,0 +1,125 @@
+query UserProfileHeaderQuery(
+  $lookup: UserLookup!
+) {
+  user: userLookup(lookup: $lookup) {
+    id
+    displayName
+    username
+    isBranded
+    isStaff
+    isFollowing
+    isViewer
+    followers {
+      totalCount
+    }
+    hasCoverPicture
+    hasPremiumFeatures
+    hasProFeatures
+    picture {
+      primaryColor
+      ...UGCImage_picture
+    }
+    coverPicture {
+      urlRoot
+    }
+    ...UserBadge_user
+    ...ProfileNavigation_user
+    ...ShareUserButton_user
+    ...ProfileRegisterUpsellComponent_user
+    ...FollowButton_user
+    ...SelectUpsellButton_user
+    city
+    country
+  }
+  viewer {
+    ...ProfileRegisterUpsellComponent_viewer
+    ...FollowButton_viewer
+    id
+  }
+}
+
+fragment FollowButton_user on User {
+  id
+  isFollowed
+  isFollowing
+  isViewer
+  followers {
+    totalCount
+  }
+  username
+  displayName
+}
+
+fragment FollowButton_viewer on Viewer {
+  me {
+    id
+  }
+}
+
+fragment ProfileNavigation_user on User {
+  id
+  username
+  stream {
+    totalCount
+  }
+  favorites {
+    totalCount
+  }
+  listeningHistory {
+    totalCount
+  }
+  uploads {
+    totalCount
+  }
+  posts {
+    totalCount
+  }
+}
+
+fragment ProfileRegisterUpsellComponent_user on User {
+  id
+  displayName
+  followers {
+    totalCount
+  }
+}
+
+fragment ProfileRegisterUpsellComponent_viewer on Viewer {
+  me {
+    id
+  }
+}
+
+fragment SelectUpsellButton_user on User {
+  username
+  isSelect
+  isSubscribedTo
+  selectUpsell {
+    planInfo {
+      displayAmount
+    }
+  }
+}
+
+fragment ShareUserButton_user on User {
+  biog
+  username
+  displayName
+  id
+  isUploader
+  picture {
+    urlRoot
+  }
+}
+
+fragment UGCImage_picture on Picture {
+  urlRoot
+  primaryColor
+}
+
+fragment UserBadge_user on User {
+  username
+  hasProFeatures
+  hasPremiumFeatures
+  isStaff
+}

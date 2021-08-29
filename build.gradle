@@ -1,5 +1,7 @@
 plugins {
     id 'java'
+    id 'com.github.johnrengelman.shadow' version '7.0.0'
+    id 'com.apollographql.apollo' version '2.5.9'
 
     // The Snyk plugin defines two tasks: snyk-test, snyk-monitor
     // https://snyk.io/blog/gradle-plugin-by-snyk-gradle-dependencies-scanning/
@@ -13,7 +15,9 @@ repositories {
 dependencies {
     // testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.2'
     // testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.2'
-    testImplementation('junit:junit:4.13.2')
+    testImplementation 'junit:junit:4.13.2'
+
+    implementation 'com.apollographql.apollo:apollo-runtime:2.5.9'
 }
 
 test {
@@ -23,9 +27,25 @@ test {
 jar {
     // noinspection GroovyAssignabilityCheck
     manifest {
-        attributes(
-            'Main-Class': 'jakshin.mixcaster.Main'
-        )
+        attributes 'Main-Class': 'jakshin.mixcaster.Main'
+    }
+}
+
+shadowJar {
+    // Should be able to enable this again with shadow 7.1+
+    // See https://github.com/johnrengelman/shadow/issues/679
+    // minimize()
+}
+
+// Use "shadowJar" in place of "jar"
+jar.enabled(false)
+shadowJar.archiveFileName = "${project.name}.jar"
+assemble.dependsOn(shadowJar)
+
+// Enable some javac diagnostics
+gradle.projectsEvaluated {
+    tasks.withType(JavaCompile) {
+        options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
     }
 }
 

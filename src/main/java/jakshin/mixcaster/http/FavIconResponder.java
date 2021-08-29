@@ -18,6 +18,8 @@
 package jakshin.mixcaster.http;
 
 import jakshin.mixcaster.utils.DateFormatter;
+import org.jetbrains.annotations.NotNull;
+
 import java.io.*;
 import java.text.ParseException;
 import java.util.Date;
@@ -28,24 +30,25 @@ import static jakshin.mixcaster.logging.Logging.*;
  * it came from http://www.softicons.com/social-media-icons/cloud-social-icons-by-graphics-vibe/rss-icon,
  * and was converted to ICO format using http://tools.dynamicdrive.com/favicon/.
  */
-class FavIconResponder {
+class FavIconResponder extends Responder {
     /**
      * Responds to the favicon request.
      *
      * @param request The incoming HTTP request.
      * @param writer A writer which can be used to output the response.
      * @param out An output stream which can be used to output the response.
-     * @throws IOException
-     * @throws ParseException
      */
-    void respond(HttpRequest request, Writer writer, OutputStream out) throws IOException, ParseException {
-        logger.log(INFO, "Serving favicon.ico");
+    void respond(@NotNull HttpRequest request, @NotNull Writer writer, @NotNull OutputStream out)
+            throws IOException, ParseException {
+
+        logger.log(INFO, "Responding to request for favicon.ico");
 
         // handle If-Modified-Since
         HttpHeaderWriter headerWriter = new HttpHeaderWriter();
         Date lastModified = DateFormatter.parse("Sun, 08 May 2016 03:00:00 GMT");  // favicon.ico creation, no milliseconds
 
         if (headerWriter.sendNotModifiedHeadersIfNeeded(request, writer, lastModified)) {
+            logger.log(INFO, "Responding with 304 for unmodified favicon.ico");
             return;  // the request was satisfied via not-modified response headers
         }
 
@@ -57,6 +60,10 @@ class FavIconResponder {
                 ByteArrayOutputStream buffer = new ByteArrayOutputStream(16_000);  // a bit larger than favicon.ico
 
                 try (InputStream in = this.getClass().getResourceAsStream("favicon.ico")) {
+                    if (in == null) {
+                        throw new IOException("Could not load resource: favicon.ico");
+                    }
+
                     final byte[] buf = new byte[2000];
 
                     while (true) {
@@ -78,11 +85,15 @@ class FavIconResponder {
         // we don't expect to receive a Range header for this type of request
         headerWriter.sendSuccessHeaders(writer, lastModified, "image/x-icon", FavIconResponder.iconBuffer.size());
 
-        // send the icon, if needed
-        if (!request.isHead()) {
-            FavIconResponder.iconBuffer.writeTo(out);
-            out.flush();
+        if (request.isHead()) {
+            logger.log(INFO, "Done responding to HEAD request for favicon.ico");
+            return;
         }
+
+        // send the icon
+        FavIconResponder.iconBuffer.writeTo(out);
+        out.flush();
+        logger.log(INFO, "Done responding to GET request for favicon.ico");
     }
 
     /** A buffer where we cache the icon resource on first use. */

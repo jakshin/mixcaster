@@ -18,22 +18,26 @@
 package jakshin.mixcaster.utils;
 
 import jakshin.mixcaster.Main;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
 /**
- * A thing which knows the locations of music tracks.
+ * A thing which knows the locations of files, especially music files.
  */
-public class TrackLocator {
+public class FileLocator {
     /**
-     * Provides the local path to a track, given its local URL.
-     * The local URL can be complete, with http://host:port,
-     * or contain just the absolute path-and-filename URL to the track, starting with a slash.
+     * Provides the local path to a music file, given its local URL.
+     * The local URL can be complete, like http://host:port/...,
+     * or contain just the absolute path-and-filename URL to the file, starting with a slash.
      *
-     * @param localUrl The track's local URL. Expected not to be URL-encoded.
-     * @return The track's local path.
+     * @param localUrl The music file's local URL. Expected not to be URL-encoded, nor need to be.
+     * @return The music file's local path.
      */
-    public static String getLocalPath(String localUrl) {
+    @NotNull
+    public static String getLocalPath(@NotNull String localUrl) {
         int index = localUrl.indexOf("//");
         if (index != -1) {
             // strip http://host:port from the front
@@ -54,43 +58,37 @@ public class TrackLocator {
     }
 
     /**
-     * Provides the local URL for a track, given info known about it from scraping Mixcloud.
+     * Provides the local URL for a music file, given some Mixcloud info about it.
      *
-     * @param localHostAndPort The local host and HTTP port, or null/empty to use configured values.
-     * @param feedUrl The Mixcloud artist/feed page's URL.
-     * @param trackWebPageUrl The track's web page's URL, i.e. the human-readable Mixcloud page about it.
-     * @param trackUrl The URL from which the track's music file can be downloaded.
-     * @return
+     * @param localHostAndPort The local HTTP server's host:port, or null/empty to use configured values.
+     * @param mixcloudUsername The username of the Mixcloud user who owns the music.
+     * @param slug The last path component of Mixcloud's web URL about the music (which their GraphQL API calls "slug").
+     * @param mixcloudUrl The URL to the music file on Mixcloud's servers.
+     * @return The music file's complete local URL.
      */
-    public static String getLocalUrl(String localHostAndPort, String feedUrl, String trackWebPageUrl, String trackUrl) {
-        // some quick testing on Mixcloud shows that doesn't seem to ever create URLs which are URL-encoded or need to be
+    @NotNull
+    public static String makeLocalUrl(@Nullable String localHostAndPort, @NotNull String mixcloudUsername,
+                                      @NotNull String slug, @NotNull String mixcloudUrl) {
+
         if (localHostAndPort == null || localHostAndPort.isEmpty()) {
             localHostAndPort = Main.config.getProperty("http_hostname") + ":" + Main.config.getProperty("http_port");
         }
 
-        String extension = trackUrl.substring(trackUrl.lastIndexOf('.'));   // includes the dot, e.g. ".m4a"
-        String localDirName = TrackLocator.getLastComponentOfUrl(feedUrl);  // usually an artist name
-        String localFileName = TrackLocator.getLastComponentOfUrl(trackWebPageUrl) + extension;
+        int pos = mixcloudUrl.indexOf("?");
+        if (pos != -1) {
+            // found a query string, strip it
+            mixcloudUrl = mixcloudUrl.substring(0, pos);
+        }
 
-        return "http://" + localHostAndPort + "/" + localDirName + "/" + localFileName;
-    }
-
-    /**
-     * Gets the last component of a URL. For example: http://foo/bar/ => bar.
-     *
-     * @param url The URL.
-     * @return The URL's last component.
-     */
-    private static String getLastComponentOfUrl(String url) {
-        String[] components = url.split("/");  // trailing empty string not included
-        return components[components.length - 1];
+        String extension = mixcloudUrl.substring(mixcloudUrl.lastIndexOf('.'));  // includes the dot, e.g. ".m4a"
+        return "http://" + localHostAndPort + "/" + mixcloudUsername + "/" + slug + extension;
     }
 
     /**
      * Private constructor to prevent instantiation.
      * This class's methods are all static, and it shouldn't be instantiated.
      */
-    private TrackLocator() {
+    private FileLocator() {
         // nothing here
     }
 }

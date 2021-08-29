@@ -1,5 +1,5 @@
-*.podcast.xml
 .DS_Store
+/*.rss.xml
 /.gradle
 /build/
 /coverage/

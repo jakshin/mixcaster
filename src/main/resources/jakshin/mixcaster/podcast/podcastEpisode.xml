@@ -1,9 +1,13 @@
 <item>
-  <enclosure url="{{episode.enclosureUrl}}" length="{{episode.enclosureLength}}" type="{{episode.enclosureMimeType}}" />
-  <guid>{{episode.enclosureUrl}}</guid>
-  <link>{{episode.link}}</link>
-  <pubDate>{{episode.pubDate}}</pubDate>
   <title>{{episode.title}}</title>
+  <link>{{episode.link}}</link>
+  <enclosure url="{{episode.enclosureUrl}}"
+             length="{{episode.enclosureLength}}" type="{{episode.enclosureMimeType}}" />
+  <guid>{{episode.enclosureUrl}}</guid>
+  <pubDate>{{episode.pubDate}}</pubDate>
+  <description>{{episode.description}}</description>
+
   <itunes:author>{{episode.iTunesAuthor}}</itunes:author>
-  <itunes:summary>{{episode.iTunesSummary}}</itunes:summary>
+  <itunes:duration>{{episode.iTunesDuration}}</itunes:duration>
+  <itunes:image href="{{episode.iTunesImageUrl}}" />
 </item>

@@ -17,6 +17,9 @@
 
 package jakshin.mixcaster.download;
 
+import org.jetbrains.annotations.NotNull;
+
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Comparator;
 
@@ -42,9 +45,9 @@ class DownloadComparator implements Comparator<Download>, Serializable {
      * @return A value indicating the appropriate sort order.
      */
     @Override
-    public int compare(Download d1, Download d2) {
-        long d1Time = d1.remoteLastModifiedDate.getTime();
-        long d2Time = d2.remoteLastModifiedDate.getTime();
+    public int compare(@NotNull Download d1, @NotNull Download d2) {
+        long d1Time = d1.remoteLastModified.getTime();
+        long d2Time = d2.remoteLastModified.getTime();
 
         if (d1Time == d2Time) {
             // d1 and d2 were modified at the same time
@@ -69,5 +72,6 @@ class DownloadComparator implements Comparator<Download>, Serializable {
     private final boolean oldestFirst;
 
     /** Serialization version number. */
+    @Serial
     private static final long serialVersionUID = 1L;  // update this whenever the class definition changes
 }

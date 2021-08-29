@@ -19,7 +19,10 @@ package jakshin.mixcaster.http;
 
 import jakshin.mixcaster.Main;
 import jakshin.mixcaster.utils.DateFormatter;
+import org.jetbrains.annotations.NotNull;
+
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.util.Calendar;
 import java.util.Date;
@@ -30,23 +33,22 @@ import static jakshin.mixcaster.logging.Logging.*;
  * Responds to an HTTP request in the root of the site with a banner page.
  * Our banner page is stored as a resource.
  */
-class BannerResponder {
+class BannerResponder extends Responder {
     /**
      * Responds to the request with a banner page.
      *
      * @param request The incoming HTTP request.
      * @param writer A writer which can be used to output the response.
-     * @throws IOException
-     * @throws ParseException
      */
-    void respond(HttpRequest request, Writer writer) throws IOException, ParseException {
-        logger.log(INFO, "Serving banner page");
+    void respond(@NotNull HttpRequest request, @NotNull Writer writer) throws IOException, ParseException {
+        logger.log(INFO, "Responding to request for banner page");
 
         // handle If-Modified-Since
         HttpHeaderWriter headerWriter = new HttpHeaderWriter();
         Date lastModified = this.getBannerLastModifiedDate();
 
         if (headerWriter.sendNotModifiedHeadersIfNeeded(request, writer, lastModified)) {
+            logger.log(INFO, "Responding with 304 for unmodified banner page");
             return;  // the request was satisfied via not-modified response headers
         }
 
@@ -58,9 +60,13 @@ class BannerResponder {
                 StringBuilder sb = new StringBuilder(41_000);  // a bit larger than banner.html
 
                 try (InputStream in = this.getClass().getResourceAsStream("banner.html")) {
+                    if (in == null) {
+                        throw new IOException("Could not load resource: banner.html");
+                    }
+
                     final char[] buf = new char[1024];
 
-                    try (Reader reader = new InputStreamReader(in, "UTF-8")) {
+                    try (Reader reader = new InputStreamReader(in, StandardCharsets.UTF_8)) {
                         while (true) {
                             int count = reader.read(buf, 0, buf.length);
                             if (count < 0) break;
@@ -70,8 +76,7 @@ class BannerResponder {
                     }
                 }
 
-                String buffer = sb.toString().replace("{{version}}", Main.version);
-                BannerResponder.resourceBuffer = buffer;
+                BannerResponder.resourceBuffer = sb.toString().replace("{{version}}", Main.version);
             }
             else {
                 logger.log(DEBUG, "Retrieved banner.html from cache");
@@ -87,11 +92,15 @@ class BannerResponder {
 
         headerWriter.sendSuccessHeaders(writer, lastModified, "text/html", length, additionalHeaders);
 
-        // send the resource, if needed
-        if (!request.isHead()) {
-            writer.write(BannerResponder.resourceBuffer);
-            writer.flush();
+        if (request.isHead()) {
+            logger.log(INFO, "Done responding to HEAD request for banner page");
+            return;
         }
+
+        // send the banner page
+        writer.write(BannerResponder.resourceBuffer);
+        writer.flush();
+        logger.log(INFO, "Done responding to GET request for banner page");
     }
 
     /**
@@ -100,10 +109,12 @@ class BannerResponder {
      * based on the program's current version, so it changes slightly with each new version.
      *
      * @return The banner page's last-modified date/time.
-     * @throws ParseException
      */
+    @NotNull
     private Date getBannerLastModifiedDate() throws ParseException {
-        Date lastModified = DateFormatter.parse("Thu, 12 May 2016 03:00:00 GMT");  // banner.html creation, no milliseconds
+        // use a synthetic creation timestamp for banner.html, with no milliseconds
+        // (this value is unrelated to the filesystem's last-modified date for the banner.html file)
+        Date lastModified = DateFormatter.parse("Thu, 12 May 2016 03:00:00 GMT");
 
         String[] version = Main.version.split("\\.");
         int major = Integer.parseInt(version[0]);

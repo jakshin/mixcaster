@@ -17,110 +17,183 @@
 
 package jakshin.mixcaster.http;
 
-import jakshin.mixcaster.ApplicationException;
+import jakshin.mixcaster.download.Download;
 import jakshin.mixcaster.download.DownloadQueue;
-import jakshin.mixcaster.mixcloud.MixcloudFeed;
-import jakshin.mixcaster.mixcloud.MixcloudScraper;
+import jakshin.mixcaster.mixcloud.*;
 import jakshin.mixcaster.podcast.Podcast;
-import java.io.FileNotFoundException;
+import jakshin.mixcaster.podcast.PodcastEpisode;
+import jakshin.mixcaster.utils.FileLocator;
+import org.jetbrains.annotations.NotNull;
+
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.Writer;
+import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeoutException;
+
 import static jakshin.mixcaster.logging.Logging.*;
 
 /**
  * Responds to an HTTP request for RSS XML.
  */
-public class PodcastXmlResponder {
+public class PodcastXmlResponder extends Responder {
     /**
      * Responds to the RSS XML request.
+     * Expected RSS URLs are like /username.xml (e.g. /NTSRadio.xml), /username/musicType.xml (e.g. /NTSRadio/shows.xml),
+     * or /username/playlist/slug.xml (e.g. /Wicked_Glitch_Podcast/playlist/wicked-glitch-podcast-archive.xml).
      *
      * @param request The incoming HTTP request.
      * @param writer A writer which can be used to output the response.
-     * @throws ApplicationException
-     * @throws HttpException
-     * @throws IOException
+     * @param out An output stream which can be used to output the response.
      */
-    void respond(HttpRequest request, Writer writer) throws ApplicationException, HttpException, IOException {
-        String feedName = this.getSecondToLastComponentOfPath(request.path);
+    void respond(@NotNull HttpRequest request, @NotNull Writer writer, @NotNull OutputStream out)
+            throws HttpException, InterruptedException, IOException, MixcloudException, TimeoutException, URISyntaxException {
 
-        if (feedName == null || feedName.isEmpty()) {
-            // 404 would also be fine, but we use 403 instead, to distinguish between an unexpected local podcast.xml URL,
-            // and a local URL which looks okay but which doesn't map to a valid Mixcloud feed (handled below)
+        logger.log(INFO, "Responding to request for podcast: {0}", request.path);
+
+        String path = request.path.substring(1);  // strip the leading slash, to avoid empty string in components[0]
+        String[] components = path.split("/");  // trailing empty string not included
+
+        // strip ".xml" from the end of the last path component
+        String last = components[components.length - 1];
+        components[components.length - 1] = last.substring(0, last.length() - 4);
+
+        String username, musicType;
+
+        if (components.length == 1) {
+            username = components[0];
+            musicType = userDefaultViews.get(username);
+
+            if (musicType == null) {
+                var client = new MixcloudClient(request.host());
+                musicType = client.queryDefaultView(username);
+                userDefaultViews.put(username, musicType);
+            }
+        }
+        else {
+            musicType = components[components.length - 1];
+
+            username = components[components.length - 2];
+            if (username == null || username.isEmpty()) {
+                throw new HttpException(403, "Forbidden");
+            }
+        }
+
+        String thing = String.format("%s's %s", username, musicType);
+        String playlist = "";
+
+        if (username.equals("playlist") || username.equals("playlists")) {
+            if (components.length < 3) {
+                throw new HttpException(403, "Forbidden");
+            }
+
+            playlist = musicType;
+            musicType = "playlist";
+            username = components[components.length - 3];
+
+            if (username == null || username.isEmpty()) {
+                throw new HttpException(403, "Forbidden");
+            }
+
+            thing = String.format("%s's %s playlist", username, playlist);
+        }
+
+        musicType = switch (musicType) {
+          case "stream", "shows", "favorites", "history", "playlist" -> musicType;
+          case "uploads" -> "shows";
+          case "listens" -> "history";
+          case "playlists" -> "playlist";
+          default -> throw new HttpException(403, "Forbidden");
+        };
+
+        if (musicType.equals("playlist") && playlist.isBlank()) {
             throw new HttpException(403, "Forbidden");
         }
 
-        logger.log(INFO, "Serving RSS XML for feed: {0}", feedName);
+        logger.log(INFO, "The podcast will contain {0}", thing);
 
-        // get a feed, either from cache or by scraping
-        FeedCache cache = FeedCache.getInstance();
-        MixcloudFeed feed = cache.getFromCache(feedName);
+        PodcastCache cache = PodcastCache.getInstance();
+        Podcast podcast = cache.getFromCache(username, musicType, playlist);
 
-        if (feed == null) {
+        if (podcast == null) {
             try {
-                // kick off a scraper
-                String mixcloudFeedUrl = String.format("https://www.mixcloud.com/%s/", feedName);
-                MixcloudScraper scraper = new MixcloudScraper();
-                feed = scraper.scrape(mixcloudFeedUrl);
-
-                // cache the MixcloudFeed instance
-                cache.addToCache(feedName, feed);
+                var client = new MixcloudClient(request.host());
+                podcast = client.query(username, musicType, playlist);
+                cache.addToCache(username, musicType, playlist, podcast);
             }
-            catch (FileNotFoundException ex) {
-                // Mixcloud returned 404 for the feed URL; pass it along
+            catch (MixcloudUserException ex) {
+                logger.log(ERROR, String.format("There's no Mixcloud user with username %s", ex.username));
+                throw new HttpException(404, "Not Found", ex);
+            }
+            catch (MixcloudPlaylistException ex) {
+                logger.log(ERROR, String.format("%s doesn't have a \"%s\" playlist", ex.username, ex.playlist));
                 throw new HttpException(404, "Not Found", ex);
             }
         }
         else {
-            logger.log(INFO, "Feed retrieved from cache: {0}", feedName);
+            logger.log(INFO, "Podcast retrieved from cache: {0}", thing);
         }
 
         // handle If-Modified-Since
         HttpHeaderWriter headerWriter = new HttpHeaderWriter();
-        Date scraped = new Date(feed.scraped.getTime() / 1000 * 1000);  // truncate milliseconds for comparison
+        Date lastModified = new Date(podcast.createdAt / 1000 * 1000);  // truncate milliseconds for comparison
 
-        if (headerWriter.sendNotModifiedHeadersIfNeeded(request, writer, scraped)) {
+        if (headerWriter.sendNotModifiedHeadersIfNeeded(request, writer, lastModified)) {
+            logger.log(INFO, "Responding with 304 for unmodified podcast: {0}", request.path);
             return;  // the request was satisfied via not-modified response headers
         }
 
-        // build the RSS XML
-        Podcast podcast = feed.createPodcast(request.host());
-        String rssXml = podcast.createXml();
-
         // kick off any downloads from Mixcloud which are now needed
-        DownloadQueue downloads = DownloadQueue.getInstance();
-        int downloadCount = downloads.queueSize();
-
-        if (downloadCount == 0) {
-            String msg = feed.tracks.isEmpty() ? "No tracks to download" : "All tracks have already been downloaded";
-            logger.log(INFO, msg);
+        if (podcast.episodes.isEmpty()) {
+            if (! playlist.isBlank())
+                logger.log(INFO, "{0} is empty", thing);
+            else
+                logger.log(INFO, "{0} has no {1}", new String[] { username, musicType });
         }
         else {
-            String tracksStr = (downloadCount == 1) ? "track" : "tracks";
-            logger.log(INFO, String.format("Starting download of %d %s", downloadCount, tracksStr));
-            downloads.processQueue();
+            DownloadQueue queue = DownloadQueue.getInstance();
+            int queued = 0;
+
+            for (PodcastEpisode episode : podcast.episodes) {
+                String localPath = FileLocator.getLocalPath(episode.enclosureUrl.toString());
+                Download download = new Download(episode.enclosureMixcloudUrl.toString(),
+                        episode.enclosureLengthBytes, episode.enclosureLastModified, localPath);
+
+                if (queue.enqueue(download)) {
+                    queued++;
+                }
+            }
+
+            if (queued == 0) {
+                logger.log(INFO, "We''ve already queued or downloaded {0}", thing);
+            }
+            else {
+                String filesStr = (queued == 1) ? "music file" : "music files";
+                logger.log(INFO, "Downloading {0} new {1} ...", new Object[] { queued, filesStr });
+                queue.processQueue(false);
+            }
         }
 
-        // send the response headers
-        headerWriter.sendSuccessHeaders(writer, scraped, "application/xml", rssXml.length());
-
-        // send the RSS XML, if needed; note that we always send the whole thing,
+        // respond; note that if we send the XML body, we always send the whole thing,
         // as we don't expect to receive a Range header for this type of request
-        if (!request.isHead()) {
-            writer.write(rssXml);
-            writer.flush();
+        String rssXml = podcast.createXml();
+        byte[] rssXmlBytes = rssXml.getBytes(StandardCharsets.UTF_8);
+        headerWriter.sendSuccessHeaders(writer, lastModified, "text/xml; charset=UTF-8", rssXmlBytes.length);
+
+        if (request.isHead()) {
+            logger.log(INFO, "Done responding to HEAD request for podcast: {0}", request.path);
+            return;
         }
+
+        out.write(rssXmlBytes);
+        out.flush();
+        logger.log(INFO, "Done responding to GET request for podcast: {0}", request.path);
     }
 
-    /**
-     * Gets the second-to-last component of a path. For example: /foo/bar/bar/ => bar.
-     *
-     * @param pathStr The path.
-     * @return The path's second-to-last component, or null if it doesn't have one.
-     */
-    private String getSecondToLastComponentOfPath(String pathStr) {
-        String[] components = pathStr.split("/");  // trailing empty string not included
-        if (components.length < 2) return null;
-        return components[components.length - 2];
-    }
+    /** A never-expiring "cache" of Mixcloud users' default views. */
+    private static final Map<String,String> userDefaultViews = new ConcurrentHashMap<>();
 }

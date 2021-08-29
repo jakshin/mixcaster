@@ -17,36 +17,58 @@
 
 package jakshin.mixcaster.http;
 
-import jakshin.mixcaster.utils.TrackLocator;
+import jakshin.mixcaster.mixcloud.MixcloudException;
+import jakshin.mixcaster.utils.FileLocator;
+import org.jetbrains.annotations.NotNull;
+
 import java.io.*;
+import java.net.URISyntaxException;
+import java.util.concurrent.TimeoutException;
+
 import static jakshin.mixcaster.logging.Logging.*;
 
 /**
  * Responds to an HTTP request for a folder, by issuing a 403 Forbidden or 404 Not Found response.
  * This responder is not used in the site's root folder; there, a banner page is served instead.
  */
-class FolderResponder {
+class FolderResponder extends Responder {
     /**
      * Responds to the folder request.
      *
      * @param request The incoming HTTP request.
      * @param writer A writer which can be used to output the response.
-     * @throws HttpException
-     * @throws IOException
+     * @param out An output stream which can be used to output the response.
      */
-    void respond(HttpRequest request, Writer writer) throws HttpException, IOException {
-        String localPathStr = TrackLocator.getLocalPath(request.path);
-        logger.log(INFO, "Serving folder: {0}", localPathStr);
+    void respond(@NotNull HttpRequest request, @NotNull Writer writer, @NotNull OutputStream out)
+            throws HttpException, InterruptedException, IOException, MixcloudException, TimeoutException, URISyntaxException {
 
-        // I tried redirecting to podcast.xml, but iTunes doesn't handle that well,
-        // so instead we just return a 403 or 404 error, depending on whether the folder exists
+        String localPathStr = FileLocator.getLocalPath(request.path);
+        logger.log(INFO, "Responding to request for folder: {0}", localPathStr);
+
+        // delegate to PodcastXmlResponder if this looks like a Mixcloud URL
+        if (delegateToPodcastXmlResponder(request, writer, out)) {
+            return;
+        }
+
+        // check on disk
         File localFolder = new File(localPathStr);
 
-        if (localFolder.exists()) {
+        if (localFolder.isFile()) {
+            logger.log(INFO, "Folder is actually a file, redirecting: {0}", localPathStr);
+
+            String filePathStr = request.path;
+            if (filePathStr.endsWith("/")) filePathStr = filePathStr.substring(0, filePathStr.length() - 1);
+
+            HttpHeaderWriter headerWriter = new HttpHeaderWriter();
+            headerWriter.sendRedirectHeadersAndBody(writer, filePathStr, request.isHead());
+            return;
+        }
+
+        if (localFolder.isDirectory()) {
+            // we don't allow folder contents to be listed
             throw new HttpException(403, "Forbidden");
         }
-        else {
-            throw new HttpException(404, "Not Found");
-        }
+
+        throw new HttpException(404, "Not Found");
     }
 }

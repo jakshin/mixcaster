@@ -26,41 +26,25 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 
 /**
- * Unit tests for the TrackLocator class.
+ * Unit tests for the FileLocator class.
  */
-public class TrackLocatorTest {
-    /** Scaffolding. */
+public class FileLocatorTest {
     @BeforeClass
     public static void setUpClass() {
     }
 
-    /** Scaffolding. */
     @AfterClass
     public static void tearDownClass() {
     }
 
-    /** Scaffolding. */
     @Before
     public void setUp() {
     }
 
-    /** Scaffolding. */
     @After
     public void tearDown() {
     }
 
-    /** Test. */
-    @Test
-    public void getLocalUrlShouldWork() {
-        String host = Main.config.getProperty("http_hostname");
-        String port = Main.config.getProperty("http_port");
-        String expResult = "http://" + host + ":" + port + "/Foo/ep1.m4a";
-        String result = TrackLocator.getLocalUrl(null, "http://www.mixcloud.com/Foo/",
-                "http://www.mixcloud.com/Foo/ep1/", "https://foo.com/a/b/c/d.m4a");
-        assertEquals(expResult, result);
-    }
-
-    /** Test. */
     @Test
     public void getLocalPathShouldWorkWithFullUrl() {
         String expResult = Main.config.getProperty("music_dir");
@@ -68,29 +52,37 @@ public class TrackLocatorTest {
         if (!expResult.endsWith("/")) expResult += "/";
         expResult += "Foo/ep1.m4a";
 
-        String result = TrackLocator.getLocalPath("http://localhost:25683/Foo/ep1.m4a");
+        String result = FileLocator.getLocalPath("http://localhost:25683/Foo/ep1.m4a");
         assertEquals(expResult, result);
     }
 
-    /** Test. */
     @Test
     public void getLocalPathShouldWorkWithAbsoluteUrl() {
         Main.config.setProperty("music_dir", "/music/");
         String expResult = "/music/Foo/ep1.m4a";
 
-        String result = TrackLocator.getLocalPath("/Foo/ep1.m4a");
+        String result = FileLocator.getLocalPath("/Foo/ep1.m4a");
         assertEquals(expResult, result);
     }
 
-    /** Test. */
     @Test
     public void getLocalPathShouldBeSecure() {
         Main.config.setProperty("music_dir", "/music");
         String[] urls = {"", ".", "..", "../..", "..//..", "//..//", "foo/..", "../foo/..", "..//foo//.." };
 
         for (var url : urls) {
-            String result = TrackLocator.getLocalPath(url);
+            String result = FileLocator.getLocalPath(url);
             assertEquals("/music", result);
         }
+    }
+
+    @Test
+    public void makeLocalUrlShouldWork() {
+        String host = Main.config.getProperty("http_hostname");
+        String port = Main.config.getProperty("http_port");
+        String expResult = "http://" + host + ":" + port + "/Foo/some-lovely-music.m4a";
+        String result = FileLocator.makeLocalUrl(null, "Foo",
+                "some-lovely-music", "https://stream.mixcloud.com/a/b/c/d.m4a?sig=blah");
+        assertEquals(expResult, result);
     }
 }

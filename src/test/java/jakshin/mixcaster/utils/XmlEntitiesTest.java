@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package jakshin.mixcaster.entities;
+package jakshin.mixcaster.utils;
 
 import org.junit.After;
 import org.junit.AfterClass;

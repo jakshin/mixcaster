@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package jakshin.mixcaster.entities;
+package jakshin.mixcaster.utils;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -25,7 +25,7 @@ import java.util.Map;
  */
 public class XmlEntities {
     /**
-     * Escapes XML entities in the passed string, returning the result as a new string.
+     * Escapes XML entities in the given string, returning the result as a new string.
      *
      * @param str The string to escape.
      * @return The escaped string.
@@ -43,7 +43,7 @@ public class XmlEntities {
     }
 
     /**
-     * Unescapes XML entities in the passed string, returning the result as a new string.
+     * Unescapes XML entities in the given string, returning the result as a new string.
      *
      * @param str The string to unescape.
      * @return The unescaped string.

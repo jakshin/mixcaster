@@ -17,30 +17,33 @@
 
 package jakshin.mixcaster.podcast;
 
-import java.net.URL;
+import java.net.URI;
 import java.util.Date;
 
 /**
  * A single episode of a podcast.
  */
 public class PodcastEpisode {
-    /**
-     * The URL of the episode's audio file.
-     * Shouldn't require URL-encoding.
-     */
-    public URL enclosureUrl;
+    /** A description of the episode (4000 chars max for Apple Podcasts). */
+    public String description;
+
+    /** The last-modified date of the episode's audio file. */
+    public Date enclosureLastModified;
+
+    /** The length in bytes of the episode's audio file. */
+    public long enclosureLengthBytes;
 
     /** The MIME type of the episode's audio file. */
     public String enclosureMimeType;
 
-    /** The length in bytes of the episode's audio file. */
-    public int enclosureLengthBytes;
+    /** The Mixcloud URL the episode's audio file was downloaded from. */
+    public URI enclosureMixcloudUrl;
 
-    /**
-     * The episode's web page's URL (for human consumption, not the URL of the audio file).
-     * Shouldn't require URL-encoding.
-     */
-    public URL link;
+    /** The local URL of the episode's audio file. */
+    public URI enclosureUrl;
+
+    /** The URL of the episode's web page on Mixcloud (not the URL of the audio file). */
+    public URI link;
 
     /** The episode's publication date/time. */
     public Date pubDate;
@@ -51,6 +54,9 @@ public class PodcastEpisode {
     /** The episode's author. */
     public String iTunesAuthor;
 
-    /** A summary of the episode. */
-    public String iTunesSummary;
+    /** The episode's duration, in seconds (optional). */
+    public Integer iTunesDuration;
+
+    /** The URL of the episode's image (optional). */
+    public URI iTunesImageUrl;
 }

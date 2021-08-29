@@ -31,7 +31,7 @@ public class Logging {
     /**
      * Initializes the global logger.
      *
-     * @param forService Whether to initialize for logging by the service (if false, initialize for manual scraping).
+     * @param forService Whether to initialize for logging by the service (if false, initialize for manual downloading).
      * @throws IOException
      */
     public static void initialize(boolean forService) throws IOException {
@@ -59,7 +59,7 @@ public class Logging {
         // set up file logging
         FileHandler fh = (forService)
                 ? new FileHandler(logDirStr + "/service.log", 1_000_000, logCount, true)  // 1 MB per log
-                : new FileHandler(logDirStr + "/scrape.log", 0, logCount, false);         // one log per scrape
+                : new FileHandler(logDirStr + "/download.log", 0, logCount, false);       // one log per run
         fh.setFormatter(new LogFileFormatter());
         fh.setLevel(logLevel);
         logger.addHandler(fh);

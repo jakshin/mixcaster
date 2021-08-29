@@ -18,7 +18,11 @@
 package jakshin.mixcaster.install;
 
 import jakshin.mixcaster.utils.FileUtils;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Locale;
@@ -133,6 +137,7 @@ public final class Installer {
      *
      * @return The service's launchd label.
      */
+    @NotNull
     private String getServiceLabel() {
         String userName = System.getProperty("user.name").replaceAll("\\W+", "_");
         return String.format("jakshin.mixcaster.%s", userName);
@@ -142,6 +147,7 @@ public final class Installer {
      * Gets the path to the service's launchd configuration file, for this user.
      * @return The path to the service's launchd configuration file, for this user.
      */
+    @NotNull
     private String getPlistPath() {
         String pathStr = String.format("Library/LaunchAgents/%s.plist", this.getServiceLabel());
         Path path = Paths.get(System.getProperty("user.home"), pathStr);
@@ -154,6 +160,7 @@ public final class Installer {
      *
      * @return The path to the currently running jar file.
      */
+    @Nullable
     private String getJarPath() {
         Path path = Paths.get(Installer.class.getProtectionDomain().getCodeSource().getLocation().getPath());
         String jarPath = path.toString();
@@ -171,8 +178,6 @@ public final class Installer {
      *
      * @param plistFile The service's user-specific plist configuration file.
      * @return The launchctl program's exit code.
-     * @throws IOException
-     * @throws InterruptedException
      */
     private int loadLaunchdAgent(File plistFile) throws IOException, InterruptedException {
         String cmd = String.format("/bin/launchctl load %s", plistFile);
@@ -187,8 +192,6 @@ public final class Installer {
      * This also stops the service immediately.
      *
      * @return The launchctl program's exit code.
-     * @throws IOException
-     * @throws InterruptedException
      */
     private int removeLaunchdAgent() throws IOException, InterruptedException {
         String cmd = String.format("/bin/launchctl remove %s", this.getServiceLabel());
@@ -202,8 +205,6 @@ public final class Installer {
      * Checks to see if the service is registered with launchd.
      *
      * @return Whether the service is registered with launchd.
-     * @throws IOException
-     * @throws InterruptedException
      */
     private boolean checkLaunchdAgent() throws IOException, InterruptedException {
         String cmd = String.format("/bin/launchctl list %s", this.getServiceLabel());
@@ -215,18 +216,20 @@ public final class Installer {
 
     /**
      * Loads the launchd-plist.xml resource.
-     *
      * @return The resource's XML content.
-     * @throws IOException
-     * @throws UnsupportedEncodingException
      */
-    private String loadPlistResource() throws IOException, UnsupportedEncodingException {
+    @NotNull
+    private String loadPlistResource() throws IOException {
         StringBuilder sb = new StringBuilder(600);
 
         try (InputStream in = this.getClass().getResourceAsStream("launchd-plist.xml")) {
+            if (in == null) {
+                throw new IOException("Could not load resource: launchd-plist.xml");
+            }
+
             final char[] buf = new char[600];
 
-            try (Reader reader = new InputStreamReader(in, "UTF-8")) {
+            try (Reader reader = new InputStreamReader(in, StandardCharsets.UTF_8)) {
                 while (true) {
                     int count = reader.read(buf, 0, buf.length);
                     if (count < 0) break;
@@ -246,7 +249,7 @@ public final class Installer {
      * @param fmt The format string, or just the string to display; processed through String.format().
      * @param args Any arguments needed to format the format string.
      */
-    private void log(String fmt, Object... args) {
+    private void log(@NotNull String fmt, Object... args) {
         String msg = String.format(fmt, args);
         System.out.println(msg);
     }
@@ -258,7 +261,7 @@ public final class Installer {
      * @param operation The operation which failed.
      * @param ex The exception which gives details about the failure.
      */
-    private void logFailure(String operation, Exception ex) {
+    private void logFailure(@NotNull String operation, @NotNull Exception ex) {
         String msg = ex.getMessage();
         if (msg == null || msg.isEmpty()) {
             msg = "Unknown error";
