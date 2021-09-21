@@ -39,7 +39,7 @@ shadowJar {
 
 // Use "shadowJar" in place of "jar"
 jar.enabled(false)
-shadowJar.archiveFileName = "${project.name}.jar"
+shadowJar.archiveFileName = "${project.name.toLowerCase()}.jar"
 assemble.dependsOn(shadowJar)
 
 // Enable some javac diagnostics
