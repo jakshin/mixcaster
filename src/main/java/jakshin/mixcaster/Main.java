@@ -326,7 +326,7 @@ public class Main {
     private void printUsage() {
         Path path = Paths.get(Main.class.getProtectionDomain().getCodeSource().getLocation().getPath());
         String jarName = path.getFileName().toString();
-        if (! jarName.toLowerCase(Locale.ROOT).endsWith(".jar")) jarName = "Mixcaster.jar";
+        if (! jarName.toLowerCase(Locale.ROOT).endsWith(".jar")) jarName = "mixcaster.jar";
 
         System.out.println();
         System.out.println("Usage: java -jar " + jarName + " <command>\n");

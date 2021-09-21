@@ -51,7 +51,7 @@ public final class Installer {
 
             String plistXml = this.loadPlistResource();
             plistXml = plistXml.replace("{{serviceLabel}}", this.getServiceLabel());
-            plistXml = plistXml.replace("{{Mixcaster.jar}}", jarPath);
+            plistXml = plistXml.replace("{{mixcaster.jar}}", jarPath);
 
             File plistFile = new File(this.getPlistPath());
             FileUtils.writeStringToFile(plistFile.toString(), plistXml, "UTF-8");

@@ -8,7 +8,7 @@
 	<array>
 		<string>java</string>
 		<string>-jar</string>
-		<string>{{Mixcaster.jar}}</string>
+		<string>{{mixcaster.jar}}</string>
 		<string>-service</string>
 	</array>
 	<key>KeepAlive</key>
