@@ -364,14 +364,14 @@ public class Main {
      */
     private void warnAboutConfigError() {
         if (Main.errorLoadingProperties != null) {
-            String msg = String.format("Problem loading configuration from Mixcaster.properties (%s)",
+            String msg = String.format("Problem loading mixcaster-settings.properties (%s)",
                     Main.errorLoadingProperties.getMessage());
             logger.log(WARNING, msg, Main.errorLoadingProperties);
         }
     }
 
     /**
-     * Initializes the global configuration by reading Mixcaster.properties.
+     * Initializes the global configuration by reading mixcaster-settings.properties.
      */
     private static Properties initConfig() {
         // set up default values; there should be a 1-to-1 correspondence between values here and in the properties file
@@ -399,7 +399,7 @@ public class Main {
             Path path = Paths.get(Main.class.getProtectionDomain().getCodeSource().getLocation().getPath());
 
             while (path.getNameCount() > 0) {
-                Path propsPath = Paths.get(path.toString(), "Mixcaster.properties");
+                Path propsPath = Paths.get(path.toString(), "mixcaster-settings.properties");
                 if (!Files.exists(propsPath)) {
                     path = path.getParent();
                     continue;
