@@ -1,0 +1,84 @@
+#!/usr/bin/env bash
+# Wrapper/launcher script for mixcaster.jar
+
+# Find this script, which might've been launched via symlink
+self="$0"
+[[ $self == /* ]] || self="$(pwd)/$self"
+
+while [[ -L $self ]]; do
+  if ! target="$(readlink -- "$self")"; then
+    # We've resolved all symlinks
+    break
+  elif [[ $target != /* ]]; then
+    # Relative symlink
+    self="$(dirname -- "$self")/$target"
+  else
+    self="$target"
+  fi
+done
+
+self_name="$(basename -- "$self")"
+export MIXCASTER_SELF_NAME="$self_name"
+
+# Find our jar file
+self_dir="$(cd -- "$(dirname -- "$self")" && pwd)"
+jar_name="$self_name.jar"
+jar_path="$self_dir/$jar_name"
+
+# Ensure a suitable version of Java is available
+min_java_major_version=16
+unset java java_version err
+
+function check_java_version() {
+  # Set $java before calling this
+  if ! java_version="$("$java" -version 2>&1)"; then
+    # Java can't run for some reason, e.g. no JVMs installed on macOS
+    # Hopefully it outputs a useful error message
+    err="Error: Can't launch Java: $("$java" -version 2>&1)"
+    return
+  fi
+
+  # Get the major version, and minor version if it's present
+  java_version="$(echo "$java_version" | head -n1 | grep -oE "[[:digit:]]+(\.[[:digit:]]+)?" | head -n1)"
+
+  if [[ -z $java_version ]] || (( "10#${java_version/.*/}" < min_java_major_version )); then
+    err="Error: Can't find a Java runtime with version ${min_java_major_version}+"
+
+    if [[ -n $java_version ]]; then
+      if [[ -n $JAVA_HOME ]]; then
+        err+=$'\n'"You have version ${java_version}, in $JAVA_HOME"
+      else
+        err+=$'\n'"You have version ${java_version}"
+        if [[ $OSTYPE == darwin* ]]; then
+          err+=$'\n'"You might need to set \$JAVA_HOME"
+        fi
+      fi
+    fi
+  fi
+}
+
+if [[ -n "$JAVA_HOME" && -x "$JAVA_HOME/bin/java" ]]; then
+  java="$JAVA_HOME/bin/java"
+  check_java_version
+fi
+
+if [[ -z $java || -n $err ]]; then
+  # Either $JAVA_HOME isn't set, or we can't use that JVM for some reason
+  # Let's see if we can find anything useful in $PATH
+
+  if ! java="$(type -P java)"; then
+    err="Error: Can't find a Java runtime"
+  else
+    check_java_version
+  fi
+fi
+
+if [[ -n $err ]]; then
+  echo "$err"
+  exit 1
+fi
+
+# Run Java, passing any options in the $JAVA_OPTS environment variable
+# Java itself will also take options from $JDK_JAVA_OPTIONS and/or $JAVA_TOOL_OPTIONS
+# shellcheck disable=SC2086
+exec "$java" $JAVA_OPTS -jar "$jar_path" "$@"

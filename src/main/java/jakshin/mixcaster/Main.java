@@ -324,12 +324,19 @@ public class Main {
      * Prints usage information.
      */
     private void printUsage() {
-        Path path = Paths.get(Main.class.getProtectionDomain().getCodeSource().getLocation().getPath());
-        String jarName = path.getFileName().toString();
-        if (! jarName.toLowerCase(Locale.ROOT).endsWith(".jar")) jarName = "mixcaster.jar";
+        String self = System.getenv("MIXCASTER_SELF_NAME");
+
+        if (self == null || self.isBlank()) {
+            Path path = Paths.get(Main.class.getProtectionDomain().getCodeSource().getLocation().getPath());
+
+            if (path.getFileName().toString().toLowerCase(Locale.ROOT).endsWith(".jar"))
+                self = "java -jar " + path.getFileName();
+            else
+                self = "mixcaster";  // Default
+        }
 
         System.out.println();
-        System.out.println("Usage: java -jar " + jarName + " <command>\n");
+        System.out.println("Usage: " + self + " <command>\n");
 
         System.out.println("Available commands:");
         System.out.println("  -download   Download a Mixcloud user's stream, shows, history, etc.");
@@ -342,20 +349,20 @@ public class Main {
         System.out.println("and additional options are available.\n");
 
         System.out.println("Usage with -download:");
-        System.out.println("  java -jar " + jarName + " -download <username> [stream|shows|favorites|history] [options]");
-        System.out.println("  java -jar " + jarName + " -download <username> playlist <playlist> [options]\n");
+        System.out.println("  " + self + " -download <username> [stream|shows|favorites|history] [options]");
+        System.out.println("  " + self + " -download <username> playlist <playlist> [options]\n");
 
         System.out.println("You may make the username a possessive, so the command line reads more naturally.");
-        System.out.println("For example: java -jar " + jarName + " -download NTSRadio’s shows -max-episodes=3\n");
+        System.out.println("For example: " + self + " -download NTSRadio’s shows -max-episodes=3\n");
 
         System.out.println("When specifying a playlist, use the last path segment of its Mixcloud URL,");
         System.out.println("e.g. if its URL is www.mixcloud.com/some-user/playlists/some-super-great-music,");
         System.out.println("specify it on the command line as \"some-super-great-music\".\n");
 
-        System.out.println("Options:");
+        System.out.println("Options with -download:");
         System.out.println("  -max-episodes=NUM  Allow NUM episodes, overriding the episode_max_count config");
         System.out.println("  -out=DIRECTORY     Save music files to DIRECTORY, overriding the music_dir config");
-        System.out.println("  -rss=FILE          Write podcast RSS to the given path/file (overwrites existing)");
+        System.out.println("  -rss=FILE          Write podcast RSS to the given path/file (overwrite existing)");
     }
 
     /**
