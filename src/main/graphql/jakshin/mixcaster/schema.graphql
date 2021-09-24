@@ -1,0 +1,5810 @@
+type Query {
+  """
+  The ID of the object
+  """
+  cloudcast(id: ID!): Cloudcast
+  """
+  The ID of the object
+  """
+  consumer(id: ID!): Consumer
+  """
+  The ID of the object
+  """
+  user(id: ID!): User
+  """
+  The ID of the object
+  """
+  comment(id: ID!): Comment
+  """
+  The ID of the object
+  """
+  playlist(id: ID!): Playlist
+  """
+  The ID of the object
+  """
+  playlistItem(id: ID!): PlaylistItem
+  """
+  The ID of the object
+  """
+  tag(id: ID!): Tag
+  """
+  The ID of the object
+  """
+  conversation(id: ID!): Conversation
+  """
+  The ID of the object
+  """
+  post(id: ID!): Post
+  """
+  The ID of the object
+  """
+  pictureItem(id: ID!): PictureItem
+  """
+  The ID of the object
+  """
+  liveStream(id: ID!): LiveStream
+  """
+  The ID of the object
+  """
+  node(id: ID!): Node
+  viewer: Viewer
+  tip: Tip
+  admin: Admin
+  userLookup(lookup: UserLookup!): User
+  userLookupMany(lookup: [UserLookup]!): [User]
+  userDisabledReasonLookup(lookup: UserLookup!): UserDisabledReason
+  cloudcastLookup(lookup: CloudcastLookup!): Cloudcast
+  postLookup(lookup: PostLookup!): Post
+  cloudcastLookupMany(lookup: [CloudcastLookup]!): [Cloudcast]
+  cloudcastLookupManyById(lookup: [CloudcastLookupID]!): [Cloudcast]
+  cloudcastDisabledReasonLookup(lookup: CloudcastLookup!): CloudcastDisabledReason
+  playlistLookup(lookup: PlaylistLookup!): Playlist
+  tagLookup(lookup: TagLookup!): Tag
+  manualStudy(id: String!): ManualStudy
+  conversationLookup(lookup: ConversationLookup!): Conversation
+  usernameCompletion(lookup: UserLookup): UsernameSuggestions
+  me: User @deprecated(reason: "Use viewer.me instead")
+}
+
+type Cloudcast implements Node & PictureFieldInterface {
+  publishDate: DateTime
+  name: String!
+  slug: String!
+  description: String
+  audioLength: Int
+  """
+  The ID of the object.
+  """
+  id: ID!
+  picture(width: Int, height: Int, blur: Int): Picture
+  owner: User!
+  hiddenStats: Boolean
+  hiddenStatsRaw: Boolean
+  attribution: Consumer
+  percentageComplete: Int
+  streamInfo(timestamper: Boolean): StreamInfo
+  isPlayable: Boolean
+  isDownloadable: Boolean
+  seekRestriction: String
+  waveformUrl: String
+  previewUrl: String
+  download: Boolean!
+  currentPosition: Int!
+  proportionListened: Float!
+  repeatPlayAmount: Int
+  hasPlayCompleted: Boolean!
+  restrictedReason: String
+  promoteRestrictedReason: String
+  downloadRestrictedReason: DownloadRestrictedReasonEnum
+  hasActivePromotions: Boolean
+  isAwaitingAudio: Boolean
+  isUnlisted: Boolean
+  isLiveRecording: Boolean!
+  isDraft: Boolean
+  isPublic: Boolean
+  isScheduled: Boolean
+  isSpam: Boolean
+  isShortLength: Boolean
+  isStaffPick: Boolean
+  isExclusive: Boolean
+  isExclusivePreviewOnly: Boolean
+  plays: Int
+  isListenLater: Boolean
+  isHighlighted: Boolean
+  isFavorited: Boolean
+  isReposted: Boolean
+  """
+  This endpoint is meant to be used for the stats totals card and the stats page only.
+  """
+  stats(from: Date, to: Date): CloudcastStats
+  comments(first: Int, last: Int, after: String, before: String): CommentWithTotalConnection!
+  tags(country: String): [CloudcastTag]!
+  reposts(first: Int, last: Int, after: String, before: String, order: UserConnectionOrderEnum): UserWithProvidedTotalConnection!
+  favorites(first: Int, last: Int, after: String, before: String, order: UserConnectionOrderEnum): UserWithProvidedTotalConnection!
+  listeners(first: Int, last: Int, after: String, before: String, filter: UserConnectionFilterEnum, order: UserConnectionOrderEnum): UserWithProvidedTotalConnection
+  featuringArtistList: [String]
+  moreFeaturingArtists: Boolean
+  moreFromOwner(first: Int, last: Int, after: String, before: String): CloudcastConnection
+  relatedPromotedCloudcast: PromotedCloudcast
+  relatedCloudcasts(first: Int, last: Int, after: String, before: String): CloudcastWithTotalsConnection!
+  sections: [Section!]
+  juno: JunoDetails
+  samples(merged: Boolean): [CloudcastSample]
+  canShowTracklist: Boolean!
+  promotions(first: Int, last: Int, after: String, before: String): PromotedCloudcastConnection
+  staffPromotions(adminTool: Boolean): [StaffPromotedCloudcast!]
+  shouldShowAds: Boolean!
+  mp3ExternalUrl: String
+  qualityScore: Float
+  listenerMinutes: Int
+  dbId: String
+  podcast: Podcast
+  countryRestrictions: [String]!
+  fileHistory: [AudioFileHistory]
+  showInUpNext: Boolean
+  hasSrpcWaiver: Boolean
+  picturePrimaryColor: String @deprecated(reason: "Use picture.primaryColor instead")
+  promotedCloudcast: Cloudcast @deprecated(reason: "Use relatedPromotedCloudcast instead")
+  tagsets(first: Int, last: Int, after: String, before: String): TagSetConnection @deprecated(reason: "use tags instead")
+  dashUrl: String @deprecated(reason: "Use stream_info instead")
+  url: String @deprecated(reason: "The url field is now deprecated, please build url on client")
+  key: String @deprecated(reason: "The key field is now deprecated, please build url path on client")
+  playInfo: String @deprecated(reason: "The play_info field is now deprecated, please use stream_info instead.")
+}
+
+"""
+An object with an ID
+"""
+interface Node {
+  """
+  The ID of the object.
+  """
+  id: ID!
+}
+
+interface PictureFieldInterface {
+  picture(width: Int, height: Int, blur: Int): Picture @deprecated(reason: "use picture object instead")
+}
+
+type Picture {
+  primaryColor(lighten: Int, darken: Int, alpha: Float): String
+  isLight: Boolean
+  urlRoot: String
+  url: String @deprecated(reason: "Use urlRoot instead")
+  width: Int @deprecated(reason: "You should set the width on the client")
+  height: Int @deprecated(reason: "You should set the height on the client")
+  blur: Int @deprecated(reason: "You should set the blur on the client")
+}
+
+"""
+The `DateTime` scalar type represents a DateTime
+value as specified by
+[iso8601](https://en.wikipedia.org/wiki/ISO_8601).
+"""
+scalar DateTime
+
+type User implements Node & PictureFieldInterface & FavoritesInterface & ListeningHistoryInterface & StreamInterface & UploadsInterface & ExclusivesInterface {
+  """
+  Required. 30 characters or fewer. Letters, numbers and the - character
+  """
+  username: String!
+  """
+  Designates whether the user can log into this admin site.
+  """
+  isStaff: Boolean!
+  dateJoined: DateTime!
+  displayName: String!
+  """
+  The ID of the object.
+  """
+  id: ID!
+  picture(width: Int, height: Int, blur: Int): Picture
+  favorites(first: Int, last: Int, after: String, before: String): FavoritesConnection!
+  listeningHistory(first: Int, last: Int, after: String, before: String): ListenConnection!
+  stream(first: Int, last: Int, after: String, before: String): StreamCloudcastConnection!
+  uploads(first: Int, last: Int, after: String, before: String, orderBy: CloudcastOrderByEnum, isPublic: Boolean, hasActivePromotions: Boolean): CloudcastWithTotalsConnection!
+  exclusives(first: Int, last: Int, after: String, before: String): ExclusivesConnection!
+  city: String
+  country: String
+  countryCode: String
+  coverPicture(width: Int, height: Int): Picture
+  hasPicture: Boolean
+  hasCoverPicture: Boolean
+  isFollowed: Boolean
+  isFollowing: Boolean
+  receivesUploadNotifications: Boolean
+  hasPremiumFeatures: Boolean
+  hasProFeatures: Boolean
+  isUploader: Boolean
+  isViewer: Boolean!
+  isSpam: Boolean
+  isBlocked: Boolean
+  isBranded: Boolean
+  quantcastTrackingPixel: String
+  percentageComplete: Int
+  biog: String
+  isSelectSubscriber: Boolean
+  usersSubscribedTo(first: Int, last: Int, after: String, before: String): UserConnection
+  email: String
+  accountType: String @deprecated(reason: "This field is now deprecated")
+  birthYear: Int
+  gender: String
+  hasConnections: Boolean
+  liveStream(isPublic: Boolean): LiveStream
+  stripeAccount: StripeAccount
+  dbId: String
+  qualityScore: Float
+  hasFacebookConnected: Boolean
+  podcasts(first: Int, last: Int, after: String, before: String): PodcastConnection
+  posts(first: Int, last: Int, after: String, before: String, visibility: PostVisibility, orderBy: PostOrder): PostConnection
+  dashboardPosts(first: Int, last: Int, after: String, before: String, visibility: PostVisibility, orderBy: PostOrder): PostConnection
+  accountSubscriber: AccountSubscriber
+  commentsByUser(first: Int, last: Int, after: String, before: String, includeDeleted: Boolean): CommentQuerySetWithTotalConnection
+  hasSrpcWaiver: Boolean
+  isWhitelistedForShortUpload: Boolean
+  tokens: [Token]!
+  liveConfig: LiveConfig
+  showInUpNext: Boolean
+  staffPromotions: [StaffPromotedUser!]
+  staffPromotedShows: [StaffPromotedCloudcast!]
+  futureStaffPromotedShows: [FutureStaffPromotedCloudcast!]
+  managedAccount: ManagedAccount
+  """
+  This endpoint is meant to be used for the stats totals card and the stats page only.
+  """
+  stats(from: Date, to: Date): UserStats
+  highlighted(first: Int, last: Int, after: String, before: String): CloudcastWithTotalsConnection!
+  drafts(first: Int, last: Int, after: String, before: String): CloudcastWithTotalsConnection
+  liveDrafts(first: Int, last: Int, after: String, before: String): CloudcastWithTotalsConnection
+  playlists(first: Int, last: Int, after: String, before: String, orderBy: PlaylistsOrderByEnum): PlaylistConnection!
+  followers(first: Int, last: Int, after: String, before: String): FollowersConnection!
+  followings(first: Int, last: Int, after: String, before: String, filter: FollowingsFilterEnum, orderBy: FollowingsOrderByEnum): FollowingsConnection!
+  profileNavigation(showHidden: Boolean): ProfileNavigation!
+  brandedProfile: BrandedProfile
+  facebookFanPages: [FacebookFanPage!]!
+  soundcloudAccount: SoundcloudAccount
+  twitterAccount: TwitterAccount
+  selectAccount: SelectAccount
+  messages(first: Int, last: Int, after: String, before: String): CommentWithTotalConnection!
+  isStaffPick: Boolean
+  isSelect: Boolean
+  isSubscribedTo: Boolean
+  isSubscribedToUser(uploaderId: ID): Boolean
+  isFollowingUser(uploaderId: ID): Boolean
+  shouldShowAds: Boolean!
+  hasAccessToSelect: Boolean
+  isInvitedToSelect: Boolean
+  isRegisteredSelect: Boolean
+  isSurveyable: Boolean
+  isArtist: Boolean
+  isLive: Boolean
+  selectSubscriptions(first: Int, last: Int, after: String, before: String, orderBy: SelectSubscriptionsOrderByEnum): SelectSubscriptionItemWithTotalsConnection
+  isTippable: Boolean
+  tipsReceived(first: Int, last: Int, after: String, before: String): TipWithTotalsConnection
+  selectUpsell: SelectUpsell
+  upcomingTicketedEvents: [LiveStream]
+  url: String @deprecated(reason: "this field is now deprecated")
+  key: String @deprecated(reason: "This field is now deprecated")
+  listens(first: Int, last: Int, after: String, before: String): CloudcastWithTotalsConnection @deprecated(reason: "Use listeningHistory instead")
+  feed(first: Int, last: Int, after: String, before: String): FeedItemConnection @deprecated(reason: "Use Viewer.feed instead")
+  listenLaters(first: Int, last: Int, after: String, before: String): CloudcastWithTotalsConnection @deprecated(reason: "Use Viewer.listenLaters instead")
+  notifications(first: Int, last: Int, after: String, before: String): NotificationConnection @deprecated(reason: "Use Viewer.notifications instead")
+  uploadNotifications(first: Int, last: Int, after: String, before: String): UploadNotificationConnection @deprecated(reason: "Use Viewer.uploadNotifications instead")
+  followSuggestions(first: Int, last: Int, after: String, before: String): UserConnection @deprecated(reason: "Use Viewer.followSuggestions instead")
+  consumers(first: Int, last: Int, after: String, before: String, status: ConsumerStatusEnum): ConsumerConnection @deprecated(reason: "Use Viewer.consumers instead")
+  currentDevice: RegisteredDevice @deprecated(reason: "Use Viewer.currentDevice instead")
+}
+
+interface FavoritesInterface {
+  favorites(first: Int, last: Int, after: String, before: String): FavoritesConnection!
+}
+
+type FavoritesConnection implements CloudcastConnectionInterface & CloudcastTotalAudioLengthInterface {
+  pageInfo: PageInfo!
+  edges: [CloudcastEdge]!
+  totalAudioLength: Int
+  isHidden: Boolean
+  totalCount: Int!
+}
+
+interface CloudcastConnectionInterface {
+  pageInfo: PageInfo!
+  edges: [CloudcastEdgeInterface]!
+}
+
+type PageInfo {
+  hasPreviousPage: Boolean!
+  hasNextPage: Boolean!
+  startCursor: String
+  endCursor: String
+}
+
+interface CloudcastEdgeInterface {
+  cursor: String!
+  node: Cloudcast!
+}
+
+interface CloudcastTotalAudioLengthInterface {
+  totalAudioLength: Int
+}
+
+type CloudcastEdge implements CloudcastEdgeInterface {
+  cursor: String!
+  node: Cloudcast!
+}
+
+interface ListeningHistoryInterface {
+  listeningHistory(first: Int, last: Int, after: String, before: String): ListenConnection!
+}
+
+type ListenConnection implements ConnectionTotalCountInterface {
+  totalCount: Int!
+  pageInfo: PageInfo!
+  edges: [ListenEdge]!
+  isHidden: Boolean
+}
+
+interface ConnectionTotalCountInterface {
+  totalCount: Int!
+}
+
+type ListenEdge {
+  cursor: String!
+  node: Listen!
+}
+
+type Listen implements Node {
+  """
+  The ID of the object.
+  """
+  id: ID!
+  cloudcast: Cloudcast!
+}
+
+interface StreamInterface {
+  stream(first: Int, last: Int, after: String, before: String): StreamCloudcastConnection!
+}
+
+type StreamCloudcastConnection implements CloudcastConnectionInterface & ConnectionTotalCountInterface {
+  pageInfo: PageInfo!
+  edges: [StreamCloudcastEdge]!
+  totalCount: Int!
+}
+
+type StreamCloudcastEdge implements CloudcastEdgeInterface {
+  cursor: String!
+  node: Cloudcast!
+  repostedBy: String
+}
+
+interface UploadsInterface {
+  uploads(first: Int, last: Int, after: String, before: String, orderBy: CloudcastOrderByEnum, isPublic: Boolean, hasActivePromotions: Boolean): CloudcastWithTotalsConnection!
+}
+
+type CloudcastWithTotalsConnection implements CloudcastConnectionInterface & CloudcastTotalAudioLengthInterface & ConnectionTotalCountInterface {
+  pageInfo: PageInfo!
+  edges: [CloudcastEdge]!
+  totalCount: Int!
+  totalAudioLength: Int
+}
+
+enum CloudcastOrderByEnum {
+  LATEST
+  OLDEST
+  HOT
+  POPULAR
+}
+
+interface ExclusivesInterface {
+  exclusives(first: Int, last: Int, after: String, before: String): ExclusivesConnection!
+}
+
+type ExclusivesConnection implements CloudcastConnectionInterface & CloudcastTotalAudioLengthInterface {
+  pageInfo: PageInfo!
+  edges: [CloudcastEdge]!
+  totalAudioLength: Int
+  isHidden: Boolean
+  totalCount: Int!
+}
+
+type UserConnection implements UserConnectionInterface {
+  pageInfo: PageInfo!
+  edges: [UserEdge]!
+}
+
+interface UserConnectionInterface {
+  pageInfo: PageInfo!
+  edges: [UserEdgeInterface]!
+}
+
+interface UserEdgeInterface {
+  cursor: String!
+  node: User!
+}
+
+type UserEdge implements UserEdgeInterface {
+  cursor: String!
+  node: User!
+}
+
+type LiveStream implements Node {
+  """
+  The ID of the object.
+  """
+  id: ID!
+  owner: User!
+  name: String!
+  description: String!
+  startedAt: DateTime
+  endedAt: DateTime
+  plays: Int!
+  chatMessages(first: Int, last: Int, after: String, before: String): ChatMessageConnection @deprecated(reason: "Use Events instead")
+  price(token: String): PriceInfo @deprecated(reason: "No more ticketed events")
+  viewerHasTicket: Boolean! @deprecated(reason: "No more ticketed events")
+  isTicketedEvent: Boolean! @deprecated(reason: "No more ticketed events")
+  isExclusive: Boolean @deprecated(reason: "Never used")
+  hasSignal: Boolean @deprecated(reason: "Use StreamStatus instead")
+  slug: String @deprecated(reason: "No more ticketed events")
+  scheduledStart: DateTime @deprecated(reason: "No more ticketed events")
+  scheduledEnd: DateTime @deprecated(reason: "No more ticketed events")
+  flyer(width: Int, height: Int, blur: Int): PictureItem
+  dbId: String
+  events(first: Int, last: Int, after: String, before: String): LiveStreamEventConnection
+  primaryTag: Tag
+  """
+  Additional tags (N.B. does not include primaryTag)
+  """
+  secondaryTags: [Tag]
+  streamStatus: LiveStreamState
+  broadcastType: BroadcastType
+  hlsUrl: String
+  dashUrl: String @deprecated(reason: "Use HLS instead")
+  thumbnailUrl: String
+  currentSpectators: Int!
+  loggedInSpectators(first: Int, last: Int, after: String, before: String): UserWithProvidedTotalConnection
+  transcodeLevel: LiveStreamTranscodeLevel
+  cdnProvider: String @deprecated(reason: "Use hls_url directly instead")
+  rtmpConnection: RTMPConnection
+  isUnlisted: Boolean!
+  isTippable: Boolean
+  spectatorLookup(lookup: NameLookup!): [User]
+}
+
+type ChatMessageConnection implements ConnectionTotalCountInterface {
+  totalCount: Int!
+  pageInfo: PageInfo!
+  edges: [ChatMessageEdge]!
+}
+
+type ChatMessageEdge {
+  cursor: String!
+  node: ChatMessage!
+}
+
+type ChatMessage implements Node {
+  """
+  The ID of the object.
+  """
+  id: ID!
+  user: User!
+  liveStream: LiveStream!
+  message: String!
+}
+
+type PriceInfo {
+  currency: String
+  currencySymbol: String
+  base: Int
+  tax: Int
+  total: Int
+}
+
+type PictureItem implements Node {
+  primaryColor(lighten: Int, darken: Int, alpha: Float): String
+  """
+  The ID of the object.
+  """
+  id: ID!
+  isLight: Boolean
+  urlRoot: String!
+}
+
+type LiveStreamEventConnection {
+  pageInfo: PageInfo!
+  edges: [LiveStreamEventEdge]!
+}
+
+type LiveStreamEventEdge {
+  cursor: String!
+  node: LiveStreamEvent!
+}
+
+union LiveStreamEvent = ChatMessage | LiveReaction | ChatBotMessage
+
+type LiveReaction implements Node {
+  """
+  The ID of the object.
+  """
+  id: ID!
+  user: User
+  liveStream: LiveStream!
+  emoji: LiveReactionEmoji!
+  shortKey: String
+  country: LiveReactionCountry
+  anonName: String
+}
+
+"""
+An enumeration.
+"""
+enum LiveReactionEmoji {
+  """
+  Fire
+  """
+  F
+  """
+  Speaker
+  """
+  S
+  """
+  Heart
+  """
+  H
+  """
+  Raise Hands
+  """
+  RH
+  """
+  Heart Eyes
+  """
+  HE
+  """
+  Hundred Points
+  """
+  HP
+  """
+  Musical Notes
+  """
+  MN
+  """
+  Dancing Woman
+  """
+  DW
+  """
+  Ok
+  """
+  OK
+}
+
+"""
+An enumeration.
+"""
+enum LiveReactionCountry {
+  """
+  Afghanistan
+  """
+  AFG
+  """
+  Åland Islands
+  """
+  ALA
+  """
+  Albania
+  """
+  ALB
+  """
+  Algeria
+  """
+  DZA
+  """
+  American Samoa
+  """
+  ASM
+  """
+  Andorra
+  """
+  AND
+  """
+  Angola
+  """
+  AGO
+  """
+  Anguilla
+  """
+  AIA
+  """
+  Antarctica
+  """
+  ATA
+  """
+  Antigua and Barbuda
+  """
+  ATG
+  """
+  Argentina
+  """
+  ARG
+  """
+  Armenia
+  """
+  ARM
+  """
+  Aruba
+  """
+  ABW
+  """
+  Australia
+  """
+  AUS
+  """
+  Austria
+  """
+  AUT
+  """
+  Azerbaijan
+  """
+  AZE
+  """
+  Bahamas
+  """
+  BHS
+  """
+  Bahrain
+  """
+  BHR
+  """
+  Bangladesh
+  """
+  BGD
+  """
+  Barbados
+  """
+  BRB
+  """
+  Belarus
+  """
+  BLR
+  """
+  Belgium
+  """
+  BEL
+  """
+  Belize
+  """
+  BLZ
+  """
+  Benin
+  """
+  BEN
+  """
+  Bermuda
+  """
+  BMU
+  """
+  Bhutan
+  """
+  BTN
+  """
+  Bolivia
+  """
+  BOL
+  """
+  Bonaire, Sint Eustatius and Saba
+  """
+  BES
+  """
+  Bosnia and Herzegovina
+  """
+  BIH
+  """
+  Botswana
+  """
+  BWA
+  """
+  Bouvet Island
+  """
+  BVT
+  """
+  Brazil
+  """
+  BRA
+  """
+  British Indian Ocean Territory
+  """
+  IOT
+  """
+  Brunei Darussalam
+  """
+  BRN
+  """
+  Bulgaria
+  """
+  BGR
+  """
+  Burkina Faso
+  """
+  BFA
+  """
+  Burundi
+  """
+  BDI
+  """
+  Cambodia
+  """
+  KHM
+  """
+  Cameroon
+  """
+  CMR
+  """
+  Canada
+  """
+  CAN
+  """
+  Cape Verde
+  """
+  CPV
+  """
+  Cayman Islands
+  """
+  CYM
+  """
+  Central African Republic
+  """
+  CAF
+  """
+  Chad
+  """
+  TCD
+  """
+  Chile
+  """
+  CHL
+  """
+  China
+  """
+  CHN
+  """
+  Christmas Island
+  """
+  CXR
+  """
+  Cocos (Keeling) Islands
+  """
+  CCK
+  """
+  Colombia
+  """
+  COL
+  """
+  Comoros
+  """
+  COM
+  """
+  Congo
+  """
+  COG
+  """
+  Congo, The Democratic Republic of the
+  """
+  COD
+  """
+  Cook Islands
+  """
+  COK
+  """
+  Costa Rica
+  """
+  CRI
+  """
+  Côte d'Ivoire
+  """
+  CIV
+  """
+  Croatia
+  """
+  HRV
+  """
+  Cuba
+  """
+  CUB
+  """
+  Curaçao
+  """
+  CUW
+  """
+  Cyprus
+  """
+  CYP
+  """
+  Czech Republic
+  """
+  CZE
+  """
+  Denmark
+  """
+  DNK
+  """
+  Djibouti
+  """
+  DJI
+  """
+  Dominica
+  """
+  DMA
+  """
+  Dominican Republic
+  """
+  DOM
+  """
+  Ecuador
+  """
+  ECU
+  """
+  Egypt
+  """
+  EGY
+  """
+  El Salvador
+  """
+  SLV
+  """
+  Equatorial Guinea
+  """
+  GNQ
+  """
+  Eritrea
+  """
+  ERI
+  """
+  Estonia
+  """
+  EST
+  """
+  Ethiopia
+  """
+  ETH
+  """
+  Falkland Islands (Malvinas)
+  """
+  FLK
+  """
+  Faroe Islands
+  """
+  FRO
+  """
+  Fiji
+  """
+  FJI
+  """
+  Finland
+  """
+  FIN
+  """
+  France
+  """
+  FRA
+  """
+  French Guiana
+  """
+  GUF
+  """
+  French Polynesia
+  """
+  PYF
+  """
+  French Southern Territories
+  """
+  ATF
+  """
+  Gabon
+  """
+  GAB
+  """
+  Gambia
+  """
+  GMB
+  """
+  Georgia
+  """
+  GEO
+  """
+  Germany
+  """
+  DEU
+  """
+  Ghana
+  """
+  GHA
+  """
+  Gibraltar
+  """
+  GIB
+  """
+  Greece
+  """
+  GRC
+  """
+  Greenland
+  """
+  GRL
+  """
+  Grenada
+  """
+  GRD
+  """
+  Guadeloupe
+  """
+  GLP
+  """
+  Guam
+  """
+  GUM
+  """
+  Guatemala
+  """
+  GTM
+  """
+  Guernsey
+  """
+  GGY
+  """
+  Guinea
+  """
+  GIN
+  """
+  Guinea-Bissau
+  """
+  GNB
+  """
+  Guyana
+  """
+  GUY
+  """
+  Haiti
+  """
+  HTI
+  """
+  Heard Island and McDonald Islands
+  """
+  HMD
+  """
+  Holy See (Vatican City State)
+  """
+  VAT
+  """
+  Honduras
+  """
+  HND
+  """
+  Hong Kong
+  """
+  HKG
+  """
+  Hungary
+  """
+  HUN
+  """
+  Iceland
+  """
+  ISL
+  """
+  India
+  """
+  IND
+  """
+  Indonesia
+  """
+  IDN
+  """
+  Iran, Islamic Republic of
+  """
+  IRN
+  """
+  Iraq
+  """
+  IRQ
+  """
+  Ireland
+  """
+  IRL
+  """
+  Isle of Man
+  """
+  IMN
+  """
+  Israel
+  """
+  ISR
+  """
+  Italy
+  """
+  ITA
+  """
+  Jamaica
+  """
+  JAM
+  """
+  Japan
+  """
+  JPN
+  """
+  Jersey
+  """
+  JEY
+  """
+  Jordan
+  """
+  JOR
+  """
+  Kazakhstan
+  """
+  KAZ
+  """
+  Kenya
+  """
+  KEN
+  """
+  Kiribati
+  """
+  KIR
+  """
+  Korea, Democratic People's Republic of
+  """
+  PRK
+  """
+  Korea, Republic of
+  """
+  KOR
+  """
+  Kuwait
+  """
+  KWT
+  """
+  Kyrgyzstan
+  """
+  KGZ
+  """
+  Lao People's Democratic Republic
+  """
+  LAO
+  """
+  Latvia
+  """
+  LVA
+  """
+  Lebanon
+  """
+  LBN
+  """
+  Lesotho
+  """
+  LSO
+  """
+  Liberia
+  """
+  LBR
+  """
+  Libya
+  """
+  LBY
+  """
+  Liechtenstein
+  """
+  LIE
+  """
+  Lithuania
+  """
+  LTU
+  """
+  Luxembourg
+  """
+  LUX
+  """
+  Macao
+  """
+  MAC
+  """
+  Macedonia, Republic of
+  """
+  MKD
+  """
+  Madagascar
+  """
+  MDG
+  """
+  Malawi
+  """
+  MWI
+  """
+  Malaysia
+  """
+  MYS
+  """
+  Maldives
+  """
+  MDV
+  """
+  Mali
+  """
+  MLI
+  """
+  Malta
+  """
+  MLT
+  """
+  Marshall Islands
+  """
+  MHL
+  """
+  Martinique
+  """
+  MTQ
+  """
+  Mauritania
+  """
+  MRT
+  """
+  Mauritius
+  """
+  MUS
+  """
+  Mayotte
+  """
+  MYT
+  """
+  Mexico
+  """
+  MEX
+  """
+  Micronesia, Federated States of
+  """
+  FSM
+  """
+  Moldova
+  """
+  MDA
+  """
+  Monaco
+  """
+  MCO
+  """
+  Mongolia
+  """
+  MNG
+  """
+  Montenegro
+  """
+  MNE
+  """
+  Montserrat
+  """
+  MSR
+  """
+  Morocco
+  """
+  MAR
+  """
+  Mozambique
+  """
+  MOZ
+  """
+  Myanmar
+  """
+  MMR
+  """
+  Namibia
+  """
+  NAM
+  """
+  Nauru
+  """
+  NRU
+  """
+  Nepal
+  """
+  NPL
+  """
+  Netherlands
+  """
+  NLD
+  """
+  New Caledonia
+  """
+  NCL
+  """
+  New Zealand
+  """
+  NZL
+  """
+  Nicaragua
+  """
+  NIC
+  """
+  Niger
+  """
+  NER
+  """
+  Nigeria
+  """
+  NGA
+  """
+  Niue
+  """
+  NIU
+  """
+  Norfolk Island
+  """
+  NFK
+  """
+  Northern Mariana Islands
+  """
+  MNP
+  """
+  Norway
+  """
+  NOR
+  """
+  Oman
+  """
+  OMN
+  """
+  Pakistan
+  """
+  PAK
+  """
+  Palau
+  """
+  PLW
+  """
+  Palestine, State of
+  """
+  PSE
+  """
+  Panama
+  """
+  PAN
+  """
+  Papua New Guinea
+  """
+  PNG
+  """
+  Paraguay
+  """
+  PRY
+  """
+  Peru
+  """
+  PER
+  """
+  Philippines
+  """
+  PHL
+  """
+  Pitcairn
+  """
+  PCN
+  """
+  Poland
+  """
+  POL
+  """
+  Portugal
+  """
+  PRT
+  """
+  Puerto Rico
+  """
+  PRI
+  """
+  Qatar
+  """
+  QAT
+  """
+  Réunion
+  """
+  REU
+  """
+  Romania
+  """
+  ROU
+  """
+  Russian Federation
+  """
+  RUS
+  """
+  Rwanda
+  """
+  RWA
+  """
+  Saint Barthélemy
+  """
+  BLM
+  """
+  Saint Helena, Ascension and Tristan da Cunha
+  """
+  SHN
+  """
+  Saint Kitts and Nevis
+  """
+  KNA
+  """
+  Saint Lucia
+  """
+  LCA
+  """
+  Saint Martin (French part)
+  """
+  MAF
+  """
+  Saint Pierre and Miquelon
+  """
+  SPM
+  """
+  Saint Vincent and the Grenadines
+  """
+  VCT
+  """
+  Samoa
+  """
+  WSM
+  """
+  San Marino
+  """
+  SMR
+  """
+  Sao Tome and Principe
+  """
+  STP
+  """
+  Saudi Arabia
+  """
+  SAU
+  """
+  Senegal
+  """
+  SEN
+  """
+  Serbia
+  """
+  SRB
+  """
+  Seychelles
+  """
+  SYC
+  """
+  Sierra Leone
+  """
+  SLE
+  """
+  Singapore
+  """
+  SGP
+  """
+  Sint Maarten (Dutch part)
+  """
+  SXM
+  """
+  Slovakia
+  """
+  SVK
+  """
+  Slovenia
+  """
+  SVN
+  """
+  Solomon Islands
+  """
+  SLB
+  """
+  Somalia
+  """
+  SOM
+  """
+  South Africa
+  """
+  ZAF
+  """
+  South Georgia and the South Sandwich Islands
+  """
+  SGS
+  """
+  Spain
+  """
+  ESP
+  """
+  Sri Lanka
+  """
+  LKA
+  """
+  Sudan
+  """
+  SDN
+  """
+  Suriname
+  """
+  SUR
+  """
+  South Sudan
+  """
+  SSD
+  """
+  Svalbard and Jan Mayen
+  """
+  SJM
+  """
+  Swaziland
+  """
+  SWZ
+  """
+  Sweden
+  """
+  SWE
+  """
+  Switzerland
+  """
+  CHE
+  """
+  Syrian Arab Republic
+  """
+  SYR
+  """
+  Taiwan
+  """
+  TWN
+  """
+  Tajikistan
+  """
+  TJK
+  """
+  Tanzania, United Republic of
+  """
+  TZA
+  """
+  Thailand
+  """
+  THA
+  """
+  Timor-Leste
+  """
+  TLS
+  """
+  Togo
+  """
+  TGO
+  """
+  Tokelau
+  """
+  TKL
+  """
+  Tonga
+  """
+  TON
+  """
+  Trinidad and Tobago
+  """
+  TTO
+  """
+  Tunisia
+  """
+  TUN
+  """
+  Turkey
+  """
+  TUR
+  """
+  Turkmenistan
+  """
+  TKM
+  """
+  Turks and Caicos Islands
+  """
+  TCA
+  """
+  Tuvalu
+  """
+  TUV
+  """
+  Uganda
+  """
+  UGA
+  """
+  Ukraine
+  """
+  UKR
+  """
+  United Arab Emirates
+  """
+  ARE
+  """
+  United Kingdom
+  """
+  GBR
+  """
+  United States
+  """
+  USA
+  """
+  United States Minor Outlying Islands
+  """
+  UMI
+  """
+  Uruguay
+  """
+  URY
+  """
+  Uzbekistan
+  """
+  UZB
+  """
+  Vanuatu
+  """
+  VUT
+  """
+  Venezuela
+  """
+  VEN
+  """
+  Vietnam
+  """
+  VNM
+  """
+  Virgin Islands, British
+  """
+  VGB
+  """
+  Virgin Islands, U.S.
+  """
+  VIR
+  """
+  Wallis and Futuna
+  """
+  WLF
+  """
+  Western Sahara
+  """
+  ESH
+  """
+  Yemen
+  """
+  YEM
+  """
+  Zambia
+  """
+  ZMB
+  """
+  Zimbabwe
+  """
+  ZWE
+}
+
+type ChatBotMessage implements Node {
+  """
+  The ID of the object.
+  """
+  id: ID!
+  liveStream: LiveStream!
+  messageType: ChatBotMessageMessageType
+  message: String
+}
+
+"""
+An enumeration.
+"""
+enum ChatBotMessageMessageType {
+  """
+  Share 10
+  """
+  SHARE_10
+  """
+  Share 100
+  """
+  SHARE_100
+  """
+  Share 1000
+  """
+  SHARE_1000
+}
+
+type Tag implements Node {
+  slug: String!
+  """
+  The ID of the object.
+  """
+  id: ID!
+  name: String
+  isChart: Boolean
+  isCategory: Boolean!
+  dbId: String
+}
+
+"""
+An enumeration.
+"""
+enum LiveStreamState {
+  LIVE
+  ENDED
+}
+
+"""
+An enumeration.
+"""
+enum BroadcastType {
+  RTMP
+  STUDIO
+}
+
+type UserWithProvidedTotalConnection implements UserConnectionInterface & UserConnectionTotalCountInterface {
+  pageInfo: PageInfo!
+  edges: [UserEdge]!
+  totalCount: Int!
+}
+
+interface UserConnectionTotalCountInterface {
+  totalCount: Int!
+}
+
+"""
+An enumeration.
+"""
+enum LiveStreamTranscodeLevel {
+  LOW
+  MID
+  HIGH
+  COPY
+  TICKETED_EVENT
+}
+
+type RTMPConnection {
+  sources: RTMPSources
+  streamCluster: String
+  streamPod: String
+  streamServerUrl: String
+  streamOriginUrl: String
+  streamCdnUrl: String
+}
+
+type RTMPSources {
+  audio: RTMPAudioInfo
+  video: RTMPVideoInfo
+}
+
+type RTMPAudioInfo {
+  bitrate: Int
+  codecName: String
+  channels: Int
+}
+
+type RTMPVideoInfo {
+  bitrate: Int
+  codecName: String
+  channels: Int
+  fps: Int
+  height: Int
+  width: Int
+}
+
+input NameLookup {
+  name: String!
+}
+
+type StripeAccount implements Node {
+  chargesEnabled: Boolean!
+  """
+  The ID of the object.
+  """
+  id: ID!
+}
+
+type PodcastConnection implements ConnectionTotalCountInterface & PodcastConnectionInterface {
+  pageInfo: PageInfo!
+  edges: [PodcastEdge]!
+  totalCount: Int!
+}
+
+interface PodcastConnectionInterface {
+  pageInfo: PageInfo!
+  edges: [PodcastEdgeInterface]!
+}
+
+interface PodcastEdgeInterface {
+  cursor: String!
+  node: Podcast!
+}
+
+type Podcast {
+  url: String!
+}
+
+type PodcastEdge implements PodcastEdgeInterface {
+  cursor: String!
+  node: Podcast!
+}
+
+type PostConnection implements ConnectionTotalCountInterface & PostConnectionInterface {
+  pageInfo: PageInfo!
+  edges: [PostEdge]!
+  totalCount: Int!
+}
+
+interface PostConnectionInterface {
+  pageInfo: PageInfo!
+  edges: [PostEdgeInterface]!
+}
+
+interface PostEdgeInterface {
+  cursor: String!
+  node: Post!
+}
+
+type Post implements Node {
+  created: DateTime!
+  modified: DateTime
+  owner: User!
+  title: String!
+  body: String
+  slug: String!
+  coverPicture: PictureItem
+  status: PostStatusEnum!
+  publishDate: DateTime
+  targetAudience: PostTargetAudienceEnum!
+  """
+  The ID of the object.
+  """
+  id: ID!
+  comments(first: Int, last: Int, after: String, before: String): CommentWithTotalConnection!
+  excerpt: String!
+  isLocked: Boolean!
+  isExclusive: Boolean!
+  hasRead: Boolean!
+  pageColor: String
+  readCount: Int!
+}
+
+enum PostStatusEnum {
+  STATUS_PUBLIC
+  STATUS_DRAFT
+}
+
+enum PostTargetAudienceEnum {
+  TARGET_AUDIENCE_PUBLIC
+  TARGET_AUDIENCE_SUBSCRIBERS
+}
+
+type CommentWithTotalConnection implements CommentConnectionInterface {
+  pageInfo: PageInfo!
+  edges: [CommentEdge]!
+  totalCount: Int!
+  commentsDisabled: Boolean!
+}
+
+interface CommentConnectionInterface {
+  pageInfo: PageInfo!
+  edges: [CommentEdge]!
+}
+
+type CommentEdge {
+  cursor: String!
+  node: Comment!
+}
+
+type Comment implements Node {
+  """
+  The ID of the object.
+  """
+  id: ID!
+  comment(showDeleted: Boolean): String!
+  user(showDeleted: Boolean): User
+  parent: Comment
+  created(showDeleted: Boolean): DateTime
+  isDeleted: Boolean
+  isFromSelectSubscriber: Boolean!
+  canDelete: Boolean
+  canBlock: Boolean
+  children(first: Int, last: Int, after: String, before: String): CommentConnection
+  commentObject: CommentObjectUnion!
+  isReply: Boolean
+  isSpam: Boolean
+  createdIpAddress: String
+  url: String
+}
+
+type CommentConnection implements CommentConnectionInterface {
+  pageInfo: PageInfo!
+  edges: [CommentEdge]!
+}
+
+union CommentObjectUnion = Cloudcast | User | Post
+
+type PostEdge implements PostEdgeInterface {
+  cursor: String!
+  node: Post!
+}
+
+enum PostVisibility {
+  ALL
+  PUBLIC
+}
+
+input PostOrder {
+  direction: OrderDirection
+  field: PostOrderField
+}
+
+enum OrderDirection {
+  ASC
+  DESC
+}
+
+enum PostOrderField {
+  MODIFIED
+  COMMENTS_COUNT
+  READ_COUNT
+  STATUS
+  PUBLISH_DATE
+}
+
+"""
+The instance is a User.
+
+NOTE: subscriptions is setup as a graphene List because in the future users will be able to subscribe to multiple
+      subscription types. Right now each user can be associated with at most 1 subscription.
+"""
+type AccountSubscriber {
+  card: Card
+  hasUsedTrial: Boolean
+  planInfo(accountSubscriptionType: AccountSubscriptionInfoEnum!, countryCode2: String): [PlanInfo!]!
+  accountSubscriptions(filterBy: AccountSubscriberFilterEnum = """"all""""): [AccountSubscription!]
+  stripeId: String
+}
+
+type Card {
+  lastFour: String!
+  expirationMonth: String!
+  expirationYear: String!
+  cardType: CardTypeEnum!
+  country: String!
+  postCode: String!
+}
+
+enum CardTypeEnum {
+  AMERICAN_EXPRESS
+  MASTERCARD
+  VISA
+  DISCOVER
+  UNION_PAY
+  JCB
+  DINERS_CLUB
+  CARTES_BANCAIRES
+}
+
+type PlanInfo {
+  amount: Int!
+  currencySymbol: String!
+  description: String!
+  displayAmount: String!
+  displayName: String!
+  interval: String!
+  name: String!
+  stripeId: String!
+  minimumQuantity: Int!
+}
+
+enum AccountSubscriptionInfoEnum {
+  PRO
+  PREMIUM
+}
+
+union AccountSubscription = PremiumAccountSubscription | ProAccountSubscription | ChannelAccountSubscription
+
+type PremiumAccountSubscription implements AccountSubscriptionInterface {
+  discount: Discount
+  plan: AccountSubscriptionPlan
+  trialEndingAt: DateTime
+}
+
+interface AccountSubscriptionInterface {
+  discount: Discount
+  plan: AccountSubscriptionPlan
+  trialEndingAt: DateTime
+}
+
+type Discount {
+  endingAt: DateTime
+  percentageOff: Int
+}
+
+type AccountSubscriptionPlan implements Node {
+  """
+  The ID of the object.
+  """
+  id: ID!
+  amount: Int!
+  displayAmount: String!
+  currency: String!
+  description: String!
+  endingAt: DateTime
+  interval: String!
+  name: String!
+  stripeId: String!
+  showInAppConfirmation: Boolean!
+  nextPaymentDate: DateTime
+  uploader: User
+  quantity: Int!
+}
+
+type ProAccountSubscription implements AccountSubscriptionInterface {
+  discount: Discount
+  plan: AccountSubscriptionPlan
+  trialEndingAt: DateTime
+}
+
+type ChannelAccountSubscription implements AccountSubscriptionInterface {
+  discount: Discount
+  plan: AccountSubscriptionPlan
+  trialEndingAt: DateTime
+}
+
+enum AccountSubscriberFilterEnum {
+  ALL
+  ACTIVE
+  ENDED
+}
+
+type CommentQuerySetWithTotalConnection implements CommentConnectionInterface {
+  pageInfo: PageInfo!
+  edges: [CommentEdge]!
+  totalCount: Int!
+}
+
+type Token {
+  consumer: Consumer!
+  value: String!
+}
+
+type Consumer implements Node & PictureFieldInterface {
+  name: String!
+  description: String!
+  website: String!
+  organisationName: String
+  organisationWebsite: String
+  official: Boolean!
+  attribution: Boolean!
+  """
+  The ID of the object.
+  """
+  id: ID!
+  picture(width: Int, height: Int, blur: Int): Picture
+  numberOfUsers: Int
+  url: String
+  clientId: String
+  clientSecret: String
+}
+
+type LiveConfig {
+  streamKey: String
+  rtmpServerUrl: String
+  name: String
+  description: String
+  unlisted: Boolean
+  primaryTag: String
+  secondaryTags: [String]
+  broadcastType: String
+  facebookStreamKey: String
+  isFacebookStreamingEnabled: Boolean
+  twitchStreamKey: String
+  isTwitchStreamingEnabled: Boolean
+  youtubeStreamKey: String
+  isYoutubeStreamingEnabled: Boolean
+}
+
+type StaffPromotedUser implements Node {
+  isActive: Boolean!
+  """
+  The ID of the object.
+  """
+  id: ID!
+  startedAt: DateTime
+  dbId: String
+  expirationDate: DateTime
+}
+
+type StaffPromotedCloudcast implements Node {
+  cloudcast: Cloudcast
+  endedAt: DateTime
+  isActive: Boolean!
+  plays: Int!
+  """
+  The ID of the object.
+  """
+  id: ID!
+  startedAt: DateTime
+  expirationDate: DateTime
+  dbId: String
+  targetPlays: Int
+}
+
+type FutureStaffPromotedCloudcast implements Node {
+  """
+  The ID of the object.
+  """
+  id: ID!
+  expirationDate: DateTime
+  dbId: String
+  targetPlays: Int
+}
+
+type ManagedAccount {
+  manager: String!
+  added: DateTime
+}
+
+"""
+`instance` is a UserStatsRootInstance
+"""
+type UserStats implements Stats {
+  comments: StatsType!
+  favorites: StatsType!
+  minutes: StatsType!
+  plays: StatsType!
+  reposts: StatsType!
+  followers: StatsFollowers
+}
+
+"""
+`instance` is a StatsRootInstance.
+"""
+interface Stats {
+  comments: StatsType!
+  favorites: StatsType!
+  minutes: StatsType!
+  plays: StatsType!
+  reposts: StatsType!
+}
+
+type StatsType implements StatTypesInterface & StatsHistogramInterface {
+  source(first: Int!): [StatsSource]
+  sourceDetail(first: Int!, source: String!): [StatsSourceDetail]
+  platform(first: Int!): [StatsPlatform]
+  country(first: Int!): [StatsCountry]
+  city(first: Int!): [StatsCity]
+  topUsers(first: Int!): [StatsTopUsers]
+  largestUsers(first: Int!): [StatsLargestUsers]
+  days: [StatsDay]
+  totalCount: Int!
+  uploads: [Cloudcast]
+}
+
+"""
+`instance` is a StatsTypeInstance
+"""
+interface StatTypesInterface {
+  source(first: Int!): [StatsSource]
+  sourceDetail(first: Int!, source: String!): [StatsSourceDetail]
+  platform(first: Int!): [StatsPlatform]
+  country(first: Int!): [StatsCountry]
+  city(first: Int!): [StatsCity]
+  topUsers(first: Int!): [StatsTopUsers]
+  largestUsers(first: Int!): [StatsLargestUsers]
+}
+
+"""
+`instance` is a StatsTypeInstance (with additional `source` and `count` attrs)
+"""
+type StatsSource {
+  source: String
+  count: Int
+  sourceDetail(first: Int!): [StatsSourceDetail]
+}
+
+type StatsSourceDetail {
+  sourceDetail: String
+  count: Int
+}
+
+type StatsPlatform {
+  platform: String
+  count: Int
+}
+
+type StatsCountry {
+  country: String
+  count: Int
+}
+
+type StatsCity {
+  country: String
+  city: String
+  count: Int
+}
+
+type StatsTopUsers {
+  user: User
+  count: Int
+}
+
+type StatsLargestUsers {
+  user: User
+}
+
+"""
+`instance` is a StatsTypeInstance
+"""
+interface StatsHistogramInterface {
+  days: [StatsDay]
+  totalCount: Int!
+  uploads: [Cloudcast]
+}
+
+type StatsDay {
+  day: String!
+  count: Int!
+}
+
+"""
+`instance` is a StatsTypeInstance with a UserStatsRootInstance `stats_root_instance`
+"""
+type StatsFollowers implements StatsHistogramInterface {
+  days: [StatsDay]
+  totalCount: Int!
+  uploads: [Cloudcast]
+  initialCount: Int
+}
+
+"""
+The `Date` scalar type represents a Date
+value as specified by
+[iso8601](https://en.wikipedia.org/wiki/ISO_8601).
+"""
+scalar Date
+
+type PlaylistConnection implements ConnectionTotalCountInterface {
+  totalCount: Int!
+  pageInfo: PageInfo!
+  edges: [PlaylistEdge]!
+}
+
+type PlaylistEdge {
+  cursor: String!
+  node: Playlist!
+}
+
+type Playlist implements Node & PictureFieldInterface {
+  name: String!
+  slug: String!
+  description: String
+  """
+  The ID of the object.
+  """
+  id: ID!
+  picture(width: Int, height: Int, blur: Int): Picture
+  items(first: Int, last: Int, after: String, before: String): PlaylistItemConnection!
+  color: String
+  containsCloudcast(id: ID): Boolean
+  owner: User!
+  dbId: String
+  key: String @deprecated(reason: "This field is now deprecated")
+}
+
+type PlaylistItemConnection implements ConnectionTotalCountInterface {
+  totalCount: Int!
+  pageInfo: PageInfo!
+  edges: [PlaylistItemEdge!]!
+  totalAudioLength: Int
+}
+
+type PlaylistItemEdge {
+  cursor: String!
+  node: PlaylistItem!
+}
+
+type PlaylistItem implements Node {
+  """
+  The ID of the object.
+  """
+  id: ID!
+  cloudcast: Cloudcast!
+}
+
+enum PlaylistsOrderByEnum {
+  LAST_MODIFIED
+  CREATED
+  ALPHABETICAL
+}
+
+type FollowersConnection implements UserConnectionInterface & UserConnectionTotalCountInterface {
+  pageInfo: PageInfo!
+  edges: [FollowerEdge]!
+  totalCount: Int!
+}
+
+type FollowerEdge implements UserEdgeInterface {
+  cursor: String!
+  node: User!
+}
+
+type FollowingsConnection implements UserConnectionInterface & UserConnectionTotalCountInterface {
+  pageInfo: PageInfo!
+  edges: [FollowedEdge]!
+  totalCount: Int!
+}
+
+type FollowedEdge implements UserEdgeInterface {
+  cursor: String!
+  node: User!
+}
+
+enum FollowingsFilterEnum {
+  ALL
+  SHARED
+}
+
+enum FollowingsOrderByEnum {
+  PK_DESC
+  MUTUAL_ADD
+}
+
+"""
+Instance is a ProfileNavigationInstance namedtuple containing a user and the response from get_profile_navigation
+"""
+type ProfileNavigation {
+  menuItems: [ProfileNavigationMenuItem!]!
+  defaultView: DefaultView
+}
+
+"""
+Instance is a menu item tuple returned from get_profile_navigation
+"""
+union ProfileNavigationMenuItem = StreamNavigationItem | UploadsNavigationItem | FavoritesNavigationItem | ListensNavigationItem | PlaylistNavigationItem | PostsNavigationItem
+
+type StreamNavigationItem implements NavigationItemInterface {
+  inDropdown: Boolean!
+}
+
+interface NavigationItemInterface {
+  inDropdown: Boolean!
+}
+
+type UploadsNavigationItem implements NavigationItemInterface {
+  inDropdown: Boolean!
+}
+
+type FavoritesNavigationItem implements NavigationItemInterface & HideableNavigationItemInterface {
+  inDropdown: Boolean!
+  hidden: Boolean
+}
+
+interface HideableNavigationItemInterface {
+  hidden: Boolean
+}
+
+type ListensNavigationItem implements NavigationItemInterface & HideableNavigationItemInterface {
+  inDropdown: Boolean!
+  hidden: Boolean
+}
+
+type PlaylistNavigationItem implements NavigationItemInterface {
+  inDropdown: Boolean!
+  count: Int
+  playlist: Playlist
+}
+
+type PostsNavigationItem implements NavigationItemInterface {
+  inDropdown: Boolean!
+}
+
+"""
+Instance is a ProfileNavigationInstance namedtuple containing a user and the response from get_profile_navigation
+"""
+union DefaultView = FavoritesView | ListeningHistoryView | PlaylistView | StreamView | UploadsView | PostsView
+
+type FavoritesView implements FavoritesInterface {
+  favorites(first: Int, last: Int, after: String, before: String): FavoritesConnection!
+}
+
+type ListeningHistoryView implements ListeningHistoryInterface {
+  listeningHistory(first: Int, last: Int, after: String, before: String): ListenConnection!
+}
+
+type PlaylistView {
+  count: Int
+  playlist: Playlist
+}
+
+type StreamView implements StreamInterface {
+  stream(first: Int, last: Int, after: String, before: String): StreamCloudcastConnection!
+}
+
+type UploadsView implements UploadsInterface {
+  uploads(first: Int, last: Int, after: String, before: String, orderBy: CloudcastOrderByEnum, isPublic: Boolean, hasActivePromotions: Boolean): CloudcastWithTotalsConnection!
+}
+
+type PostsView implements PostsInterface {
+  posts(first: Int, last: Int, after: String, before: String): PostConnection!
+}
+
+interface PostsInterface {
+  posts(first: Int, last: Int, after: String, before: String): PostConnection!
+}
+
+type BrandedProfile {
+  backgroundTiled: Boolean!
+  backgroundClickUrl: String
+  hasBackgroundPicture: Boolean
+  backgroundPicture(width: Int, height: Int): Picture
+  backgroundColor: String
+}
+
+type FacebookFanPage {
+  facebookPageName: String!
+  facebookPageId: String
+}
+
+type SoundcloudAccount {
+  username: String
+  displayName: String
+  sounds(first: Int, last: Int, after: String, before: String): SoundcloudSoundsConnection
+}
+
+type SoundcloudSoundsConnection implements SoundcloudSoundConnectionInterface {
+  pageInfo: PageInfo!
+  edges: [SoundcloudSoundEdge]!
+}
+
+interface SoundcloudSoundConnectionInterface {
+  pageInfo: PageInfo!
+  edges: [SoundcloudSoundEdgeInterface]!
+}
+
+interface SoundcloudSoundEdgeInterface {
+  cursor: String!
+  node: SoundcloudSound!
+}
+
+type SoundcloudSound implements Node {
+  """
+  The ID of the object.
+  """
+  id: ID!
+  name: String
+  duration: Int
+  public: Boolean
+  publishedAt: DateTime
+  disable: Boolean
+}
+
+type SoundcloudSoundEdge implements SoundcloudSoundEdgeInterface {
+  cursor: String!
+  node: SoundcloudSound!
+}
+
+type TwitterAccount {
+  username: String!
+  postUpload: Boolean
+  postFavorite: Boolean
+  postListen: Boolean
+  postCloudcastComment: Boolean
+  postProfileComment: Boolean
+}
+
+type SelectAccount {
+  formattedBalance: String!
+  formattedTotalEarningsPaid: String!
+  subscribers(first: Int, last: Int, after: String, before: String, orderBy: SelectSubscriptionsOrderByEnum): SelectSubscriptionItemWithTotalsConnection
+  upsell: SelectUpsell
+}
+
+type SelectSubscriptionItemWithTotalsConnection implements ConnectionTotalCountInterface & SelectSubscriptionItemConnectionInterface {
+  pageInfo: PageInfo!
+  edges: [SelectSubscriptionItemEdge]!
+  totalCount: Int!
+}
+
+interface SelectSubscriptionItemConnectionInterface {
+  pageInfo: PageInfo!
+  edges: [SelectSubscriptionItemEdgeInterface]!
+}
+
+interface SelectSubscriptionItemEdgeInterface {
+  cursor: String!
+  node: SelectSubscriptionItem!
+}
+
+"""
+A separate object from account_subscriptions intended for select
+users to query their subscribers. Should be available for staff or is_viewer.
+This should be the basis for the select creator dashboard.
+The instance here is a SubscriptionPlanItem.
+"""
+type SelectSubscriptionItem implements Node {
+  """
+  The ID of the object.
+  """
+  id: ID!
+  subscriber: User
+  amount: Int!
+  currency: String!
+  created: String!
+  displayAmount: String!
+  formattedTotalSpend: String!
+  location: String
+}
+
+type SelectSubscriptionItemEdge implements SelectSubscriptionItemEdgeInterface {
+  cursor: String!
+  node: SelectSubscriptionItem!
+}
+
+enum SelectSubscriptionsOrderByEnum {
+  TOP
+  LATEST
+  OLDEST
+  LOWEST
+  LOCALPHA
+  LOCALPHAREV
+  ALPHA
+  ALPHAREV
+  TOTAL_TOP
+  TOTAL_LOWEST
+}
+
+type SelectUpsell {
+  user: User!
+  text: String!
+  completionText: String!
+  coverImage: String!
+  """
+  Amount in cents, not dollars!
+  """
+  minUsd: Int!
+  """
+  Amount in pence, not pounds!
+  """
+  minGbp: Int!
+  """
+  Amount in cents, not euros!
+  """
+  minEur: Int!
+  primaryCategory: CategoryChoiceEnum
+  secondaryCategory: CategoryChoiceEnum
+  isPublic: Boolean!
+  planInfo: PlanInfo!
+  contactEmail: String
+  minQuantity: Int
+  payoutCurrency: CurrencyChoice
+  categoriesLabel: String!
+  valuePropsOffered: [String]
+}
+
+"""
+An enumeration.
+"""
+enum CategoryChoiceEnum {
+  AMBIENT
+  BASS
+  BEATS
+  CHILLOUT
+  CLASSICAL
+  DEEP_HOUSE
+  DRUM_BASS
+  DUB
+  DUBSTEP
+  EDM
+  ELECTRONICA
+  FUNK
+  GARAGE
+  HIP_HOP
+  HOUSE
+  INDIE
+  JAZZ
+  POP
+  RAP
+  REGGAE
+  RB
+  ROCK
+  SOUL
+  TECH_HOUSE
+  TECHNO
+  TRANCE
+  TRAP
+  WORLD
+  NONE
+}
+
+enum CurrencyChoice {
+  GBP
+  USD
+  EUR
+}
+
+type TipWithTotalsConnection implements ConnectionTotalCountInterface & TipConnectionInterface {
+  pageInfo: PageInfo!
+  edges: [TipEdge]!
+  totalCount: Int!
+}
+
+interface TipConnectionInterface {
+  pageInfo: PageInfo!
+  edges: [TipEdgeInterface]!
+}
+
+interface TipEdgeInterface {
+  cursor: String!
+  node: Tip!
+}
+
+"""
+The representation of a Tip object.
+"""
+type Tip implements Node {
+  created: DateTime!
+  """
+  The ID of the object.
+  """
+  id: ID!
+  user: User!
+  amount: Int!
+  currency: TipCurrency!
+  message: String
+  currencySymbol: String!
+  tipper: User!
+  source: TipSourceObjectUnion!
+}
+
+"""
+An enumeration.
+"""
+enum TipCurrency {
+  """
+  USD
+  """
+  USD
+  """
+  GBP
+  """
+  GBP
+  """
+  EUR
+  """
+  EUR
+}
+
+union TipSourceObjectUnion = Cloudcast | User | LiveStream
+
+type TipEdge implements TipEdgeInterface {
+  cursor: String!
+  node: Tip!
+}
+
+type FeedItemConnection {
+  pageInfo: PageInfo!
+  edges: [FeedItemEdge]!
+}
+
+type FeedItemEdge {
+  cursor: String!
+  node: FeedItem!
+}
+
+union FeedItem = RepostFeedItem | FavoriteFeedItem | UploadFeedItem | NoLongerExclusiveFeedItem | ListenFeedItem | LikeFeedItem | CommentFeedItem | TweetFeedItem | PromotedFeedItem | ShareFeedItem
+
+type RepostFeedItem implements Node & FeedItemWithCloudcastInterface {
+  """
+  The ID of the object.
+  """
+  id: ID!
+  cloudcast: Cloudcast!
+  user: User
+  created: DateTime
+}
+
+interface FeedItemWithCloudcastInterface {
+  cloudcast: Cloudcast!
+  user: User
+  created: DateTime
+}
+
+type FavoriteFeedItem implements Node & FeedItemWithCloudcastInterface {
+  """
+  The ID of the object.
+  """
+  id: ID!
+  cloudcast: Cloudcast!
+  user: User
+  created: DateTime
+}
+
+type UploadFeedItem implements Node & FeedItemWithCloudcastInterface {
+  """
+  The ID of the object.
+  """
+  id: ID!
+  cloudcast: Cloudcast!
+  user: User
+  created: DateTime
+}
+
+type NoLongerExclusiveFeedItem implements Node & FeedItemWithCloudcastInterface {
+  """
+  The ID of the object.
+  """
+  id: ID!
+  cloudcast: Cloudcast!
+  user: User
+  created: DateTime
+}
+
+type ListenFeedItem implements Node & FeedItemWithCloudcastInterface {
+  """
+  The ID of the object.
+  """
+  id: ID!
+  cloudcast: Cloudcast!
+  user: User
+  created: DateTime
+  attribution: Consumer
+}
+
+type LikeFeedItem implements Node & FeedItemWithCloudcastInterface {
+  """
+  The ID of the object.
+  """
+  id: ID!
+  cloudcast: Cloudcast!
+  user: User
+  created: DateTime
+}
+
+type CommentFeedItem implements Node & FeedItemWithCloudcastInterface {
+  """
+  The ID of the object.
+  """
+  id: ID!
+  cloudcast: Cloudcast!
+  user: User
+  created: DateTime
+  comment: String
+}
+
+type TweetFeedItem implements Node & FeedItemWithCloudcastInterface {
+  """
+  The ID of the object.
+  """
+  id: ID!
+  cloudcast: Cloudcast!
+  user: User
+  created: DateTime
+  tweet: String
+}
+
+type PromotedFeedItem implements Node & FeedItemWithCloudcastInterface {
+  """
+  The ID of the object.
+  """
+  id: ID!
+  cloudcast: Cloudcast!
+  user: User
+  created: DateTime
+  promotionId: Int! @deprecated(reason: "IDs are now bigInts. Use promotion_relay_id instead")
+  promotionRelayId: ID!
+  brandName: String!
+  brandLink: String
+  brandImage(width: Int, height: Int): Picture
+}
+
+type ShareFeedItem implements Node & FeedItemWithCloudcastInterface {
+  """
+  The ID of the object.
+  """
+  id: ID!
+  cloudcast: Cloudcast!
+  user: User
+  created: DateTime
+}
+
+type NotificationConnection {
+  pageInfo: PageInfo!
+  edges: [NotificationEdge]!
+  unreadCount: Int!
+}
+
+type NotificationEdge {
+  cursor: String!
+  node: Notification!
+}
+
+union Notification = PlaylistItemNotification | FollowNotification | CommentReplyNotification | CommentMentionNotification | RepostNotification | FavoriteNotification | ProfileCommentNotification | CloudcastCommentNotification | PostNotification | TipNotification | CommentNotification
+
+type PlaylistItemNotification implements Node & NotificationBase {
+  created: DateTime!
+  noticeTypeId: Int!
+  """
+  The ID of the object.
+  """
+  id: ID!
+  hasBeenViewed: Boolean
+  playlist: Playlist!
+  cloudcast: Cloudcast!
+}
+
+interface NotificationBase {
+  """
+  The ID of the object.
+  """
+  id: ID!
+  hasBeenViewed: Boolean
+}
+
+type FollowNotification implements Node & NotificationBase {
+  created: DateTime!
+  noticeTypeId: Int!
+  """
+  The ID of the object.
+  """
+  id: ID!
+  hasBeenViewed: Boolean
+  follower: User!
+}
+
+type CommentReplyNotification implements Node & NotificationBase & CommentNotificationInterface {
+  created: DateTime!
+  noticeTypeId: Int!
+  """
+  The ID of the object.
+  """
+  id: ID!
+  hasBeenViewed: Boolean
+  comment: Comment!
+}
+
+interface CommentNotificationInterface {
+  comment: Comment!
+}
+
+type CommentMentionNotification implements Node & NotificationBase & CommentNotificationInterface {
+  created: DateTime!
+  noticeTypeId: Int!
+  """
+  The ID of the object.
+  """
+  id: ID!
+  hasBeenViewed: Boolean
+  comment: Comment!
+}
+
+type RepostNotification implements Node & NotificationBase {
+  created: DateTime!
+  noticeTypeId: Int!
+  """
+  The ID of the object.
+  """
+  id: ID!
+  hasBeenViewed: Boolean
+  user: User!
+  cloudcast: Cloudcast!
+}
+
+type FavoriteNotification implements Node & NotificationBase {
+  created: DateTime!
+  noticeTypeId: Int!
+  """
+  The ID of the object.
+  """
+  id: ID!
+  hasBeenViewed: Boolean
+  user: User!
+  cloudcast: Cloudcast!
+}
+
+type ProfileCommentNotification implements Node & NotificationBase & CommentNotificationInterface {
+  created: DateTime!
+  noticeTypeId: Int!
+  """
+  The ID of the object.
+  """
+  id: ID!
+  hasBeenViewed: Boolean
+  comment: Comment!
+}
+
+type CloudcastCommentNotification implements Node & NotificationBase & CommentNotificationInterface {
+  created: DateTime!
+  noticeTypeId: Int!
+  """
+  The ID of the object.
+  """
+  id: ID!
+  hasBeenViewed: Boolean
+  comment: Comment!
+}
+
+type PostNotification implements Node & NotificationBase {
+  created: DateTime!
+  noticeTypeId: Int!
+  """
+  The ID of the object.
+  """
+  id: ID!
+  hasBeenViewed: Boolean
+  post: Post!
+}
+
+type TipNotification implements Node & NotificationBase {
+  created: DateTime!
+  noticeTypeId: Int!
+  """
+  The ID of the object.
+  """
+  id: ID!
+  hasBeenViewed: Boolean
+  tip: Tip!
+}
+
+type CommentNotification implements Node & NotificationBase & CommentNotificationInterface {
+  created: DateTime!
+  noticeTypeId: Int!
+  """
+  The ID of the object.
+  """
+  id: ID!
+  hasBeenViewed: Boolean
+  comment: Comment!
+}
+
+type UploadNotificationConnection implements CloudcastConnectionInterface {
+  pageInfo: PageInfo!
+  edges: [UploadNotificationEdge]!
+  unreadCount: Int!
+}
+
+type UploadNotificationEdge implements CloudcastEdgeInterface {
+  cursor: String!
+  node: Cloudcast!
+  hasBeenViewed: Boolean
+}
+
+type ConsumerConnection {
+  pageInfo: PageInfo!
+  edges: [ConsumerEdge]!
+}
+
+type ConsumerEdge {
+  cursor: String!
+  node: Consumer!
+}
+
+enum ConsumerStatusEnum {
+  PENDING
+  ACCEPTED
+  CANCELLED
+  REJECTED
+}
+
+type RegisteredDevice implements Node {
+  osName: String
+  osVersion: String
+  hasDownloads: Boolean!
+  pushNotificationsEnabled: Boolean!
+  """
+  The ID of the object.
+  """
+  id: ID!
+  notificationSettings: DeviceNotificationSettings
+  name: String
+  model: String
+}
+
+"""
+Instance is a registered device object.
+
+The fields bellow must match our notice_types.
+"""
+type DeviceNotificationSettings {
+  newUpload: NotificationSettingEnum
+  newFollower: NotificationSettingEnum
+  newFavorite: NotificationSettingEnum
+  newLiveStream: NotificationSettingEnum
+  newPost: NotificationSettingEnum
+}
+
+enum NotificationSettingEnum {
+  ON
+  OFF
+}
+
+type StreamInfo {
+  dashUrl: String
+  hlsUrl: String
+  url: String
+  uuid: String!
+  hash: String!
+  timestamperUrl: String @deprecated(reason: "Use url instead")
+}
+
+enum DownloadRestrictedReasonEnum {
+  MECHANICAL_RIGHTS
+  NOT_PLAYABLE
+  NOT_SUBSCRIBED
+}
+
+"""
+`instance` is a CloudcastStatsRootInstance
+"""
+type CloudcastStats implements Stats {
+  comments: StatsType!
+  favorites: StatsType!
+  minutes: StatsType!
+  plays: StatsType!
+  reposts: StatsType!
+  engagement: CloudcastStatsEngagement
+}
+
+type CloudcastStatsEngagement {
+  data: [CloudcastStatsEngagementPoints!]!
+}
+
+type CloudcastStatsEngagementPoints {
+  value: Int!
+}
+
+type CloudcastTag {
+  tag: Tag!
+  position: Int
+  bestPosition: Int
+}
+
+enum UserConnectionOrderEnum {
+  RECENT
+}
+
+enum UserConnectionFilterEnum {
+  ALL
+  FOLLOWING
+}
+
+type CloudcastConnection implements CloudcastConnectionInterface {
+  pageInfo: PageInfo!
+  edges: [CloudcastEdge]!
+}
+
+type PromotedCloudcast implements Node {
+  cloudcast: Cloudcast!
+  impressions: Int!
+  plays: Int!
+  startDate: DateTime
+  """
+  The ID of the object.
+  """
+  id: ID!
+  promotionId: Int! @deprecated(reason: "PKs are now bigInts. Use promotion_relay_id instead")
+  isActive: Boolean!
+  endDate: DateTime
+}
+
+union Section = TrackSection | ChapterSection
+
+type TrackSection implements Node & SectionBase {
+  """
+  The ID of the object.
+  """
+  id: ID!
+  startSeconds: Int
+  artistName: String
+  songName: String
+}
+
+interface SectionBase {
+  startSeconds: Int
+}
+
+type ChapterSection implements Node & SectionBase {
+  """
+  The ID of the object.
+  """
+  id: ID!
+  startSeconds: Int
+  chapter: String
+}
+
+type JunoDetails {
+  guid: String
+  chartUrl: String
+  requestId: Int
+}
+
+type CloudcastSample {
+  dbId: String!
+  track: IdentificationTrack
+  startTime: Int!
+  endTime: Int!
+}
+
+type IdentificationTrack {
+  dbId: Int!
+  title: String!
+  artists: [IdentificationArtist]!
+  flattenedArtists: String!
+}
+
+type IdentificationArtist {
+  dbId: Int!
+  name: String!
+}
+
+type PromotedCloudcastConnection {
+  pageInfo: PageInfo!
+  edges: [PromotedCloudcastEdge]!
+}
+
+type PromotedCloudcastEdge {
+  cursor: String!
+  node: PromotedCloudcast!
+}
+
+union AudioFileHistory = SlicedAudioFileHistory | ReplacedAudioFileHistory | RestoredAudioFileHistory
+
+type SlicedAudioFileHistory implements Node & AudioFileHistoryBase {
+  """
+  The ID of the object.
+  """
+  id: ID!
+  created: String
+  audioLength: Int
+  reason: String
+  isArchived: Boolean
+  streamInfo: StreamInfo
+  actionUser: User
+  notes: String
+  slices: [AudioFileSlice]
+}
+
+interface AudioFileHistoryBase {
+  created: String
+  audioLength: Int
+  reason: String
+  isArchived: Boolean
+  streamInfo: StreamInfo
+}
+
+type AudioFileSlice {
+  start: Int
+  end: Int
+  artist: String
+  track: String
+}
+
+type ReplacedAudioFileHistory implements Node & AudioFileHistoryBase {
+  """
+  The ID of the object.
+  """
+  id: ID!
+  created: String
+  audioLength: Int
+  reason: String
+  isArchived: Boolean
+  streamInfo: StreamInfo
+  actionUser: User
+}
+
+type RestoredAudioFileHistory implements Node & AudioFileHistoryBase {
+  """
+  The ID of the object.
+  """
+  id: ID!
+  created: String
+  audioLength: Int
+  reason: String
+  isArchived: Boolean
+  streamInfo: StreamInfo
+  actionUser: User
+}
+
+type TagSetConnection {
+  pageInfo: PageInfo!
+  edges: [TagSetEdge]!
+}
+
+type TagSetEdge {
+  cursor: String!
+  node: TagSet!
+}
+
+type TagSet implements Node {
+  tag: Tag!
+  position: Int
+  """
+  The ID of the object.
+  """
+  id: ID!
+}
+
+type Conversation implements Node {
+  """
+  The ID of the object.
+  """
+  id: ID!
+  participants: [Participant]
+  messages(first: Int, last: Int, after: String, before: String): MessageConnection
+}
+
+type Participant implements Node {
+  user: User!
+  """
+  The ID of the object.
+  """
+  id: ID!
+}
+
+type MessageConnection {
+  pageInfo: PageInfo!
+  edges: [MessageEdge]!
+}
+
+type MessageEdge {
+  cursor: String!
+  node: Message!
+}
+
+type Message implements Node {
+  created: DateTime!
+  user: User!
+  conversation: Conversation!
+  message: String
+  """
+  The ID of the object.
+  """
+  id: ID!
+}
+
+type Viewer implements Node {
+  """
+  The ID of the object.
+  """
+  id: ID!
+  discover(discoverTags: [DiscoverTagType], country: String): Discover
+  tagSuggestions(q: String!): [Tag]!
+  search: Search!
+  drm: Drm!
+  trending(first: Int, last: Int, after: String, before: String, country: String): TrendingConnection
+  experiments: Experiments!
+  featureIsActive(switch: String!): Boolean!
+  activeFeatures: [Feature]
+  categories: Categories!
+  showHideableContent(contentKey: String!): Boolean
+  promotions: Promotions!
+  playerWidgetFeed(first: Int, last: Int, after: String, before: String, feed: String!): CloudcastConnection
+  latestSelectPosts(first: Int, last: Int, after: String, before: String): PostConnection
+  showCookieWarning: Boolean!
+  canViewHome: Boolean!
+  eligibleForSelect: Boolean!
+  currentCountryCode: String
+  me: User
+  authentication: Authentication
+  ads: Ads!
+  playerQueue: PlayerQueue!
+  notifications(first: Int, last: Int, after: String, before: String): NotificationConnection
+  uploadNotifications(first: Int, last: Int, after: String, before: String): UploadNotificationConnection
+  latestSelectCloudcasts(first: Int, last: Int, after: String, before: String): CloudcastConnection
+  facebookProfile: FacebookProfile
+  settings: Settings
+  consumers(first: Int, last: Int, after: String, before: String, status: ConsumerStatusEnum): ConsumerConnection
+  listenLaters(first: Int, last: Int, after: String, before: String): CloudcastWithTotalsConnection
+  selectCreators(first: Int, last: Int, after: String, before: String, isPromoted: Boolean, orderBy: SelectCreatorsOrderByEnum, startsWith: String, category: String): UserConnection
+  downloads: Downloads
+  feed(first: Int, last: Int, after: String, before: String): FeedItemConnection
+  followSuggestions(first: Int, last: Int, after: String, before: String, hasPosts: Boolean): UserConnection
+  promotedFollowSuggestion: User
+  home: Home
+  currentDevice: RegisteredDevice
+  hasRegisteredDevice: Boolean
+  coupon(name: String): Coupon
+  accountSubscriber: AccountSubscriber!
+  vatPercentage(countryCode2: String): VatPercentage!
+  availableCloudcastNamecheck(name: String): AvailableCloudcastNamecheckEnum
+  podcasts(first: Int, last: Int, after: String, before: String): PodcastConnection!
+  isLoggedInAs: Boolean
+  isInSelectPreview: Boolean
+  conversations(first: Int, last: Int, after: String, before: String): ConversationConnection
+  devices(first: Int, last: Int, after: String, before: String, filter: DeviceConnectionFilterEnum): DeviceWithTotalsConnection
+  localisation: Localisation!
+  posts(first: Int, last: Int, after: String, before: String): ViewerPostConnection
+  recommendedSelectUploaders(first: Int, last: Int, after: String, before: String): UserConnection
+  recommendedShows(first: Int, last: Int, after: String, before: String): CloudcastConnection
+  live: Live
+  upcomingOrLivePurchasedLiveStreams: [LiveStream] @deprecated(reason: "Tickets is removed")
+  geoInfo: GeoInfo!
+  audioAds(clientContext: AdClientContextInput): [AudioAdItem]!
+  npsCampaign(name: String!): NPSCampaign
+  discoverTag(discoverTagSlug: String): Discover @deprecated(reason: "Use Viewer.discover instead")
+}
+
+"""
+Instance is a ParsedDiscoverTags namedtuple
+"""
+type Discover {
+  isChart: Boolean!
+  isCategory: Boolean!
+  name: String @deprecated(reason: "Should be generated client side - use selected_tags endpoint")
+  staffPicks(first: Int, last: Int, after: String, before: String, orderBy: DiscoverOrderByEnum): CloudcastConnection!
+  shows(first: Int, last: Int, after: String, before: String, orderBy: DiscoverOrderByEnum): ChartCloudcastConnection!
+  related(first: Int!): [DiscoverTag]!
+  searchSuggested(first: Int!, query: String!): [DiscoverTag]!
+  selectedTags: [DiscoverTag]!
+  promoted: PromotedCloudcast
+}
+
+enum DiscoverOrderByEnum {
+  LATEST
+  POPULAR
+  HOT
+}
+
+type ChartCloudcastConnection implements CloudcastConnectionInterface {
+  pageInfo: PageInfo!
+  edges: [ChartCloudcastEdge]!
+}
+
+"""
+Wraps discover cloudcasts OR chart cloudcasts (TagSets)
+"""
+type ChartCloudcastEdge implements CloudcastEdgeInterface {
+  cursor: String!
+  node: Cloudcast!
+  position: Int
+}
+
+"""
+Instance is a tuple of type: (tag_type, value)
+tag_type: DISCOVER_TAG_TYPE_ARTIST or DISCOVER_TAG_TYPE_CITY or DISCOVER_TAG_TYPE_TAG
+value: ArtistModel or str or TagModel
+"""
+union DiscoverTag = DiscoverTagCity | DiscoverTagTag
+
+type DiscoverTagCity implements DiscoverTagInterface {
+  name: String!
+  slug: String!
+}
+
+interface DiscoverTagInterface {
+  name: String!
+  slug: String!
+}
+
+type DiscoverTagTag implements DiscoverTagInterface {
+  name: String!
+  slug: String!
+}
+
+input DiscoverTagType {
+  slug: String!
+  type: DiscoverTagTypeEnum!
+}
+
+enum DiscoverTagTypeEnum {
+  ARTIST
+  CITY
+  TAG
+}
+
+type Search {
+  searchQuery(term: String!): SearchQuery!
+}
+
+type SearchQuery {
+  cloudcasts(first: Int, last: Int, after: String, before: String, createdAfter: CreatedAfterFilter, isTimestamped: IsTimestampedFilter): CloudcastConnection!
+  users(first: Int, last: Int, after: String, before: String, dateJoinedAfter: DateJoinedAfterFilter, isUploader: IsUploaderFilter): UserConnection!
+  tags(first: Int, last: Int, after: String, before: String): TagConnection!
+  showPurposeMessage: Boolean
+}
+
+enum CreatedAfterFilter {
+  PAST_WEEK
+  PAST_MONTH
+  PAST_YEAR
+}
+
+enum IsTimestampedFilter {
+  YES
+}
+
+enum DateJoinedAfterFilter {
+  PAST_WEEK
+  PAST_MONTH
+  PAST_YEAR
+}
+
+enum IsUploaderFilter {
+  YES
+  NO
+}
+
+type TagConnection implements TagConnectionInterface {
+  pageInfo: PageInfo!
+  edges: [TagEdge]!
+}
+
+interface TagConnectionInterface {
+  pageInfo: PageInfo!
+  edges: [TagEdge]!
+}
+
+type TagEdge {
+  cursor: String!
+  node: Tag!
+}
+
+type Drm {
+  widevine: Widevine!
+  fairplay: FairPlay!
+  playready: PlayReady!
+}
+
+type Widevine {
+  serverUrl: String!
+  certificateUrl: String!
+}
+
+type FairPlay {
+  serverUrl: String!
+  certificateUrl: String!
+}
+
+type PlayReady {
+  serverUrl: String!
+}
+
+type TrendingConnection implements CloudcastConnectionInterface {
+  pageInfo: PageInfo!
+  edges: [TrendingEdge]!
+}
+
+type TrendingEdge implements CloudcastEdgeInterface {
+  cursor: String!
+  node: Cloudcast!
+  position: Int
+}
+
+type Experiments {
+  experiment(name: String!): Experiment!
+}
+
+type Experiment {
+  alternative: String!
+  name: String!
+}
+
+type Feature {
+  key: String!
+}
+
+type Categories {
+  music: [Category!]!
+  talk: [Category!]!
+}
+
+type Category {
+  name: String!
+  slug: String!
+}
+
+type Promotions {
+  plan: PromotionPlan!
+}
+
+type PromotionPlan {
+  pricePerDay: Int!
+  currency: String!
+  symbol: String!
+}
+
+type Authentication {
+  isValidClaimToken(uid: String, token: String): Boolean
+  hasLoginPassword: Boolean
+}
+
+type Ads {
+  targeting: [TargetingArgument]!
+  shouldShowAds: Boolean!
+}
+
+type TargetingArgument {
+  key: String!
+  value: String!
+}
+
+"""
+instance is: [(cloudcast_id, situation), (...], current_index, last_modified_date
+"""
+type PlayerQueue {
+  currentIndex: Int
+  lastModified: DateTime
+  queue: [PlayerQueueItem]
+  suggestedUpNext(seedCloudcastId: String!, context: String): SuggestedCloudcast
+}
+
+type PlayerQueueItem {
+  cloudcast: Cloudcast!
+  situation: JSONString
+}
+
+"""
+Allows use of a JSON String for input / output from the GraphQL schema.
+
+Use of this type is *not recommended* as you lose the benefits of having a defined, static
+schema (one of the key benefits of GraphQL).
+"""
+scalar JSONString
+
+type SuggestedCloudcast {
+  cloudcast: Cloudcast!
+  context: String
+  promoted: Boolean
+  branded: Boolean
+  mixcloudAd: Boolean
+}
+
+type FacebookProfile {
+  connected: Boolean!
+  canShare: Boolean
+}
+
+"""
+Instance is a user object
+"""
+type Settings {
+  disableEmail: Boolean!
+  emailNotifications: EmailNotifications
+  applications: Applications
+  countryChoices: [CountryChoice!]!
+  tips: TipSettings
+}
+
+"""
+Instance is a user object.
+
+The fields bellow must match our notice_types.
+"""
+type EmailNotifications {
+  newFollower: NotificationSettingEnum!
+  newComment: NotificationSettingEnum!
+  newProfileComment: NotificationSettingEnum!
+  newUpload: NotificationSettingEnum!
+  newNewsletter: NotificationSettingEnum!
+  newFavorite: NotificationSettingEnum!
+  newCommentReply: NotificationSettingEnum!
+  uploadReminders: NotificationSettingEnum!
+  chartPosition: NotificationSettingEnum!
+  newRepost: NotificationSettingEnum!
+  newCommentMention: NotificationSettingEnum!
+  newPost: NotificationSettingEnum!
+  contentRecommendations: NotificationSettingEnum!
+  uploaderRetention: NotificationSettingEnum!
+  weeklyUpdate: NotificationSettingEnum!
+  select: NotificationSettingEnum!
+}
+
+type Applications {
+  accessTokens(first: Int, last: Int, after: String, before: String, filterByClientId: String): ApplicationConnection!
+}
+
+type ApplicationConnection implements ConnectionTotalCountInterface {
+  totalCount: Int!
+  pageInfo: PageInfo!
+  edges: [ApplicationEdge]!
+}
+
+type ApplicationEdge {
+  cursor: String!
+  node: AccessToken!
+}
+
+type AccessToken implements Node {
+  """
+  The ID of the object.
+  """
+  id: ID!
+  connectedAt: DateTime
+  consumer: Consumer
+}
+
+type CountryChoice {
+  code: String!
+  country: String!
+}
+
+type TipSettings {
+  user: User!
+  isAvailableOnCloudcast: Boolean
+  isAvailableOnProfile: Boolean
+  isAvailableOnLivestream: Boolean
+}
+
+enum SelectCreatorsOrderByEnum {
+  ALPHABETICAL
+  POPULAR
+  RECOMMENDED
+}
+
+type Downloads {
+  shows(first: Int, last: Int, after: String, before: String): CloudcastDownloadConnection!
+}
+
+type CloudcastDownloadConnection implements ConnectionTotalCountInterface {
+  totalCount: Int!
+  pageInfo: PageInfo!
+  edges: [CloudcastDownloadEdge]!
+}
+
+type CloudcastDownloadEdge {
+  cursor: String!
+  node: CloudcastDownload!
+}
+
+type CloudcastDownload implements Node {
+  cloudcast: Cloudcast!
+  """
+  The ID of the object.
+  """
+  id: ID!
+}
+
+type Home {
+  shelves(first: Int, last: Int, after: String, before: String): ShelfConnection
+}
+
+type ShelfConnection implements ConnectionTotalCountInterface & ShelfConnectionInterface {
+  pageInfo: PageInfo!
+  edges: [ShelfEdge]!
+  totalCount: Int!
+}
+
+interface ShelfConnectionInterface {
+  pageInfo: PageInfo!
+  edges: [ShelfEdgeInterface]!
+}
+
+interface ShelfEdgeInterface {
+  cursor: String!
+  node: ShelfUnion!
+}
+
+union ShelfUnion = CloudcastsShelf | UsersShelf | PlaylistsShelf
+
+type CloudcastsShelf implements Node & ShelfInterface {
+  """
+  The ID of the object.
+  """
+  id: ID!
+  title: String
+  subtitle: String
+  trackingContext: JSONString!
+  blocks(first: Int, last: Int, after: String, before: String): CloudcastsBlockConnection
+}
+
+interface ShelfInterface {
+  title: String
+  subtitle: String
+  trackingContext: JSONString!
+}
+
+type CloudcastsBlockConnection {
+  pageInfo: PageInfo!
+  edges: [CloudcastsBlockEdge]!
+}
+
+type CloudcastsBlockEdge {
+  cursor: String!
+  node: Cloudcast!
+}
+
+type UsersShelf implements Node & ShelfInterface {
+  """
+  The ID of the object.
+  """
+  id: ID!
+  title: String
+  subtitle: String
+  trackingContext: JSONString!
+  blocks(first: Int, last: Int, after: String, before: String): UsersBlockConnection
+}
+
+type UsersBlockConnection {
+  pageInfo: PageInfo!
+  edges: [UsersBlockEdge]!
+}
+
+type UsersBlockEdge {
+  cursor: String!
+  node: User!
+}
+
+type PlaylistsShelf implements Node & ShelfInterface {
+  """
+  The ID of the object.
+  """
+  id: ID!
+  title: String
+  subtitle: String
+  trackingContext: JSONString!
+  blocks(first: Int, last: Int, after: String, before: String): PlaylistsBlockConnection
+}
+
+type PlaylistsBlockConnection {
+  pageInfo: PageInfo!
+  edges: [PlaylistsBlockEdge]!
+}
+
+type PlaylistsBlockEdge {
+  cursor: String!
+  node: Playlist!
+}
+
+type ShelfEdge implements ShelfEdgeInterface {
+  cursor: String!
+  node: ShelfUnion!
+}
+
+type Coupon {
+  name: String!
+  percentOff: Int!
+  durationInMonths: Int!
+}
+
+"""
+A simple object to help with pre-emptive estimtes of VAT percentage.
+This is instantiated with fixed values. If you want to add dynamic resolvers,
+it will need to be changed in viewer/__init__.py
+"""
+type VatPercentage {
+  estimated: Boolean!
+  percentage: Int!
+  countryCode2: String
+}
+
+enum AvailableCloudcastNamecheckEnum {
+  REQUIRED
+  SLUGIFY
+  DUPLICATE
+}
+
+type ConversationConnection {
+  pageInfo: PageInfo!
+  edges: [ConversationEdge]!
+}
+
+type ConversationEdge {
+  cursor: String!
+  node: Conversation!
+}
+
+type DeviceWithTotalsConnection implements ConnectionTotalCountInterface & DeviceConnectionInterface {
+  pageInfo: PageInfo!
+  edges: [DeviceEdge]!
+  totalCount: Int!
+}
+
+interface DeviceConnectionInterface {
+  pageInfo: PageInfo!
+  edges: [DeviceEdgeInterface]!
+}
+
+interface DeviceEdgeInterface {
+  cursor: String!
+  node: RegisteredDevice!
+}
+
+type DeviceEdge implements DeviceEdgeInterface {
+  cursor: String!
+  node: RegisteredDevice!
+}
+
+enum DeviceConnectionFilterEnum {
+  ALL
+  WITH_DOWNLOADS
+}
+
+type Localisation {
+  currentCountry: Country!
+  availableCountries: [Country]!
+}
+
+type Country {
+  code: String!
+  name: String!
+}
+
+type ViewerPostConnection implements ConnectionTotalCountInterface & PostConnectionInterface {
+  pageInfo: PageInfo!
+  edges: [PostEdge]!
+  totalCount: Int!
+  unreadCount: Int!
+  totalReadCount: Int!
+}
+
+type Live {
+  streamForUsername(username: String!, slug: String): LiveStream
+  webrtcServer: WebRTCServer
+  currentLiveStreams(first: Int, last: Int, after: String, before: String, orderBy: LiveStreamsOrderByEnum, filterBy: LiveStreamsFilterByEnum, tag: String): LiveStreamConnection!
+  featuredLiveStreams(first: Int, last: Int, after: String, before: String): LiveStreamConnection! @deprecated(reason: "Superceded by recommendedLiveStreams")
+  recommendedCurrentLiveStreams(first: Int, last: Int, after: String, before: String): LiveStreamConnection! @deprecated(reason: "Superceded by recommendedLiveStreams")
+  recommendedLiveStreams(first: Int, last: Int, after: String, before: String): RecommendedLiveStreamConnection!
+  upcomingTicketedEvents(first: Int, last: Int, after: String, before: String, orderBy: TicketedEventOrderByEnu): LiveStreamConnection! @deprecated(reason: "tickets has been removed")
+}
+
+type WebRTCServer {
+  url: String!
+  turnConfig: TurnServerConfig
+}
+
+type TurnServerConfig {
+  uri: String!
+  username: String!
+  password: String!
+}
+
+type LiveStreamConnection implements ConnectionTotalCountInterface {
+  totalCount: Int!
+  pageInfo: PageInfo!
+  edges: [LiveStreamEdge]!
+}
+
+type LiveStreamEdge {
+  cursor: String!
+  node: LiveStream!
+}
+
+enum LiveStreamsOrderByEnum {
+  PLAYS
+  STARTED_AT
+  CURRENT_SPECTATORS
+  CHAT_MESSAGES
+}
+
+enum LiveStreamsFilterByEnum {
+  FOLLOWING
+  SUBSCRIBED
+}
+
+type RecommendedLiveStreamConnection implements ConnectionTotalCountInterface {
+  totalCount: Int!
+  pageInfo: PageInfo!
+  edges: [RecommendedLiveStreamEdge]!
+}
+
+type RecommendedLiveStreamEdge {
+  cursor: String!
+  node: RecommendedLiveStreamUnion!
+}
+
+union RecommendedLiveStreamUnion = FeaturedRecommendedLiveStream | RegularStreamerRecommendedLiveStream | FollowingRecommendedLiveStream | TicketedRecommendedLiveStream
+
+type FeaturedRecommendedLiveStream implements RecommendedLiveStreamInterface {
+  liveStream: LiveStream!
+}
+
+interface RecommendedLiveStreamInterface {
+  liveStream: LiveStream!
+}
+
+type RegularStreamerRecommendedLiveStream implements RecommendedLiveStreamInterface {
+  liveStream: LiveStream!
+}
+
+type FollowingRecommendedLiveStream implements RecommendedLiveStreamInterface {
+  liveStream: LiveStream!
+}
+
+type TicketedRecommendedLiveStream implements RecommendedLiveStreamInterface {
+  liveStream: LiveStream!
+}
+
+enum TicketedEventOrderByEnu {
+  LIVE
+  SCHEDULED_START
+}
+
+type GeoInfo {
+  countryCode3: String
+  countryCode2: String
+  city: String
+  ip: String
+  overridden: Boolean!
+}
+
+type AudioAdItem {
+  startSeconds: Int!
+  ad: AudioAd!
+}
+
+union AudioAd = AdswizzAd | HouseAd | GoogleAd
+
+type AdswizzAd {
+  """
+  Fallback house ad when the adswizz failed or no ads to show
+  """
+  fallback: HouseAd
+}
+
+type HouseAd implements Node {
+  """
+  The ID of the object.
+  """
+  id: ID!
+  audioUrl: String!
+}
+
+type GoogleAd {
+  """
+  Fallback house ad when the google request ad failed
+  """
+  fallback: HouseAd
+}
+
+input AdClientContextInput {
+  """
+  What's the current position played when fetching the ad
+  """
+  position: Int!
+  """
+  What's the cloudcast's id that playing when fetching the ad
+  """
+  cloudcastId: ID!
+}
+
+type NPSCampaign implements Node {
+  name: String!
+  isActive: Boolean!
+  sampleRate: Int
+  viewerDescription: String!
+  """
+  The ID of the object.
+  """
+  id: ID!
+  canShowToViewer: Boolean
+}
+
+type Admin implements Node {
+  """
+  The ID of the object.
+  """
+  id: ID!
+  userEmailLookup(lookup: UserEmailLookup!): User
+  cloudcastUrlsLookup(urls: String!): [Cloudcast]
+  canChangeCloudcastSrpcWaiver: Boolean!
+  canChangeUserSrpcWaiver: Boolean!
+  spamTargets(first: Int, last: Int, after: String, before: String, type: SpamTargetTypeEnum!, filterBy: SpamTargetFilterByEnum, word: String, min: Float, max: Float): SpamTargetConnection
+}
+
+input UserEmailLookup {
+  email: String!
+}
+
+type SpamTargetConnection {
+  pageInfo: PageInfo!
+  edges: [SpamTargetEdge]!
+}
+
+type SpamTargetEdge {
+  cursor: String!
+  node: SpamTarget!
+}
+
+"""
+The node that has been reported - could be a comment or a user.
+"""
+union SpamTarget = Comment | User
+
+enum SpamTargetTypeEnum {
+  COMMENT
+  USER
+}
+
+enum SpamTargetFilterByEnum {
+  CERTAIN
+  CONTAINS
+  DELETED
+  EDGE_CASES
+  EDGE_CASES_ACTIVE
+  JAIL_ESCAPED
+  PROB_RANGE
+  RECENT
+  REPORTED
+}
+
+"""
+For consistency with CloudcastLookup
+"""
+input UserLookup {
+  username: String!
+}
+
+type UserDisabledReason {
+  userId: String
+  redirect: String
+  reason: String
+  reasonType: String
+  actionUser: User
+  isSpam: Boolean
+}
+
+"""
+Fields on Query can only accept one argument so we group these together
+"""
+input CloudcastLookup {
+  username: String!
+  slug: String!
+}
+
+input PostLookup {
+  username: String!
+  slug: String!
+}
+
+"""
+For consistency with CloudcastLookup
+"""
+input CloudcastLookupID {
+  cloudcastId: String!
+}
+
+type CloudcastDisabledReason {
+  cloudcastId: String
+  reason: String
+  actionUser: User
+  isUploadCorrupted: Boolean
+}
+
+"""
+Fields on Query can only accept one argument so we group these together
+"""
+input PlaylistLookup {
+  username: String
+  slug: String!
+}
+
+input TagLookup {
+  slug: String!
+}
+
+type ManualStudy implements Node {
+  """
+  The ID of the object.
+  """
+  id: ID!
+  sampleLength: Int!
+  samples(first: Int, last: Int, after: String, before: String): ManualStudySampleConnection!
+}
+
+type ManualStudySampleConnection implements ConnectionTotalCountInterface {
+  totalCount: Int!
+  pageInfo: PageInfo!
+  edges: [ManualStudySampleEdge]!
+}
+
+type ManualStudySampleEdge {
+  cursor: String!
+  node: ManualStudySample!
+}
+
+type ManualStudySample implements Node {
+  """
+  The ID of the object.
+  """
+  id: ID!
+  study: ManualStudy!
+  offset: Int!
+  audioUrl: String!
+  cloudcast: Cloudcast!
+  listenDate: DateTime!
+  listenCountry: String
+  uploaderEmail: String
+  identification: ManualStudyIdentification
+}
+
+type ManualStudyIdentification implements Node {
+  trackTitle: String
+  trackArtist: String
+  trackLabel: String
+  notes: String
+  result: ManualStudyIdentificationResult!
+  """
+  The ID of the object.
+  """
+  id: ID!
+}
+
+"""
+An enumeration.
+"""
+enum ManualStudyIdentificationResult {
+  """
+  Pending
+  """
+  PENDING
+  """
+  No music
+  """
+  NONE
+  """
+  Music found, can't find label
+  """
+  NO_LABEL
+  """
+  Music found, can't find major
+  """
+  NO_MAJOR
+  """
+  Music found, different major
+  """
+  OTHER
+  """
+  Licensed by Merlin
+  """
+  MERLIN
+  """
+  Licensed by Sony
+  """
+  SONY
+  """
+  Licensed by UMG
+  """
+  UMG
+  """
+  Licensed by Warner
+  """
+  WARNER
+  """
+  Licensed by Believe
+  """
+  BELIEVE
+  """
+  Licensed by Orchard
+  """
+  ORCHARD
+  """
+  Unidentified music
+  """
+  NO_ID
+}
+
+input ConversationLookup {
+  username: String!
+}
+
+type UsernameSuggestions {
+  usernameSuggestions: [User]
+}
+
+type Mutation {
+  addAccountSubscription(input: AddAccountSubscriptionMutationInput!): AddAccountSubscriptionMutationPayload
+  addComment(input: AddCommentMutationInput!): AddCommentMutationPayload
+  addConsumer(input: AddConsumerMutationInput!): AddConsumerMutationPayload
+  addFeedback(input: AddFeedbackMutationInput!): AddFeedbackMutationPayload
+  addMessage(input: AddMessageMutationInput!): AddMessageMutationPayload
+  addPlaylist(input: AddPlaylistMutationInput!): AddPlaylistMutationPayload
+  addPlaylistItem(input: AddPlaylistItemMutationInput!): AddPlaylistItemMutationPayload
+  addPost(input: AddPostMutationInput!): AddPostMutationPayload
+  addPostComment(input: AddPostCommentMutationInput!): AddPostCommentMutationPayload
+  addPromotedCloudcast(input: AddPromotedCloudcastMutationInput!): AddPromotedCloudcastMutationPayload
+  addPushToken(input: AddPushTokenMutationInput!): AddPushTokenMutationPayload
+  addReply(input: AddReplyMutationInput!): AddReplyMutationPayload
+  blockUpNext(input: BlockUpNextMutationInput!): BlockUpNextMutationPayload
+  bulkTakedown(input: BulkTakedownMutationInput!): BulkTakedownMutationPayload
+  cancelConsumer(input: CancelConsumerMutationInput!): CancelConsumerMutationPayload
+  cancelAccountSubscription(input: CancelAccountSubscriptionMutationInput!): CancelAccountSubscriptionMutationPayload
+  changeAccountSettings(input: ChangeAccountSettingsMutationInput!): ChangeAccountSettingsMutationPayload
+  changeAudioAdTrackingProgress(input: ChangeAudioAdTrackingProgressInput!): ChangeAudioAdTrackingProgressPayload
+  changeBlockUser(input: ChangeBlockUserMutationInput!): ChangeBlockUserMutationPayload
+  changeCard(input: ChangeCardMutationInput!): ChangeCardMutationPayload
+  changeCloudcastDownload(input: ChangeCloudcastDownloadMutationInput!): ChangeCloudcastDownloadMutationPayload
+  changeDeviceNotificationSetting(input: ChangeDeviceNotificationSettingMutationInput!): ChangeDeviceNotificationSettingMutationPayload
+  changeDisableEmail(input: ChangeDisableEmailMutationInput!): ChangeDisableEmailMutationPayload
+  changeFavorite(input: ChangeFavoriteMutationInput!): ChangeFavoriteMutationPayload
+  changeFollowing(input: ChangeFollowingMutationInput!): ChangeFollowingMutationPayload
+  changeHighlight(input: ChangeHighlightMutationInput!): ChangeHighlightMutationPayload
+  changeListenLater(input: ChangeListenLaterMutationInput!): ChangeListenLaterMutationPayload
+  changeLiveStream(input: ChangeLiveStreamMutationInput!): ChangeLiveStreamMutationPayload
+  changeNotificationUnread(input: ChangeNotificationUnreadMutationInput!): ChangeNotificationUnreadMutationPayload
+  changePassword(input: ChangePasswordMutationInput!): ChangePasswordMutationPayload
+  changePost(input: ChangePostMutationInput!): ChangePostMutationPayload
+  changePostRead(input: ChangePostReadMutationInput!): ChangePostReadMutationPayload
+  changePlayerQueue(input: ChangePlayerQueueMutationInput!): ChangePlayerQueueMutationPayload
+  changePaymentMethod(input: ChangePaymentMethodMutationInput!): ChangePaymentMethodMutationPayload
+  changePlaylistName(input: ChangePlaylistNameMutationInput!): ChangePlaylistNameMutationPayload
+  """
+  Update current user's profile information
+
+All input fields in this mutation are optional. Fields that do not get sent will not be changed.
+  """
+  changeProfile(input: ChangeProfileMutationInput!): ChangeProfileMutationPayload
+  changeReceivesUploadNotifications(input: ChangeReceivesUploadNotificationsMutationInput!): ChangeReceivesUploadNotificationsMutationPayload
+  changeRepost(input: ChangeRepostMutationInput!): ChangeRepostMutationPayload
+  changeSpamCloudcast(input: ChangeSpamCloudcastMutationInput!): ChangeSpamCloudcastMutationPayload
+  changeSpamUser(input: ChangeSpamUserMutationInput!): ChangeSpamUserMutationPayload
+  changeStaffPick(input: ChangeStaffPickMutationInput!): ChangeStaffPickMutationPayload
+  changeStaffPickUser(input: ChangeStaffPickUserMutationInput!): ChangeStaffPickUserMutationPayload
+  completeNps(input: CompleteNPSMutationInput!): CompleteNPSMutationPayload
+  confirmPayment(input: ConfirmPaymentMutationInput!): ConfirmPaymentMutationPayload
+  classifySpam(input: ClassifySpamMutationInput!): ClassifySpamMutationPayload
+  cloudcastAdImpression(input: CloudcastAdImpressionMutationInput!): CloudcastAdImpressionMutationPayload
+  cloudcastAdImpressionByRelayId(input: CloudcastAdImpressionByRelayIdMutationInput!): CloudcastAdImpressionByRelayIdMutationPayload
+  createConversation(input: CreateConversationMutationInput!): CreateConversationMutationPayload
+  createLiveStream(input: CreateLiveStreamMutationInput!): CreateLiveStreamMutationPayload
+  disableCloudcast(input: DisableCloudcastMutationInput!): DisableCloudcastMutationPayload
+  disableUser(input: DisableUserMutationInput!): DisableUserMutationPayload
+  deletePlaylist(input: DeletePlaylistMutationInput!): DeletePlaylistMutationPayload
+  deletePost(input: DeletePostMutationInput!): DeletePostMutationPayload
+  enableCloudcast(input: EnableCloudcastMutationInput!): EnableCloudcastMutationPayload
+  enableUser(input: EnableUserMutationInput!): EnableUserMutationPayload
+  editConsumer(input: EditConsumerMutationInput!): EditConsumerMutationPayload
+  facebookShare(input: FacebookShareMutationInput!): FacebookShareMutationPayload
+  hideContent(input: HideContentMutationInput!): HideContentMutationPayload
+  hideCookieWarning(input: HideCookieWarningMutationInput!): HideCookieWarningMutationPayload
+  ignoreFollowingSuggestion(input: IgnoreFollowingSuggestionMutationInput!): IgnoreFollowingSuggestionMutationPayload
+  imageTakedown(input: ImageTakedownMutationInput!): ImageTakedownMutationPayload
+  markNotificationsRead(input: MarkNotificationsReadMutationInput!): MarkNotificationsReadMutationPayload
+  markSpamComment(input: MarkSpamCommentMutationInput!): MarkSpamCommentMutationPayload
+  markUploadNotificationsRead(input: MarkUploadNotificationsReadMutationInput!): MarkUploadNotificationsReadMutationPayload
+  promotedFeedItemImpression(input: PromotedFeedItemImpressionMutationInput!): PromotedFeedItemImpressionMutationPayload
+  promotedFeedItemImpressionByRelayId(input: PromotedFeedItemImpressionByRelayIdMutationInput!): PromotedFeedItemImpressionByRelayIdMutationPayload
+  promotedFeedItemInteraction(input: PromotedFeedItemInteractionMutationInput!): PromotedFeedItemInteractionMutationPayload
+  promotedFeedItemInteractionByRelayId(input: PromotedFeedItemInteractionByRelayIdMutationInput!): PromotedFeedItemInteractionByRelayIdMutationPayload
+  registerDevice(input: RegisterDeviceMutationInput!): RegisterDeviceMutationPayload
+  removeComment(input: RemoveCommentMutationInput!): RemoveCommentMutationPayload
+  removeDownloadDevice(input: RemoveDownloadDeviceMutationInput!): RemoveDownloadDeviceMutationPayload
+  removeListeningHistory(input: RemoveListeningHistoryMutationInput!): RemoveListeningHistoryMutationPayload
+  removePlaylistItem(input: RemovePlaylistItemMutationInput!): RemovePlaylistItemMutationPayload
+  reorderPlaylist(input: ReorderPlaylistMutationInput!): ReorderPlaylistMutationPayload
+  resetConsumerSecret(input: ResetConsumerSecretMutationInput!): ResetConsumerSecretMutationPayload
+  saveManualStudyIdentification(input: SaveManualStudyIdentificationMutationInput!): SaveManualStudyIdentificationMutationPayload
+  triggerPodcastImport(input: TriggerPodcastImportMutationInput!): TriggerPodcastImportMutationPayload
+  uploadCloudcast(input: UploadCloudcastMutationInput!): UploadCloudcastMutationPayload
+  changeCloudcast(input: ChangeCloudcastMutationInput!): ChangeCloudcastMutationPayload
+  sliceCloudcast(input: SliceCloudcastMutationInput!): SliceCloudcastMutationPayload
+  changeEmailNotificationSetting(input: ChangeEmailNotificationSettingMutationInput!): ChangeEmailNotificationSettingMutationPayload
+  revokeAccessToken(input: RevokeAccessTokenMutationInput!): RevokeAccessTokenMutationPayload
+  sendMessage(input: SendMessageMutationInput!): SendMessageMutationPayload
+  podcastBulkImport(input: PodcastBulkImportMutationInput!): PodcastBulkImportMutationPayload
+  deleteCommentsByUser(input: DeleteCommentsByUserMutationInput!): DeleteCommentsByUserMutationPayload
+  moveUserData(input: MoveUserDataMutationInput!): MoveUserDataMutationPayload
+  addCloudcastSrpcWaiver(input: AddCloudcastSRPCWaiverMutationInput!): AddCloudcastSRPCWaiverMutationPayload
+  deleteCloudcastSrpcWaiver(input: DeleteCloudcastSRPCWaiverMutationInput!): DeleteCloudcastSRPCWaiverMutationPayload
+  addUserSrpcWaiver(input: AddUserSRPCWaiverMutationInput!): AddUserSRPCWaiverMutationPayload
+  deleteUserSrpcWaiver(input: DeleteUserSRPCWaiverMutationInput!): DeleteUserSRPCWaiverMutationPayload
+  changeShortUploadWhitelist(input: ChangeShortUploadWhitelistMutationInput!): ChangeShortUploadWhitelistMutationPayload
+  restoreAudioFileHistory(input: RestoreAudioFileHistoryMutationInput!): RestoreAudioFileHistoryMutationPayload
+  addFreeCloudcastAd(input: AddFreeCloudcastAdMutationInput!): AddFreeCloudcastAdMutationPayload
+  homeShelfInteraction(input: HomeShelfInteractionMutationInput!): HomeShelfInteractionMutationPayload
+  setExperimentGoal(input: SetExperimentGoalMutationInput!): SetExperimentGoalMutationPayload
+  scheduleGdprDataRequest(input: ScheduleGdprDataRequestMutationInput!): ScheduleGdprDataRequestMutationPayload
+  addTrackingEvent(input: AddTrackingEventInput!): AddTrackingEventPayload
+  registerSelectInterest(input: RegisterSelectInterestMutationInput!): RegisterSelectInterestMutationPayload
+  dismissSelectInAppConfirmation(input: DismissSelectInAppConfirmationMutationInput!): DismissSelectInAppConfirmationMutationPayload
+  changeSelectUpsell(input: ChangeSelectUpsellMutationInput!): ChangeSelectUpsellMutationPayload
+  publishSelectUpsell(input: PublishSelectUpsellMutationInput!): PublishSelectUpsellMutationPayload
+  changeGeoOverrides(input: ChangeGeoOverridesMutationInput!): ChangeGeoOverridesMutationPayload
+  trackRepeatPlay(input: TrackRepeatPlayMutationInput!): TrackRepeatPlayMutationPayload
+  completeRepeatPlay(input: CompleteRepeatPlayMutationInput!): CompleteRepeatPlayMutationPayload
+  retranscodeCloudcast(input: RetranscodeCloudcastMutationInput!): RetranscodeCloudcastMutationPayload
+  addChatMessage(input: AddChatMessageMutationInput!): AddChatMessageMutationPayload
+  addLiveReaction(input: AddLiveReactionMutationInput!): AddLiveReactionMutationPayload
+  deleteChatMessage(input: DeleteChatMessageMutationInput!): DeleteChatMessageMutationPayload
+  liveStreamKeyReset(input: LiveStreamKeyResetMutationInput!): LiveStreamKeyResetMutationPayload
+  liveStreamPayment(input: LiveStreamPaymentMutationInput!): LiveStreamPaymentMutationPayload
+  createCheckoutSessionMutation(input: CreateCheckoutSessionMutationInput!): CreateCheckoutSessionMutationPayload
+  createTip(input: CreateTipMutationInput!): CreateTipMutationPayload
+  changeTipSettings(input: ChangeTipSettingsMutationInput!): ChangeTipSettingsMutationPayload
+  onboardStripeConnect(input: OnboardStripeConnectMutationInput!): OnboardStripeConnectMutationPayload
+  changePromotionStreamKey(input: ChangePromotionStreamKeyMutationInput!): ChangePromotionStreamKeyMutationPayload
+}
+
+type AddAccountSubscriptionMutationPayload {
+  viewer: Viewer
+  uploader: User
+  requiredAction: String
+  setupIntent: SetupIntent
+  clientMutationId: String
+}
+
+type SetupIntent {
+  clientSecret: String!
+}
+
+input AddAccountSubscriptionMutationInput {
+  coupon: String
+  stripeId: String!
+  token: String
+  quantity: Int
+  clientMutationId: String
+}
+
+type AddCommentMutationPayload {
+  cloudcast: Cloudcast
+  newCommentEdge: CommentEdge
+  clientMutationId: String
+}
+
+input AddCommentMutationInput {
+  cloudcastId: String!
+  comment: String!
+  shareFacebook: Boolean
+  tracking: JSONString
+  clientMutationId: String
+}
+
+type AddConsumerMutationPayload {
+  newConsumerEdge: ConsumerEdge
+  viewer: Viewer
+  clientMutationId: String
+}
+
+input AddConsumerMutationInput {
+  name: String!
+  description: String!
+  website: String!
+  organisationName: String
+  organisationWebsite: String
+  clientMutationId: String
+}
+
+type AddFeedbackMutationPayload {
+  user: User
+  clientMutationId: String
+}
+
+input AddFeedbackMutationInput {
+  userId: String
+  feedback: String!
+  appVersion: String!
+  source: String
+  category: CategoryEnum
+  clientMutationId: String
+}
+
+enum CategoryEnum {
+  CATEGORY_SOMETHING_NOT_WORKING
+  CATEGORY_GENERAL_FEEDBACK
+  CATEGORY_ACCOUNT_ISSUES
+  CATEGORY_SELECT_SUBSCRIPTION
+  CATEGORY_DELETE_ACCOUNT
+  CATEGORY_CANCEL_PRO_SUBSCRIPTION
+  CATEGORY_CANCEL_PREMIUM_SUBSCRIPTION
+  CATEGORY_CANCEL_SELECT_SUBSCRIPTION
+}
+
+type AddMessageMutationPayload {
+  user: User
+  newCommentEdge: CommentEdge
+  clientMutationId: String
+}
+
+input AddMessageMutationInput {
+  userId: String!
+  comment: String!
+  shareFacebook: Boolean
+  tracking: JSONString
+  clientMutationId: String
+}
+
+type AddPlaylistMutationPayload {
+  viewer: Viewer
+  newPlaylistEdge: PlaylistEdge
+  newPlaylistItemEdge: PlaylistItemEdge
+  clientMutationId: String
+}
+
+input AddPlaylistMutationInput {
+  cloudcastId: String
+  playlistName: String!
+  clientMutationId: String
+}
+
+type AddPlaylistItemMutationPayload {
+  playlist: Playlist
+  newPlaylistItemEdge: PlaylistItemEdge
+  clientMutationId: String
+}
+
+input AddPlaylistItemMutationInput {
+  cloudcastId: String!
+  playlistId: String
+  clientMutationId: String
+}
+
+type AddPostMutationPayload {
+  newPostEdge: PostEdge
+  clientMutationId: String
+}
+
+input AddPostMutationInput {
+  title: String!
+  body: String!
+  excerpt: String
+  targetAudience: PostTargetAudienceEnum!
+  status: PostStatusEnum = """2"""
+  pageColor: String
+  clientMutationId: String
+}
+
+type AddPostCommentMutationPayload {
+  post: Post
+  newCommentEdge: CommentEdge
+  clientMutationId: String
+}
+
+input AddPostCommentMutationInput {
+  postId: String!
+  comment: String!
+  clientMutationId: String
+}
+
+type AddPromotedCloudcastMutationPayload {
+  cloudcast: Cloudcast
+  newPromotedCloudcastEdge: PromotedCloudcastEdge
+  requiredAction: String
+  clientMutationId: String
+}
+
+input AddPromotedCloudcastMutationInput {
+  cloudcastId: ID!
+  daysActive: Int!
+  paymentMethodId: String!
+  clientMutationId: String
+}
+
+type AddPushTokenMutationPayload {
+  clientMutationId: String
+}
+
+input AddPushTokenMutationInput {
+  deviceId: String!
+  fcmToken: String!
+  apnsToken: String
+  developmentBuild: Boolean
+  clientMutationId: String
+}
+
+type AddReplyMutationPayload {
+  comment: Comment
+  newReplyEdge: CommentEdge
+  clientMutationId: String
+}
+
+input AddReplyMutationInput {
+  parentCommentId: String!
+  text: String!
+  shareFacebook: Boolean
+  tracking: JSONString
+  clientMutationId: String
+}
+
+type BlockUpNextMutationPayload {
+  cloudcast: Cloudcast
+  user: User
+  clientMutationId: String
+}
+
+input BlockUpNextMutationInput {
+  targetId: ID!
+  block: Boolean!
+  modifyCloudcasts: Boolean
+  clientMutationId: String
+}
+
+type BulkTakedownMutationPayload {
+  clientMutationId: String
+}
+
+input BulkTakedownMutationInput {
+  items: [ItemsInput]!
+  reason: String!
+  rawLinks: String!
+  clientMutationId: String
+}
+
+input ItemsInput {
+  """
+  ID of cloudcast to takedown
+  """
+  pk: ID!
+  sendEmail: Boolean!
+}
+
+type CancelConsumerMutationPayload {
+  canceledConsumerId: ID
+  clientMutationId: String
+}
+
+input CancelConsumerMutationInput {
+  consumerId: String!
+  clientMutationId: String
+}
+
+type CancelAccountSubscriptionMutationPayload {
+  viewer: Viewer
+  uploader: User
+  removedPlanItemId: ID
+  clientMutationId: String
+}
+
+input CancelAccountSubscriptionMutationInput {
+  reason: String
+  stripeId: String
+  clientMutationId: String
+}
+
+type ChangeAccountSettingsMutationPayload {
+  viewer: Viewer
+  clientMutationId: String
+}
+
+input ChangeAccountSettingsMutationInput {
+  email: String!
+  username: String!
+  clientMutationId: String
+}
+
+type ChangeAudioAdTrackingProgressPayload {
+  viewer: Viewer
+  clientMutationId: String
+}
+
+input ChangeAudioAdTrackingProgressInput {
+  playSessionId: String!
+  progress: Float!
+  cloudcastId: String!
+  audioAdType: AudioAdType!
+  audioAdId: String!
+  clientMutationId: String
+}
+
+enum AudioAdType {
+  HOUSE
+  ADSWIZZ
+  GOOGLE
+}
+
+type ChangeBlockUserMutationPayload {
+  user: User
+  clientMutationId: String
+}
+
+input ChangeBlockUserMutationInput {
+  userId: String!
+  isBlocked: Boolean!
+  clientMutationId: String
+}
+
+type ChangeCardMutationPayload {
+  viewer: Viewer
+  clientMutationId: String
+}
+
+input ChangeCardMutationInput {
+  stripeToken: String!
+  clientMutationId: String
+}
+
+type ChangeCloudcastDownloadMutationPayload {
+  cloudcast: Cloudcast
+  viewer: Viewer
+  clientMutationId: String
+}
+
+input ChangeCloudcastDownloadMutationInput {
+  cloudcastId: String!
+  download: Boolean!
+  tracking: JSONString!
+  clientMutationId: String
+}
+
+type ChangeDeviceNotificationSettingMutationPayload {
+  registeredDevice: RegisteredDevice
+  clientMutationId: String
+}
+
+input ChangeDeviceNotificationSettingMutationInput {
+  noticeType: String!
+  isEnabled: NotificationSettingEnum
+  clientMutationId: String
+}
+
+type ChangeDisableEmailMutationPayload {
+  viewer: Viewer
+  clientMutationId: String
+}
+
+input ChangeDisableEmailMutationInput {
+  disableEmail: Boolean!
+  clientMutationId: String
+}
+
+type ChangeFavoriteMutationPayload {
+  cloudcast: Cloudcast
+  me: User
+  newFavoriteEdge: CloudcastEdgeInterface
+  clientMutationId: String
+}
+
+input ChangeFavoriteMutationInput {
+  cloudcastId: String!
+  isFavorited: Boolean!
+  tracking: JSONString
+  clientMutationId: String
+}
+
+type ChangeFollowingMutationPayload {
+  user: User
+  clientMutationId: String
+}
+
+input ChangeFollowingMutationInput {
+  userId: String!
+  isFollowing: Boolean!
+  tracking: JSONString
+  clientMutationId: String
+}
+
+type ChangeHighlightMutationPayload {
+  cloudcast: Cloudcast
+  me: User
+  newHighlightEdge: CloudcastEdgeInterface
+  clientMutationId: String
+}
+
+input ChangeHighlightMutationInput {
+  cloudcastId: String!
+  isHighlighted: Boolean!
+  clientMutationId: String
+}
+
+type ChangeListenLaterMutationPayload {
+  cloudcast: Cloudcast
+  me: User @deprecated(reason: "Use viewer instead")
+  viewer: Viewer
+  newListenLaterEdge: CloudcastEdgeInterface
+  clientMutationId: String
+}
+
+input ChangeListenLaterMutationInput {
+  cloudcastId: String!
+  isListenLater: Boolean!
+  tracking: JSONString
+  clientMutationId: String
+}
+
+type ChangeLiveStreamMutationPayload {
+  liveStream: LiveStream
+  clientMutationId: String
+}
+
+input ChangeLiveStreamMutationInput {
+  liveStreamId: String!
+  name: String
+  description: String
+  unlisted: Boolean
+  primaryTag: String
+  secondaryTags: [String]
+  clientMutationId: String
+}
+
+type ChangeNotificationUnreadMutationPayload {
+  notification: NotificationBase
+  me: User @deprecated(reason: "User Viewer instead")
+  viewer: Viewer
+  clientMutationId: String
+}
+
+input ChangeNotificationUnreadMutationInput {
+  notificationId: String!
+  hasBeenViewed: Boolean!
+  clientMutationId: String
+}
+
+type ChangePasswordMutationPayload {
+  viewer: Viewer
+  clientMutationId: String
+}
+
+input ChangePasswordMutationInput {
+  oldPassword: String!
+  newPassword: String!
+  clientMutationId: String
+}
+
+type ChangePostMutationPayload {
+  post: Post
+  clientMutationId: String
+}
+
+input ChangePostMutationInput {
+  postId: String!
+  title: String
+  body: String
+  excerpt: String
+  status: PostStatusEnum
+  targetAudience: PostTargetAudienceEnum
+  pageColor: String
+  clientMutationId: String
+}
+
+type ChangePostReadMutationPayload {
+  post: Post
+  viewer: Viewer
+  clientMutationId: String
+}
+
+input ChangePostReadMutationInput {
+  postId: String!
+  hasRead: Boolean!
+  clientMutationId: String
+}
+
+type ChangePlayerQueueMutationPayload {
+  playerQueue: PlayerQueue @deprecated(reason: "Use viewer instead, so that the local cache gets updated")
+  viewer: Viewer
+  clientMutationId: String
+}
+
+input ChangePlayerQueueMutationInput {
+  queue: [InputPlayerQueueItem]!
+  currentIndex: Int!
+  expectedLastModifiedDate: DateTime
+  clientMutationId: String
+}
+
+input InputPlayerQueueItem {
+  cloudcastId: String
+  situation: JSONString
+}
+
+type ChangePaymentMethodMutationPayload {
+  viewer: Viewer
+  setupIntent: SetupIntent
+  clientMutationId: String
+}
+
+input ChangePaymentMethodMutationInput {
+  setupIntentId: String
+  paymentMethodId: String!
+  clientMutationId: String
+}
+
+type ChangePlaylistNameMutationPayload {
+  playlist: Playlist
+  clientMutationId: String
+}
+
+input ChangePlaylistNameMutationInput {
+  playlistId: String!
+  name: String!
+  clientMutationId: String
+}
+
+"""
+Update current user's profile information
+
+All input fields in this mutation are optional. Fields that do not get sent will not be changed.
+"""
+type ChangeProfileMutationPayload {
+  viewer: Viewer
+  clientMutationId: String
+}
+
+input ChangeProfileMutationInput {
+  brandedProfile: BrandedProfileInput
+  displayName: String
+  biog: String
+  country: String
+  city: String
+  gender: String
+  birthyear: String
+  menuItems: [MenuItem]
+  clientMutationId: String
+}
+
+input BrandedProfileInput {
+  backgroundColor: String
+  backgroundTiled: Boolean
+}
+
+input MenuItem {
+  itemType: MenuItemTypes
+  inDropdown: Boolean = """false"""
+  hidden: Boolean = """false"""
+  playlistId: ID
+}
+
+enum MenuItemTypes {
+  STREAM
+  UPLOADS
+  FAVORITES
+  LISTENS
+  PLAYLIST
+  POSTS
+}
+
+type ChangeReceivesUploadNotificationsMutationPayload {
+  user: User
+  clientMutationId: String
+}
+
+input ChangeReceivesUploadNotificationsMutationInput {
+  userId: String!
+  receivesUploadNotifications: Boolean!
+  clientMutationId: String
+}
+
+type ChangeRepostMutationPayload {
+  cloudcast: Cloudcast
+  clientMutationId: String
+}
+
+input ChangeRepostMutationInput {
+  cloudcastId: String!
+  isReposted: Boolean!
+  tracking: JSONString
+  clientMutationId: String
+}
+
+type ChangeSpamCloudcastMutationPayload {
+  cloudcast: Cloudcast
+  clientMutationId: String
+}
+
+input ChangeSpamCloudcastMutationInput {
+  cloudcastId: String!
+  isSpam: Boolean!
+  clientMutationId: String
+}
+
+type ChangeSpamUserMutationPayload {
+  user: User
+  clientMutationId: String
+}
+
+input ChangeSpamUserMutationInput {
+  userId: String!
+  isSpam: Boolean!
+  clientMutationId: String
+}
+
+type ChangeStaffPickMutationPayload {
+  cloudcast: Cloudcast
+  clientMutationId: String
+}
+
+input ChangeStaffPickMutationInput {
+  cloudcastId: String!
+  isStaffPick: Boolean!
+  clientMutationId: String
+}
+
+type ChangeStaffPickUserMutationPayload {
+  user: User
+  clientMutationId: String
+}
+
+input ChangeStaffPickUserMutationInput {
+  userId: String!
+  touchExisitingCloudcasts: String!
+  clientMutationId: String
+}
+
+type CompleteNPSMutationPayload {
+  npsScore: NPSScore
+  clientMutationId: String
+}
+
+type NPSScore implements Node {
+  user: User
+  sessionKey: String!
+  score: Int
+  feedback: String
+  """
+  The ID of the object.
+  """
+  id: ID!
+}
+
+input CompleteNPSMutationInput {
+  campaignId: ID!
+  score: Int
+  feedback: String
+  clientMutationId: String
+}
+
+type ConfirmPaymentMutationPayload {
+  requiresAction: Boolean
+  paymentIntentClientSecret: String
+  succeeded: Boolean
+  clientMutationId: String
+}
+
+input ConfirmPaymentMutationInput {
+  paymentIntentId: String!
+  clientMutationId: String
+}
+
+type ClassifySpamMutationPayload {
+  classified: [SpamTarget]
+  clientMutationId: String
+}
+
+input ClassifySpamMutationInput {
+  classifications: [ClassificationInput]!
+  clientMutationId: String
+}
+
+input ClassificationInput {
+  id: ID!
+  isSpam: Boolean!
+}
+
+type CloudcastAdImpressionMutationPayload {
+  dbId: Int!
+  clientMutationId: String
+}
+
+input CloudcastAdImpressionMutationInput {
+  dbId: Int!
+  clientMutationId: String
+}
+
+type CloudcastAdImpressionByRelayIdMutationPayload {
+  relayId: ID!
+  clientMutationId: String
+}
+
+input CloudcastAdImpressionByRelayIdMutationInput {
+  relayId: ID!
+  clientMutationId: String
+}
+
+type CreateConversationMutationPayload {
+  newConversationEdge: ConversationEdge
+  clientMutationId: String
+}
+
+input CreateConversationMutationInput {
+  userId: ID!
+  clientMutationId: String
+}
+
+type CreateLiveStreamMutationPayload {
+  liveStream: LiveStream
+  clientMutationId: String
+}
+
+input CreateLiveStreamMutationInput {
+  name: String
+  description: String
+  unlisted: Boolean!
+  primaryTag: String
+  secondaryTags: [String]
+  broadcastType: BroadcastType
+  clientMutationId: String
+}
+
+type DisableCloudcastMutationPayload {
+  removedCloudcastId: ID
+  owner: User
+  clientMutationId: String
+}
+
+input DisableCloudcastMutationInput {
+  cloudcastId: String!
+  reason: DisableCloudcastReasonType!
+  clientMutationId: String
+}
+
+enum DisableCloudcastReasonType {
+  STAFF
+  USER
+  SINGLE_TRACK
+  STAFF_REMOVE_PODCAST
+  PODCAST_404
+  SHORT_UPLOAD
+  SUSPECTED_ALBUM
+  AUDIO_IMPORT_FAILED
+  CORRUPTED
+  ACCOUNT_CLOSED
+}
+
+type DisableUserMutationPayload {
+  viewer: Viewer
+  clientMutationId: String
+}
+
+input DisableUserMutationInput {
+  reason: String
+  userIdToDelete: String!
+  reasonType: DisableUserReasonType!
+  clientMutationId: String
+}
+
+enum DisableUserReasonType {
+  USER_CLOSE
+  SUPPORT_TICKET
+  SPAM
+  OTHER
+  FRAUD
+  COPYRIGHT
+  GDPR
+}
+
+type DeletePlaylistMutationPayload {
+  deletedPlaylistId: ID
+  viewer: Viewer
+  clientMutationId: String
+}
+
+input DeletePlaylistMutationInput {
+  playlistId: String
+  clientMutationId: String
+}
+
+type DeletePostMutationPayload {
+  deletedPostId: ID
+  viewer: Viewer
+  clientMutationId: String
+}
+
+input DeletePostMutationInput {
+  postId: String
+  clientMutationId: String
+}
+
+type EnableCloudcastMutationPayload {
+  cloudcast: Cloudcast
+  clientMutationId: String
+}
+
+input EnableCloudcastMutationInput {
+  cloudcastId: String!
+  clientMutationId: String
+}
+
+type EnableUserMutationPayload {
+  viewer: Viewer
+  clientMutationId: String
+}
+
+input EnableUserMutationInput {
+  userIdToEnable: String!
+  clientMutationId: String
+}
+
+type EditConsumerMutationPayload {
+  consumer: Consumer
+  viewer: Viewer
+  clientMutationId: String
+}
+
+input EditConsumerMutationInput {
+  consumerId: String!
+  name: String!
+  description: String!
+  website: String!
+  organisationName: String
+  organisationWebsite: String
+  clientMutationId: String
+}
+
+type FacebookShareMutationPayload {
+  id: ID
+  clientMutationId: String
+}
+
+input FacebookShareMutationInput {
+  postId: String!
+  contentId: String!
+  tracking: JSONString!
+  clientMutationId: String
+}
+
+type HideContentMutationPayload {
+  viewer: Viewer
+  clientMutationId: String
+}
+
+input HideContentMutationInput {
+  contentKey: String!
+  clientMutationId: String
+}
+
+type HideCookieWarningMutationPayload {
+  viewer: Viewer
+  clientMutationId: String
+}
+
+input HideCookieWarningMutationInput {
+  hideCookieWarning: Boolean!
+  clientMutationId: String
+}
+
+type IgnoreFollowingSuggestionMutationPayload {
+  ignoredFollowingSuggestionId: ID
+  clientMutationId: String
+}
+
+input IgnoreFollowingSuggestionMutationInput {
+  userId: String!
+  clientMutationId: String
+}
+
+type ImageTakedownMutationPayload {
+  imageUrls: [String]
+  clientMutationId: String
+}
+
+input ImageTakedownMutationInput {
+  imageUrls: String!
+  clientMutationId: String
+}
+
+type MarkNotificationsReadMutationPayload {
+  viewer: Viewer
+  clientMutationId: String
+}
+
+input MarkNotificationsReadMutationInput {
+  clientMutationId: String
+}
+
+type MarkSpamCommentMutationPayload {
+  comment: Comment
+  clientMutationId: String
+}
+
+input MarkSpamCommentMutationInput {
+  commentId: String!
+  clientMutationId: String
+}
+
+type MarkUploadNotificationsReadMutationPayload {
+  me: User @deprecated(reason: "Use Viewer instead")
+  viewer: Viewer
+  clientMutationId: String
+}
+
+input MarkUploadNotificationsReadMutationInput {
+  clientMutationId: String
+}
+
+type PromotedFeedItemImpressionMutationPayload {
+  dbId: Int!
+  clientMutationId: String
+}
+
+input PromotedFeedItemImpressionMutationInput {
+  dbId: Int!
+  clientMutationId: String
+}
+
+type PromotedFeedItemImpressionByRelayIdMutationPayload {
+  relayId: ID!
+  clientMutationId: String
+}
+
+input PromotedFeedItemImpressionByRelayIdMutationInput {
+  relayId: ID!
+  clientMutationId: String
+}
+
+type PromotedFeedItemInteractionMutationPayload {
+  dbId: Int!
+  clientMutationId: String
+}
+
+input PromotedFeedItemInteractionMutationInput {
+  dbId: Int!
+  clientMutationId: String
+}
+
+type PromotedFeedItemInteractionByRelayIdMutationPayload {
+  relayId: ID!
+  clientMutationId: String
+}
+
+input PromotedFeedItemInteractionByRelayIdMutationInput {
+  relayId: ID!
+  clientMutationId: String
+}
+
+type RegisterDeviceMutationPayload {
+  clientMutationId: String
+}
+
+input RegisterDeviceMutationInput {
+  deviceId: String!
+  deviceName: String!
+  deviceModel: String!
+  osName: String!
+  osVersion: String!
+  timezone: String!
+  locale: String!
+  appVersion: String!
+  pushNotificationsEnabled: Boolean!
+  clientMutationId: String
+}
+
+type RemoveCommentMutationPayload {
+  comment: Comment
+  clientMutationId: String
+}
+
+input RemoveCommentMutationInput {
+  commentId: String!
+  clientMutationId: String
+}
+
+type RemoveDownloadDeviceMutationPayload {
+  viewer: Viewer
+  clientMutationId: String
+}
+
+input RemoveDownloadDeviceMutationInput {
+  deviceId: String!
+  clientMutationId: String
+}
+
+type RemoveListeningHistoryMutationPayload {
+  viewer: Viewer
+  removedListeningHistoryId: ID
+  clientMutationId: String
+}
+
+input RemoveListeningHistoryMutationInput {
+  listeningHistoryId: String!
+  clientMutationId: String
+}
+
+type RemovePlaylistItemMutationPayload {
+  playlist: Playlist
+  removedPlaylistItemId: ID
+  clientMutationId: String
+}
+
+input RemovePlaylistItemMutationInput {
+  cloudcastId: String!
+  playlistId: String
+  clientMutationId: String
+}
+
+type ReorderPlaylistMutationPayload {
+  playlist: Playlist
+  clientMutationId: String
+}
+
+input ReorderPlaylistMutationInput {
+  playlistId: String!
+  items: [String]!
+  clientMutationId: String
+}
+
+type ResetConsumerSecretMutationPayload {
+  consumer: Consumer
+  clientMutationId: String
+}
+
+input ResetConsumerSecretMutationInput {
+  consumerId: String!
+  clientMutationId: String
+}
+
+type SaveManualStudyIdentificationMutationPayload {
+  sample: ManualStudySample
+  clientMutationId: String
+}
+
+input SaveManualStudyIdentificationMutationInput {
+  sampleId: String!
+  trackTitle: String!
+  trackArtist: String!
+  trackLabel: String!
+  notes: String!
+  result: ResultEnum!
+  clientMutationId: String
+}
+
+enum ResultEnum {
+  PENDING
+  NONE
+  NO_LABEL
+  NO_MAJOR
+  OTHER
+  MERLIN
+  SONY
+  UMG
+  WARNER
+  ORCHARD
+  BELIEVE
+  NO_ID
+}
+
+type TriggerPodcastImportMutationPayload {
+  viewer: Viewer
+  clientMutationId: String
+}
+
+input TriggerPodcastImportMutationInput {
+  clientMutationId: String
+}
+
+type UploadCloudcastMutationPayload {
+  cloudcast: Cloudcast
+  owner: User
+  clientMutationId: String
+}
+
+input UploadCloudcastMutationInput {
+  name: String!
+  tracking: JSONString!
+  clientMutationId: String
+}
+
+type ChangeCloudcastMutationPayload {
+  cloudcast: Cloudcast
+  owner: User
+  clientMutationId: String
+}
+
+input ChangeCloudcastMutationInput {
+  cloudcastId: String!
+  name: String
+  description: String
+  disableComments: Boolean
+  mp3ExternalUrl: String
+  picturePrimaryColor: String
+  hideStats: Boolean
+  isExclusive: Boolean
+  unlisted: Boolean
+  schedulePublishDate: DateTime
+  tags: [String]
+  sections: [SectionInput]
+  shareFacebook: Boolean
+  clientMutationId: String
+}
+
+input SectionInput {
+  type: SectionTypeEnum!
+  startSeconds: Int
+  chapter: String
+  songName: String
+  artistName: String
+}
+
+enum SectionTypeEnum {
+  TRACK
+  CHAPTER
+}
+
+type SliceCloudcastMutationPayload {
+  cloudcast: Cloudcast
+  clientMutationId: String
+}
+
+input SliceCloudcastMutationInput {
+  cloudcastId: String!
+  notes: String
+  sendEmail: Boolean
+  emailBody: String
+  sections: [RemoveSectionInput]
+  slices: [SliceInput]
+  clientMutationId: String
+}
+
+input RemoveSectionInput {
+  pk: ID
+  remove: Boolean
+}
+
+input SliceInput {
+  artistName: String
+  songName: String
+  startTime: Int
+  stopTime: Int
+}
+
+type ChangeEmailNotificationSettingMutationPayload {
+  viewer: Viewer
+  clientMutationId: String
+}
+
+input ChangeEmailNotificationSettingMutationInput {
+  noticeLabel: String!
+  noticeSetting: NotificationSettingEnum!
+  clientMutationId: String
+}
+
+type RevokeAccessTokenMutationPayload {
+  removedAccessTokenId: ID
+  viewer: Viewer
+  clientMutationId: String
+}
+
+input RevokeAccessTokenMutationInput {
+  accessTokenId: String!
+  clientMutationId: String
+}
+
+type SendMessageMutationPayload {
+  newMessageEdge: MessageEdge
+  clientMutationId: String
+}
+
+input SendMessageMutationInput {
+  conversationId: ID!
+  message: String!
+  clientMutationId: String
+}
+
+type PodcastBulkImportMutationPayload {
+  failures: [PodcastBulkImportFailure]
+  clientMutationId: String
+}
+
+type PodcastBulkImportFailure {
+  email: String
+  feedUrl: String
+}
+
+input PodcastBulkImportMutationInput {
+  podcasts: [PodcastInput]!
+  clientMutationId: String
+}
+
+input PodcastInput {
+  email: String!
+  feedUrl: String!
+}
+
+type DeleteCommentsByUserMutationPayload {
+  user: User
+  clientMutationId: String
+}
+
+input DeleteCommentsByUserMutationInput {
+  userId: String!
+  clientMutationId: String
+}
+
+type MoveUserDataMutationPayload {
+  user: User
+  clientMutationId: String
+}
+
+input MoveUserDataMutationInput {
+  sourceUsername: String!
+  destUsername: String!
+  comments: Boolean
+  favorites: Boolean
+  listens: Boolean
+  uploads: Boolean
+  followers: Boolean
+  clientMutationId: String
+}
+
+type AddCloudcastSRPCWaiverMutationPayload {
+  cloudcast: Cloudcast
+  clientMutationId: String
+}
+
+input AddCloudcastSRPCWaiverMutationInput {
+  cloudcastId: String!
+  clientMutationId: String
+}
+
+type DeleteCloudcastSRPCWaiverMutationPayload {
+  cloudcast: Cloudcast
+  clientMutationId: String
+}
+
+input DeleteCloudcastSRPCWaiverMutationInput {
+  cloudcastId: String!
+  clientMutationId: String
+}
+
+type AddUserSRPCWaiverMutationPayload {
+  user: User
+  clientMutationId: String
+}
+
+input AddUserSRPCWaiverMutationInput {
+  userId: String!
+  clientMutationId: String
+}
+
+type DeleteUserSRPCWaiverMutationPayload {
+  user: User
+  clientMutationId: String
+}
+
+input DeleteUserSRPCWaiverMutationInput {
+  userId: String!
+  clientMutationId: String
+}
+
+type ChangeShortUploadWhitelistMutationPayload {
+  user: User
+  clientMutationId: String
+}
+
+input ChangeShortUploadWhitelistMutationInput {
+  userId: String!
+  clientMutationId: String
+}
+
+type RestoreAudioFileHistoryMutationPayload {
+  cloudcast: Cloudcast
+  clientMutationId: String
+}
+
+input RestoreAudioFileHistoryMutationInput {
+  audioFileHistoryId: ID!
+  clientMutationId: String
+}
+
+type AddFreeCloudcastAdMutationPayload {
+  cloudcast: Cloudcast
+  newPromotedCloudcastEdge: PromotedCloudcastEdge
+  clientMutationId: String
+}
+
+input AddFreeCloudcastAdMutationInput {
+  cloudcastId: ID!
+  daysActive: Int!
+  clientMutationId: String
+}
+
+type HomeShelfInteractionMutationPayload {
+  clientMutationId: String
+}
+
+input HomeShelfInteractionMutationInput {
+  interactionType: HomeShelfInteractionEnum!
+  tracking: JSONString!
+  clientMutationId: String
+}
+
+enum HomeShelfInteractionEnum {
+  SHELF_IMPRESSION
+  SHELF_PLAY
+}
+
+type SetExperimentGoalMutationPayload {
+  clientMutationId: String
+}
+
+input SetExperimentGoalMutationInput {
+  goal: String!
+  count: Int
+  clientMutationId: String
+}
+
+type ScheduleGdprDataRequestMutationPayload {
+  clientMutationId: String
+}
+
+input ScheduleGdprDataRequestMutationInput {
+  userId: ID!
+  customEmails: String
+  clientMutationId: String
+}
+
+type AddTrackingEventPayload {
+  clientMutationId: String
+}
+
+input AddTrackingEventInput {
+  action: String!
+  category: String!
+  tracking: JSONString!
+  clientMutationId: String
+}
+
+type RegisterSelectInterestMutationPayload {
+  user: User
+  clientMutationId: String
+}
+
+input RegisterSelectInterestMutationInput {
+  clientMutationId: String
+}
+
+type DismissSelectInAppConfirmationMutationPayload {
+  viewer: Viewer
+  clientMutationId: String
+}
+
+input DismissSelectInAppConfirmationMutationInput {
+  clientMutationId: String
+}
+
+type ChangeSelectUpsellMutationPayload {
+  user: User
+  clientMutationId: String
+}
+
+input ChangeSelectUpsellMutationInput {
+  userId: ID!
+  text: String
+  contactEmail: String
+  completionText: String
+  minQuantity: Int
+  payoutCurrency: CurrencyChoice
+  isPublic: Boolean
+  primaryCategory: CategoryChoiceEnum
+  secondaryCategory: CategoryChoiceEnum
+  hasExclusivesValueProp: Boolean
+  hasEarlyAccessValueProp: Boolean
+  hasExtendedShowsValueProp: Boolean
+  hasUpfrontTracklistsValueProp: Boolean
+  hasSupportMeValueProp: Boolean
+  clientMutationId: String
+}
+
+type PublishSelectUpsellMutationPayload {
+  user: User
+  clientMutationId: String
+}
+
+input PublishSelectUpsellMutationInput {
+  userId: ID!
+  isPublic: Boolean
+  clientMutationId: String
+}
+
+type ChangeGeoOverridesMutationPayload {
+  viewer: Viewer
+  clientMutationId: String
+}
+
+input ChangeGeoOverridesMutationInput {
+  geoIp: String
+  geoCity: String
+  geoCountry: String
+  clientMutationId: String
+}
+
+type TrackRepeatPlayMutationPayload {
+  cloudcast: Cloudcast
+  clientMutationId: String
+}
+
+input TrackRepeatPlayMutationInput {
+  cloudcastId: String!
+  clientMutationId: String
+}
+
+type CompleteRepeatPlayMutationPayload {
+  cloudcast: Cloudcast
+  clientMutationId: String
+}
+
+input CompleteRepeatPlayMutationInput {
+  cloudcastId: String!
+  clientMutationId: String
+}
+
+type RetranscodeCloudcastMutationPayload {
+  cloudcast: Cloudcast
+  clientMutationId: String
+}
+
+input RetranscodeCloudcastMutationInput {
+  cloudcastId: String!
+  clientMutationId: String
+}
+
+type AddChatMessageMutationPayload {
+  chatMessage: ChatMessage
+  clientMutationId: String
+}
+
+input AddChatMessageMutationInput {
+  liveStreamId: String!
+  message: String!
+  clientMutationId: String
+}
+
+type AddLiveReactionMutationPayload {
+  liveReaction: LiveReaction
+  clientMutationId: String
+}
+
+input AddLiveReactionMutationInput {
+  liveStreamId: String!
+  emoji: String!
+  clientMutationId: String
+}
+
+type DeleteChatMessageMutationPayload {
+  clientMutationId: String
+}
+
+input DeleteChatMessageMutationInput {
+  chatMessageId: String!
+  clientMutationId: String
+}
+
+type LiveStreamKeyResetMutationPayload {
+  user: User
+  clientMutationId: String
+}
+
+input LiveStreamKeyResetMutationInput {
+  userId: ID
+  clientMutationId: String
+}
+
+type LiveStreamPaymentMutationPayload {
+  liveStream: LiveStream
+  requiredAction: String
+  clientMutationId: String
+}
+
+input LiveStreamPaymentMutationInput {
+  liveStreamId: ID!
+  stripeToken: String
+  currency: String!
+  clientMutationId: String
+}
+
+type CreateCheckoutSessionMutationPayload {
+  sessionId: String
+  clientMutationId: String
+}
+
+input CreateCheckoutSessionMutationInput {
+  planStripeId: String!
+  successUrl: String!
+  cancelUrl: String!
+  coupon: String
+  clientMutationId: String
+}
+
+type CreateTipMutationPayload {
+  sessionId: String
+  clientMutationId: String
+}
+
+input CreateTipMutationInput {
+  amount: Int!
+  userId: String!
+  successUrl: String!
+  cancelUrl: String!
+  message: String
+  contentId: String
+  clientMutationId: String
+}
+
+type ChangeTipSettingsMutationPayload {
+  viewer: Viewer
+  clientMutationId: String
+}
+
+input ChangeTipSettingsMutationInput {
+  isAvailableOnCloudcast: Boolean
+  isAvailableOnLivestream: Boolean
+  isAvailableOnProfile: Boolean
+  clientMutationId: String
+}
+
+type OnboardStripeConnectMutationPayload {
+  onboardingUrl: String
+  clientMutationId: String
+}
+
+input OnboardStripeConnectMutationInput {
+  refreshUrl: String!
+  returnUrl: String!
+  clientMutationId: String
+}
+
+type ChangePromotionStreamKeyMutationPayload {
+  liveConfig: LiveConfig
+  clientMutationId: String
+}
+
+input ChangePromotionStreamKeyMutationInput {
+  streamKey: String!
+  isStreamingEnabled: Boolean!
+  promotionSite: PromotionSite
+  clientMutationId: String
+}
+
+"""
+An enumeration.
+"""
+enum PromotionSite {
+  FACEBOOK
+  TWITCH
+  YOUTUBE
+}
+
+type Subscription {
+  newLiveStreamEvent(input: NewLiveStreamEventSubscriptionInput!): NewLiveStreamEventSubscriptionPayload
+  removedLiveStreamEvent(input: RemovedLiveStreamEventSubscriptionInput!): RemovedLiveStreamEventSubscriptionPayload
+  liveStreamChange(input: LiveStreamChangeSubscriptionInput!): LiveStreamChangeSubscriptionPayload
+  userLiveStreamChange(input: UserLiveStreamChangeSubscriptionInput!): UserLiveStreamChangeSubscriptionPayload
+  newSelectSubscriber(input: NewSelectSubscriberSubscriptionInput!): NewSelectSubscriberSubscriptionPayload
+  currentSpectators(input: CurrentSpectatorSubscriptionInput!): CurrentSpectatorSubscriptionPayload
+  rtmpConnectionChange(input: RTMPConnectionChangeSubscriptionInput!): RTMPConnectionChangeSubscriptionPayload
+  playTracking(input: PlayTrackingSubscriptionInput!): PlayTrackingSubscriptionPayload
+}
+
+type NewLiveStreamEventSubscriptionPayload {
+  liveStreamEvent: LiveStreamEvent!
+}
+
+input NewLiveStreamEventSubscriptionInput {
+  liveStreamId: String!
+}
+
+type RemovedLiveStreamEventSubscriptionPayload {
+  liveStreamEvent: LiveStreamEvent!
+}
+
+input RemovedLiveStreamEventSubscriptionInput {
+  liveStreamId: String!
+}
+
+type LiveStreamChangeSubscriptionPayload {
+  liveStream: LiveStream
+}
+
+input LiveStreamChangeSubscriptionInput {
+  liveStreamId: String!
+}
+
+type UserLiveStreamChangeSubscriptionPayload {
+  user: User
+}
+
+input UserLiveStreamChangeSubscriptionInput {
+  userId: String!
+}
+
+type NewSelectSubscriberSubscriptionPayload {
+  user: User
+}
+
+input NewSelectSubscriberSubscriptionInput {
+  subscribedTo: String!
+}
+
+type CurrentSpectatorSubscriptionPayload {
+  liveStream: LiveStream
+}
+
+input CurrentSpectatorSubscriptionInput {
+  liveStreamId: String!
+}
+
+type RTMPConnectionChangeSubscriptionPayload {
+  rtmpConnection: RTMPConnection
+}
+
+input RTMPConnectionChangeSubscriptionInput {
+  liveStreamId: String!
+}
+
+type PlayTrackingSubscriptionPayload {
+  success: Boolean
+}
+
+input PlayTrackingSubscriptionInput {
+  pingSessionId: String!
+  cloudcastId: String!
+  startPosition: Int!
+  debounceDelay: Int
+  situation: JSONString
+}
+
+schema {
+  query: Query
+  mutation: Mutation
+  subscription: Subscription
+}
