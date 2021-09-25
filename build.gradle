@@ -1,7 +1,11 @@
+//file:noinspection GroovyAssignabilityCheck
+
 plugins {
     id 'java'
+    id 'distribution'
     id 'com.github.johnrengelman.shadow' version '7.0.0'
     id 'com.apollographql.apollo' version '2.5.9'
+    id 'org.barfuin.gradle.taskinfo' version '1.3.0'  // For the `tiTree <task>` task
 
     // The Snyk plugin defines two tasks: snyk-test, snyk-monitor
     // https://snyk.io/blog/gradle-plugin-by-snyk-gradle-dependencies-scanning/
@@ -20,33 +24,54 @@ dependencies {
     implementation 'com.apollographql.apollo:apollo-runtime:2.5.9'
 }
 
-test {
-    useJUnit()
+// Enable some javac diagnostics
+gradle.projectsEvaluated {
+    tasks.withType(JavaCompile) {
+        options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+    }
+}
+
+// Configure/tweak tasks
+distTar.enabled(false)
+
+distributions {
+    main {
+        contents {
+            from shadowJar.archiveFile
+            from 'config'
+            from 'README.md'
+        }
+    }
+}
+
+installDist {
+    // Install for real, on the machine the build is running on
+    destinationDir = new File("${System.getenv("HOME")}/Applications/Mixcaster")
+
+    doLast {
+        def settingsFile = new File(destinationDir.getPath() + '/mixcaster-settings.properties')
+        def newSettings = settingsFile.text.replace('http_port = 25683', 'http_port = 6498')
+        settingsFile.text = newSettings
+
+        exec {
+            // If our launchd agent already exists, it's removed before installing the new one
+            commandLine "${System.getenv("HOME")}/Applications/Mixcaster/mixcaster", "-install"
+        }
+    }
 }
 
 jar {
-    // noinspection GroovyAssignabilityCheck
     manifest {
         attributes 'Main-Class': 'jakshin.mixcaster.Main'
     }
 }
 
 shadowJar {
+    archiveFileName = "${project.name.toLowerCase()}.jar"
+
     // Should be able to enable this again with shadow 7.1+
     // See https://github.com/johnrengelman/shadow/issues/679
     // minimize()
-}
-
-// Use "shadowJar" in place of "jar"
-jar.enabled(false)
-shadowJar.archiveFileName = "${project.name.toLowerCase()}.jar"
-assemble.dependsOn(shadowJar)
-
-// Enable some javac diagnostics
-gradle.projectsEvaluated {
-    tasks.withType(JavaCompile) {
-        options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
-    }
 }
 
 snyk {
@@ -55,3 +80,14 @@ snyk {
     autoDownload = true
     autoUpdate = true
 }
+
+test {
+    useJUnit()
+}
+
+// Use "shadowJar" in place of "jar"
+assemble.dependsOn(shadowJar)
+distTar.dependsOn(shadowJar)
+distZip.dependsOn(shadowJar)
+installDist.dependsOn(shadowJar)
+jar.enabled(false)
