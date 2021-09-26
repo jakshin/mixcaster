@@ -33,6 +33,7 @@ class PodcastCache {
      * Gets the instance of this singleton class.
      * @return The PodcastCache instance.
      */
+    @NotNull
     static synchronized PodcastCache getInstance() {
         if (PodcastCache.instance == null) {
             PodcastCache.instance = new PodcastCache();
@@ -45,6 +46,7 @@ class PodcastCache {
      * Gets a podcast from the cache.
      * Returns null if a matching podcast isn't in the cache.
      */
+    @Nullable
     synchronized Podcast getFromCache(@NotNull String username, @NotNull String musicType, @Nullable String playlist) {
         String key = buildCacheKey(username, musicType, playlist);
         Podcast existing = this.cached.get(key);
