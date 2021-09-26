@@ -17,6 +17,7 @@
 
 package jakshin.mixcaster.http;
 
+import org.jetbrains.annotations.NotNull;
 import java.io.Serial;
 
 /**
@@ -30,7 +31,7 @@ class HttpException extends Exception {
      * @param httpResponseCode The HTTP response code.
      * @param message The detail message; saved for later retrieval by the Throwable.getMessage() method.
      */
-    HttpException(int httpResponseCode, String message) {
+    HttpException(int httpResponseCode, @NotNull String message) {
         super(message);
         this.httpResponseCode = httpResponseCode;
     }
@@ -42,7 +43,7 @@ class HttpException extends Exception {
      * @param message The detail message; saved for later retrieval by the Throwable.getMessage() method.
      * @param cause The cause; saved for later retrieval by the Throwable.getCause() method.
      */
-    HttpException(int httpResponseCode, String message, Throwable cause) {
+    HttpException(int httpResponseCode, @NotNull String message, @NotNull Throwable cause) {
         super(message, cause);
         this.httpResponseCode = httpResponseCode;
     }
