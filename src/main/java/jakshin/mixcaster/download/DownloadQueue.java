@@ -38,6 +38,7 @@ public final class DownloadQueue {
      * Gets the instance of this singleton class.
      * @return The DownloadQueue instance.
      */
+    @NotNull
     public static synchronized DownloadQueue getInstance() {
         if (DownloadQueue.instance == null) {
             DownloadQueue.instance = new DownloadQueue();
@@ -116,7 +117,7 @@ public final class DownloadQueue {
      *
      * @param download The download to remove.
      */
-    private synchronized void removeActiveDownload(Download download) {
+    private synchronized void removeActiveDownload(@NotNull Download download) {
         this.activeDownloads.remove(download);
 
         if (this.exitWhenEmpty) {
@@ -140,7 +141,7 @@ public final class DownloadQueue {
      */
     private class DownloadRunnable implements Runnable {
         /** Creates a new instance of the class. */
-        DownloadRunnable(Download download) {
+        DownloadRunnable(@NotNull Download download) {
             this.download = download;
         }
 
