@@ -24,6 +24,8 @@ dependencies {
     implementation 'com.apollographql.apollo:apollo-runtime:2.5.9'
 }
 
+def appVersion = 'dev'  // Must be either "dev" or major.minor.patch
+
 // Enable some javac diagnostics
 gradle.projectsEvaluated {
     tasks.withType(JavaCompile) {
@@ -36,6 +38,7 @@ distTar.enabled(false)
 
 distributions {
     main {
+        distributionBaseName = "$project.name-$appVersion"
         contents {
             from shadowJar.archiveFile
             from 'config'
@@ -62,7 +65,10 @@ installDist {
 
 jar {
     manifest {
-        attributes 'Main-Class': 'jakshin.mixcaster.Main'
+        attributes (
+                'Main-Class': 'jakshin.mixcaster.Main',
+                'Implementation-Version': appVersion
+        )
     }
 }
 

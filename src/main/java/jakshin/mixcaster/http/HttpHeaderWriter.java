@@ -17,7 +17,7 @@
 
 package jakshin.mixcaster.http;
 
-import jakshin.mixcaster.Main;
+import jakshin.mixcaster.utils.AppVersion;
 import jakshin.mixcaster.utils.DateFormatter;
 import java.io.IOException;
 import java.io.Writer;
@@ -255,7 +255,7 @@ class HttpHeaderWriter {
      */
     private void addCommonHeaders(StringBuilder out, StringBuilder log) {
         this.addHeader(out, log, "Date: %s", DateFormatter.format(new Date()));
-        this.addHeader(out, log, "Server: Mixcaster/%s (%s)", Main.version, System.getProperty("os.name"));
+        this.addHeader(out, log, "Server: Mixcaster/%s (%s)", AppVersion.raw, System.getProperty("os.name"));
         this.addHeader(out, log, "Connection: close");
         this.addHeader(out, log, "Accept-Ranges: bytes");
     }

@@ -17,7 +17,7 @@
 
 package jakshin.mixcaster.http;
 
-import jakshin.mixcaster.Main;
+import jakshin.mixcaster.utils.AppVersion;
 import jakshin.mixcaster.utils.DateFormatter;
 import org.jetbrains.annotations.NotNull;
 
@@ -76,7 +76,7 @@ class BannerResponder extends Responder {
                     }
                 }
 
-                BannerResponder.resourceBuffer = sb.toString().replace("{{version}}", Main.version);
+                BannerResponder.resourceBuffer = sb.toString().replace("{{version}}", AppVersion.display);
             }
             else {
                 logger.log(DEBUG, "Retrieved banner.html from cache");
@@ -116,21 +116,23 @@ class BannerResponder extends Responder {
         // (this value is unrelated to the filesystem's last-modified date for the banner.html file)
         Date lastModified = DateFormatter.parse("Thu, 12 May 2016 03:00:00 GMT");
 
-        String[] version = Main.version.split("\\.");
-        int major = Integer.parseInt(version[0]);
-        int minor = (version.length >= 2) ? Integer.parseInt(version[1]) : 0;
-        int patch = (version.length >= 3) ? Integer.parseInt(version[2]) : 0;
-
-        // add hours for major version, minutes for minor version, and seconds for patch version; adding this time,
-        // combined with our use of the no-cache header above, causes browsers to send an If-Modified-Since request,
-        // so if Mixcaster's version has changed since the browser's last hit to the banner page,
-        // the page will be retrieved again and the new version will be displayed in the banner
         Calendar cal = Calendar.getInstance();
         cal.setTime(lastModified);
 
-        cal.add(Calendar.HOUR_OF_DAY, major);
-        cal.add(Calendar.MINUTE, minor);
-        cal.add(Calendar.SECOND, patch);
+        String[] version = AppVersion.raw.split("\\.");
+        if (version.length == 3) {
+            // our use of the Cache-Control header causes browsers to send an If-Modified-Since request;
+            // add hours for major version, minutes for minor version, and seconds for patch version
+            // to implement caching of the banner per Mixcaster version
+
+            int major = Integer.parseInt(version[0]);
+            int minor = Integer.parseInt(version[1]);
+            int patch = Integer.parseInt(version[2]);
+
+            cal.add(Calendar.HOUR_OF_DAY, major);
+            cal.add(Calendar.MINUTE, minor);
+            cal.add(Calendar.SECOND, patch);
+        }
 
         return cal.getTime();
     }

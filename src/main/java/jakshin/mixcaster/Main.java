@@ -27,6 +27,7 @@ import jakshin.mixcaster.mixcloud.MixcloudPlaylistException;
 import jakshin.mixcaster.mixcloud.MixcloudUserException;
 import jakshin.mixcaster.podcast.Podcast;
 import jakshin.mixcaster.podcast.PodcastEpisode;
+import jakshin.mixcaster.utils.AppVersion;
 import jakshin.mixcaster.utils.FileLocator;
 import jakshin.mixcaster.utils.FileUtils;
 import org.jetbrains.annotations.NotNull;
@@ -76,11 +77,6 @@ public class Main {
     public static final Properties config = Main.initConfig();
 
     /**
-     * The application's version number.
-     */
-    public static final String version = "0.9.5";
-
-    /**
      * Downloads a user's music files to a local directory, music_dir by default,
      * mostly like PodcastXmlResponder would do, but with some tweaks and additional options.
      *
@@ -92,7 +88,7 @@ public class Main {
         try {
             // initialize logging (if this fails, the program will show error info on stdout and abort)
             Logging.initialize(false);
-            logger.log(INFO, "Mixcaster v{0}", Main.version);
+            logger.log(INFO, "Mixcaster {0}", AppVersion.display);
 
             // parse our command-line arguments
             String musicType = null;
@@ -276,7 +272,7 @@ public class Main {
         try {
             // initialize logging (if this fails, the program will show error info on stdout and abort)
             Logging.initialize(true);
-            logger.log(INFO, "Mixcaster v{0} starting up", Main.version);
+            logger.log(INFO, "Mixcaster {0} starting up", AppVersion.display);
 
             // warn if we failed to load configuration from our properties file
             this.warnAboutConfigError();
@@ -316,7 +312,7 @@ public class Main {
      * Prints version information.
      */
     private void printVersion() {
-        System.out.printf("Mixcaster v%s%n", Main.version);
+        System.out.printf("Mixcaster %s%n", AppVersion.display);
         System.out.println("https://github.com/jakshin/mixcaster");
     }
 
