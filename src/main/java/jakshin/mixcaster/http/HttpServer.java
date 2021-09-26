@@ -39,21 +39,23 @@ public class HttpServer implements Runnable {
         this.port = Integer.parseInt(httpPortStr);  // already validated
 
         // 3 threads min, 300 threads max, wait 30s before killing idle threads;
-        // LinkedBlockingQueue is FIFO so we process HTTP requests in the order they're received
-        this.pool = new ThreadPoolExecutor(3, 300, 30L, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>());
+        // LinkedBlockingQueue is FIFO, so we process HTTP requests in the order they're received
+        int min = 3, max = 300, keepAliveTime = 30;
+        this.pool = new ThreadPoolExecutor(min, max, keepAliveTime, TimeUnit.SECONDS, new LinkedBlockingQueue<>());
     }
 
     /**
      * Runs the HTTP server, listening for HTTP connections on the configured port,
      * and passing each connection off in a separate thread for processing.
      */
+    @SuppressWarnings("InfiniteLoopStatement")
     @Override
     public void run() {
-        ServerSocket ssocket;
+        ServerSocket serverSocket;
 
         try {
             // bind to the configured TCP port
-            ssocket = new ServerSocket(this.port);
+            serverSocket = new ServerSocket(this.port);
         }
         catch (IOException ex) {
             String msg = String.format("HTTP server failed to bind to TCP port %d", this.port);
@@ -67,17 +69,14 @@ public class HttpServer implements Runnable {
         while (true) {
             try {
                 // listen for connections; this will block until a connection is received
-                Socket socket = ssocket.accept();
+                Socket socket = serverSocket.accept();
 
                 // connection received, process it on a separate thread
                 HttpResponse response = new HttpResponse(socket);
                 this.pool.execute(response);
             }
-            catch (SocketException ex) {
-                // the socket was closed
-                logger.log(ERROR, ex.getMessage(), ex);
-            }
             catch (IOException ex) {
+                // a SocketException means the socket was closed
                 logger.log(ERROR, ex.getMessage(), ex);
             }
         }
