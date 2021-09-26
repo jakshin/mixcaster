@@ -17,6 +17,9 @@
 
 package jakshin.mixcaster.http;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import static jakshin.mixcaster.logging.Logging.*;
 
 /**
@@ -31,10 +34,10 @@ class ByteRangeParser {
      *
      * @param rangeHeader The HTTP Range header's value (expected to be like "bytes=...").
      * @return A logical byte range.
-     * @throws HttpException
      */
-    ByteRange parse(String rangeHeader) throws HttpException {
-        if (rangeHeader == null || rangeHeader.isEmpty()) {
+    @Nullable
+    ByteRange parse(@NotNull String rangeHeader) throws HttpException {
+        if (rangeHeader.isEmpty()) {
             return null;  // no Range header
         }
 
@@ -83,7 +86,7 @@ class ByteRangeParser {
         }
 
         // validate
-        if (start >= 0 && end >= 0 && start > end) {
+        if (start > end && end >= 0) {
             // the start of the range must be at or before the end of the range
             logger.log(WARNING, "Invalid Range header: {0}", rangeHeader);
             return null;  // invalid range
@@ -106,9 +109,9 @@ class ByteRangeParser {
      * @param range The range to translate.
      * @param fileSize The file size applicable in this case.
      * @return A translated version of the range.
-     * @throws HttpException
      */
-    ByteRange translate(final ByteRange range, long fileSize) throws HttpException {
+    @Nullable
+    ByteRange translate(@Nullable final ByteRange range, long fileSize) throws HttpException {
         if (range == null) return null;
 
         if (fileSize == 0) {
