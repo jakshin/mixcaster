@@ -30,28 +30,23 @@ import static org.junit.Assert.*;
 public class MimeTyperTest {
     private MimeTyper instance;
 
-    /** Scaffolding. */
     @BeforeClass
     public static void setUpClass() {
     }
 
-    /** Scaffolding. */
     @AfterClass
     public static void tearDownClass() {
     }
 
-    /** Scaffolding. */
     @Before
     public void setUp() {
         this.instance = new MimeTyper();
     }
 
-    /** Scaffolding. */
     @After
     public void tearDown() {
     }
 
-    /** Test. */
     @Test
     public void guessContentTypeShouldWorkForAudioFile() {
         String expResult = "audio/mp4";
@@ -59,7 +54,6 @@ public class MimeTyperTest {
         assertEquals(expResult, result);
     }
 
-    /** Test. */
     @Test
     public void guessContentTypeShouldWorkForMiscFile() {
         String expResult = "image/jpeg";
@@ -67,7 +61,6 @@ public class MimeTyperTest {
         assertEquals(expResult, result);
     }
 
-    /** Test. */
     @Test
     public void guessContentTypeShouldReturnDefaultForUnknownExtension() {
         String expResult = "application/octet-stream";
@@ -75,7 +68,6 @@ public class MimeTyperTest {
         assertEquals(expResult, result);
     }
 
-    /** Test. */
     @Test
     public void guessContentTypeShouldReturnDefaultForFileWithNoExtension() {
         String expResult = "application/octet-stream";
@@ -83,18 +75,10 @@ public class MimeTyperTest {
         assertEquals(expResult, result);
     }
 
-    /** Test. */
     @Test
     public void guessContentTypeShouldReturnDefaultForDotFile() {
         String expResult = "application/octet-stream";
         String result = instance.guessContentTypeFromName(".foo");
         assertEquals(expResult, result);
-    }
-
-    /** Test. */
-    @Test
-    public void guessContentTypeShouldReturnNullForNull() {
-        String result = instance.guessContentTypeFromName(null);
-        assertEquals(null, result);
     }
 }
