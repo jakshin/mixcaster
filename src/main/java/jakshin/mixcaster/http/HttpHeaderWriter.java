@@ -19,6 +19,9 @@ package jakshin.mixcaster.http;
 
 import jakshin.mixcaster.utils.AppVersion;
 import jakshin.mixcaster.utils.DateFormatter;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.io.IOException;
 import java.io.Writer;
 import java.text.ParseException;
@@ -38,10 +41,12 @@ class HttpHeaderWriter {
      * @param contentLastModified When the content was last modified.
      * @param contentType The content's MIME type.
      * @param contentLength The content's length.
-     * @throws IOException
      */
-    void sendSuccessHeaders(Writer writer, Date contentLastModified, String contentType, long contentLength)
-            throws IOException {
+    void sendSuccessHeaders(@NotNull Writer writer,
+                            @NotNull Date contentLastModified,
+                            @NotNull String contentType,
+                            long contentLength) throws IOException {
+
         this.sendSuccessHeaders(writer, contentLastModified, contentType, contentLength, null);
     }
 
@@ -53,11 +58,14 @@ class HttpHeaderWriter {
      * @param contentLastModified When the content was last modified.
      * @param contentType The content's MIME type.
      * @param contentLength The content's length.
-     * @param additionalHeaders Additional headers to send.
-     * @throws IOException
+     * @param additionalHeaders Additional headers to send (optional).
      */
-    void sendSuccessHeaders(Writer writer, Date contentLastModified, String contentType, long contentLength,
-            Map<String,String> additionalHeaders) throws IOException {
+    void sendSuccessHeaders(@NotNull Writer writer,
+                            @NotNull Date contentLastModified,
+                            @NotNull String contentType,
+                            long contentLength,
+                            @Nullable Map<String,String> additionalHeaders) throws IOException {
+
         StringBuilder out = new StringBuilder(500);
         StringBuilder log = new StringBuilder(500);
 
@@ -90,10 +98,14 @@ class HttpHeaderWriter {
      * @param fullContentLength The content's full length (the length of the file, not the part being sent).
      * @param firstByte The first byte being sent in the partial response.
      * @param lastByte The last byte being sent in the partial response.
-     * @throws IOException
      */
-    void sendRangeSuccessHeaders(Writer writer, Date contentLastModified, String contentType,
-            long fullContentLength, long firstByte, long lastByte) throws IOException {
+    void sendRangeSuccessHeaders(@NotNull Writer writer,
+                                 @NotNull Date contentLastModified,
+                                 @NotNull String contentType,
+                                 long fullContentLength,
+                                 long firstByte,
+                                 long lastByte) throws IOException {
+
         StringBuilder out = new StringBuilder(500);
         StringBuilder log = new StringBuilder(500);
 
@@ -114,11 +126,9 @@ class HttpHeaderWriter {
 
     /**
      * Sends HTTP not-modified headers (response code 304).
-     *
      * @param writer The writer to output the headers to.
-     * @throws IOException
      */
-    void sendNotModifiedHeaders(Writer writer) throws IOException {
+    void sendNotModifiedHeaders(@NotNull Writer writer) throws IOException {
         StringBuilder out = new StringBuilder(500);
         StringBuilder log = new StringBuilder(500);
 
@@ -141,10 +151,11 @@ class HttpHeaderWriter {
      * @param writer The writer to output the headers to, if they are needed.
      * @param resourceLastModified The date/time at which the resource being requested was last modified.
      * @return Whether not-modified headers were output in order to satisfy the request.
-     * @throws IOException
      */
-    public boolean sendNotModifiedHeadersIfNeeded(HttpRequest request, Writer writer, Date resourceLastModified)
-            throws IOException {
+    public boolean sendNotModifiedHeadersIfNeeded(@NotNull HttpRequest request,
+                                                  @NotNull Writer writer,
+                                                  @NotNull Date resourceLastModified) throws IOException {
+
         try {
             if (request.headers.containsKey("If-Modified-Since")) {
                 Date ifModifiedSince = DateFormatter.parse(request.headers.get("If-Modified-Since"));
@@ -157,7 +168,7 @@ class HttpHeaderWriter {
         }
         catch (ParseException ex) {
             // log and continue without If-Modified-Since handling
-            String msg = String.format("Invalid If-Modifed-Since header: %s", request.headers.get("If-Modified-Since"));
+            String msg = String.format("Invalid If-Modified-Since header: %s", request.headers.get("If-Modified-Since"));
             logger.log(WARNING, msg, ex);
         }
 
@@ -171,9 +182,10 @@ class HttpHeaderWriter {
      * @param writer The writer to output the headers to.
      * @param newLocationUrl The URL to redirect to.
      * @param isHeadRequest Whether the error is in response to an HTTP HEAD request.
-     * @throws IOException
      */
-    void sendRedirectHeadersAndBody(Writer writer, String newLocationUrl, boolean isHeadRequest) throws IOException {
+    void sendRedirectHeadersAndBody(@NotNull Writer writer, @NotNull String newLocationUrl, boolean isHeadRequest)
+            throws IOException {
+
         StringBuilder out = new StringBuilder(500);
         StringBuilder log = new StringBuilder(500);
 
@@ -209,9 +221,10 @@ class HttpHeaderWriter {
      * @param writer The writer to output the headers to.
      * @param err A Throwable which contains details about the problem.
      * @param isHeadRequest Whether the error is in response to an HTTP HEAD request.
-     * @throws IOException
      */
-    void sendErrorHeadersAndBody(Writer writer, Throwable err, boolean isHeadRequest) throws IOException {
+    void sendErrorHeadersAndBody(@NotNull Writer writer, @NotNull Throwable err, boolean isHeadRequest)
+            throws IOException {
+
         int responseCode = 500;
         String reasonPhrase = "Internal Server Error";
 
@@ -253,7 +266,7 @@ class HttpHeaderWriter {
      * @param out Collects the headers formatted for sending to the client.
      * @param log Collects the headers formatted for logging.
      */
-    private void addCommonHeaders(StringBuilder out, StringBuilder log) {
+    private void addCommonHeaders(@NotNull StringBuilder out, @NotNull StringBuilder log) {
         this.addHeader(out, log, "Date: %s", DateFormatter.format(new Date()));
         this.addHeader(out, log, "Server: Mixcaster/%s (%s)", AppVersion.raw, System.getProperty("os.name"));
         this.addHeader(out, log, "Connection: close");
@@ -269,7 +282,9 @@ class HttpHeaderWriter {
      * @param format The header's format string.
      * @param params Any parameters needed to perform formatting on the format string.
      */
-    private void addHeader(StringBuilder out, StringBuilder log, String format, Object... params) {
+    private void addHeader(@NotNull StringBuilder out, @NotNull StringBuilder log,
+                           @NotNull String format, @NotNull Object... params) {
+
         String header = (params.length > 0) ? String.format(format, params) : format;
 
         out.append(header);
