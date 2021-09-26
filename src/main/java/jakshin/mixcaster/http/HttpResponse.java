@@ -18,6 +18,7 @@
 package jakshin.mixcaster.http;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.net.Socket;
@@ -152,6 +153,7 @@ class HttpResponse implements Runnable {
      * @param reader The reader from which request headers should be read.
      * @return The HTTP request.
      */
+    @NotNull
     private HttpRequest parseRequestHeaders(@NotNull BufferedReader reader) throws HttpException, IOException {
         HttpRequest request = null;
         String lastHeaderName = null;
@@ -195,6 +197,10 @@ class HttpResponse implements Runnable {
             }
         }
 
+        if (request == null) {
+            throw new HttpException(400, "No request headers received");
+        }
+
         logger.log(DEBUG, "Received HTTP request headers{0}", loggedHeaders);
         for (String header : unparsableHeaders) {
             logger.log(WARNING, "Unparsable HTTP request header: {0}", header);
@@ -209,7 +215,7 @@ class HttpResponse implements Runnable {
      * @param thing The thing to be closed.
      * @param description A description of the thing which will be closed.
      */
-    private void closeAThing(Closeable thing, String description) {
+    private void closeAThing(@Nullable Closeable thing, @NotNull String description) {
         if (thing == null) return;
 
         try {
