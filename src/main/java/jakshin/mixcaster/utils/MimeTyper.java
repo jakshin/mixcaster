@@ -17,6 +17,8 @@
 
 package jakshin.mixcaster.utils;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.net.URLConnection;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -35,9 +37,8 @@ public class MimeTyper {
      * @param pathOrName The path to or name of the file.
      * @return The file's probable MIME content type.
      */
-    public String guessContentTypeFromName(String pathOrName) {
-        if (pathOrName == null) return null;
-
+    @NotNull
+    public String guessContentTypeFromName(@NotNull String pathOrName) {
         // check our own extension => MIME type map first
         Path path = Paths.get(pathOrName);
         String fileName = path.getFileName().toString();
@@ -63,7 +64,7 @@ public class MimeTyper {
     /** A map of known extensions to their MIME types. */
     private static final Map<String,String> mimeTypes = new HashMap<>(17);
 
-    /** Static initialization. */
+    /* Static initialization. */
     static {
         // common audio types
         mimeTypes.put(".aac", "audio/aac");
