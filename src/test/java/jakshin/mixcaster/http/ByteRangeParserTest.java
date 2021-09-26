@@ -30,115 +30,98 @@ import static org.junit.Assert.*;
 public class ByteRangeParserTest {
     private ByteRangeParser instance;
 
-    /** Scaffolding. */
     @BeforeClass
     public static void setUpClass() {
     }
 
-    /** Scaffolding. */
     @AfterClass
     public static void tearDownClass() {
     }
 
-    /** Scaffolding. */
     @Before
     public void setUp() {
         this.instance = new ByteRangeParser();
     }
 
-    /** Scaffolding. */
     @After
     public void tearDown() {
     }
 
-    /** Test. */
     @Test
     public void parseShouldReturnNullForEmptyRange() throws HttpException {
         ByteRange result = instance.parse("");
         assertNull(result);
     }
 
-    /** Test. */
     @Test
     public void parseShouldHandleLeftRange() throws HttpException {
         ByteRange result = instance.parse("bytes=123-");
-        assertEquals(123, result.start);
-        assertEquals(-1, result.end);
+        assertEquals(123, result.start());
+        assertEquals(-1, result.end());
     }
 
-    /** Test. */
     @Test
     public void parseShouldHandleRightRange() throws HttpException {
         ByteRange result = instance.parse("bytes=-456");
-        assertEquals(-1, result.start);
-        assertEquals(456, result.end);
+        assertEquals(-1, result.start());
+        assertEquals(456, result.end());
     }
 
-    /** Test. */
     @Test
     public void parseShouldHandleCompleteRange() throws HttpException {
         ByteRange result = instance.parse("bytes=123-456");
-        assertEquals(123, result.start);
-        assertEquals(456, result.end);
+        assertEquals(123, result.start());
+        assertEquals(456, result.end());
     }
 
-    /** Test. */
     @Test
     public void parseShouldReturnNullForNonByteRange() throws HttpException {
         ByteRange result = instance.parse("stuff=123-456");
         assertNull(result);
     }
 
-    /** Test. */
     @Test (expected=HttpException.class)
     public void parseShouldThrowOnMultipleRange() throws HttpException {
         ByteRange result = instance.parse("bytes=123-456,789-1000");
         assertNull(result);  // shouldn't be reached
     }
 
-    /** Test. */
     @Test
     public void parseShouldReturnNullForRangeWithoutDash() throws HttpException {
         ByteRange result = instance.parse("bytes=123");
         assertNull(result);
     }
 
-    /** Test. */
     @Test
     public void parseShouldReturnNullForRangeWithExtraDash() throws HttpException {
         ByteRange result = instance.parse("bytes=123-456-");
         assertNull(result);
     }
 
-    /** Test. */
     @Test
     public void parseShouldReturnNullForRangeWithOnlyDash() throws HttpException {
         ByteRange result = instance.parse("bytes=-");
         assertNull(result);
     }
 
-    /** Test. */
     @Test
     public void parseShouldReturnNullForNonNumericRange() throws HttpException {
         ByteRange result = instance.parse("bytes=123-foo");
         assertNull(result);
     }
 
-    /** Test. */
     @Test
     public void parseShouldReturnNullForInvalidRange() throws HttpException {
         ByteRange result = instance.parse("bytes=456-123");  // start is greater than end
         assertNull(result);
     }
 
-    /** Test. */
     @Test
     public void translateShouldReturnNullForNull() throws HttpException {
         ByteRange result = instance.translate(null, 1234);
         assertNull(result);
     }
 
-    /** Test. */
     @Test
     public void translateShouldReturnNullForZeroLengthFile() throws HttpException {
         ByteRange range = new ByteRange(123, 456);
@@ -146,16 +129,14 @@ public class ByteRangeParserTest {
         assertNull(result);
     }
 
-    /** Test. */
     @Test
     public void translateShouldHandleLeftRange() throws HttpException {
         ByteRange range = new ByteRange(123, -1);
         ByteRange result = instance.translate(range, 1234);
-        assertEquals(123, result.start);
-        assertEquals(1233, result.end);
+        assertEquals(123, result.start());
+        assertEquals(1233, result.end());
     }
 
-    /** Test. */
     @Test (expected=HttpException.class)
     public void translateShouldHandleLongLeftRange() throws HttpException {
         ByteRange range = new ByteRange(12345, -1);
@@ -163,43 +144,38 @@ public class ByteRangeParserTest {
         assertNull(result);  // shouldn't be reached
     }
 
-    /** Test. */
     @Test
     public void translateShouldHandleRightRange() throws HttpException {
         ByteRange range = new ByteRange(-1, 456);
         ByteRange result = instance.translate(range, 1234);
-        assertEquals(778, result.start);  // 1233 - 778 + 1 = 456
-        assertEquals(1233, result.end);
+        assertEquals(778, result.start());  // 1233 - 778 + 1 = 456
+        assertEquals(1233, result.end());
     }
 
-    /** Test. */
     @Test
     public void translateShouldHandleLongRightRange() throws HttpException {
         ByteRange range = new ByteRange(-1, 12345);
         ByteRange result = instance.translate(range, 1234);
-        assertEquals(0, result.start);  // entire file
-        assertEquals(1233, result.end);
+        assertEquals(0, result.start());  // entire file
+        assertEquals(1233, result.end());
     }
 
-    /** Test. */
     @Test
     public void translateShouldHandleCompleteRange() throws HttpException {
         ByteRange range = new ByteRange(123, 456);
         ByteRange result = instance.translate(range, 1234);
-        assertEquals(123, result.start);
-        assertEquals(456, result.end);
+        assertEquals(123, result.start());
+        assertEquals(456, result.end());
     }
 
-    /** Test. */
     @Test
     public void translateShouldHandleLongCompleteRange() throws HttpException {
         ByteRange range = new ByteRange(123, 4567);
         ByteRange result = instance.translate(range, 1234);
-        assertEquals(123, result.start);
-        assertEquals(1233, result.end);
+        assertEquals(123, result.start());
+        assertEquals(1233, result.end());
     }
 
-    /** Test. */
     @Test (expected=HttpException.class)
     public void translateShouldThrowOnInvalidRange() throws HttpException {
         ByteRange range = new ByteRange(-1, -1);

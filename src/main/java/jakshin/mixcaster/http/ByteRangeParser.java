@@ -121,22 +121,25 @@ class ByteRangeParser {
             return null;
         }
 
-        if (range.start >= 0) {
-            if (range.start >= fileSize) {
+        long start = range.start();
+        long end = range.end();
+
+        if (start >= 0) {
+            if (start >= fileSize) {
                 throw new HttpException(416, "Requested Range Not Satisfiable");
             }
 
-            long end = (range.end == -1 || range.end >= fileSize) ? fileSize - 1 : range.end;
-            return new ByteRange(range.start, end);
+            long fixedEnd = (end == -1 || end >= fileSize) ? fileSize - 1 : end;
+            return new ByteRange(start, fixedEnd);
         }
-        else if (range.end >= 0) {
+        else if (end >= 0) {
             // end actually contains the number of bytes to retrieve from the end of the file
-            long start = (range.end < fileSize) ? fileSize - range.end : 0;
-            return new ByteRange(start, fileSize - 1);
+            long fixedStart = (end < fileSize) ? fileSize - end : 0;
+            return new ByteRange(fixedStart, fileSize - 1);
         }
         else {
             // this shouldn't happen, because of validation in parse(), so we treat it as an internal error
-            throw new HttpException(500, String.format("Invalid byte range %d-%d", range.start, range.end));
+            throw new HttpException(500, String.format("Invalid byte range %d-%d", start, end));
         }
     }
 }

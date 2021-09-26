@@ -20,16 +20,14 @@ package jakshin.mixcaster.http;
 /**
  * A range of bytes.
  */
-class ByteRange {
+record ByteRange(long start, long end) {
     /**
      * Creates a new instance of the class.
      *
      * @param start The start of the range, inclusive, 0-indexed.
-     * @param end The end of the range, inclusive, 0-indexed.
+     * @param end   The end of the range, inclusive, 0-indexed.
      */
-    ByteRange(long start, long end) {
-        this.start = start;
-        this.end = end;
+    ByteRange {
     }
 
     /**
@@ -44,14 +42,4 @@ class ByteRange {
         return (end - start) + 1;
     }
 
-    /**
-     * The start of the range, inclusive, 0-indexed. -1 if the range doesn't have a specific start,
-     * in which case "end" should actually be interpreted as the number of bytes to retrieve from the end of the file.
-     */
-    final long start;
-
-    /**
-     * The end of the range, inclusive, 0-indexed. -1 if the range doesn't have a specific end.
-     */
-    final long end;
 }

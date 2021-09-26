@@ -84,7 +84,7 @@ public class FileResponder extends Responder {
                 ByteRange range = request.byteRange(fileSize);
 
                 if (range != null) {
-                    logger.log(INFO, "Serving bytes {0} - {1}", new Object[]{range.start, range.end});
+                    logger.log(INFO, "Serving bytes {0} - {1}", new Object[]{ range.start(), range.end() });
                 }
 
                 // send the response headers
@@ -95,7 +95,8 @@ public class FileResponder extends Responder {
                     range = new ByteRange(0, fileSize - 1);
                 }
                 else {
-                    headerWriter.sendRangeSuccessHeaders(writer, lastModified, contentType, fileSize, range.start, range.end);
+                    headerWriter.sendRangeSuccessHeaders(writer, lastModified, contentType,
+                                                        fileSize, range.start(), range.end());
                 }
 
                 if (request.isHead()) {
@@ -104,9 +105,9 @@ public class FileResponder extends Responder {
                 }
 
                 // read the appropriate part of the file & output
-                if (range.start > 0) {
+                if (range.start() > 0) {
                     // seek to the first byte of the partial request
-                    in.seek(range.start);
+                    in.seek(range.start());
                 }
 
                 long bytesLeftToSend = range.size();
