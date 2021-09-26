@@ -17,12 +17,16 @@
 
 package jakshin.mixcaster.download;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Date;
 import java.util.Objects;
 
 /**
  * A single download, either in progress or waiting to start.
+ * (Not a record because we exclude remoteUrl when comparing and hashing.)
  */
+@SuppressWarnings("ClassCanBeRecord")
 public class Download {
     /**
      * Creates a new instance of the class.
@@ -32,7 +36,11 @@ public class Download {
      * @param remoteLastModified When the remote data was last modified, according to the remote server.
      * @param localFilePath The full path of the local file to download to.
      */
-    public Download(String remoteUrl, long remoteLengthBytes, Date remoteLastModified, String localFilePath) {
+    public Download(@NotNull String remoteUrl,
+                    long remoteLengthBytes,
+                    @NotNull Date remoteLastModified,
+                    @NotNull String localFilePath) {
+
         this.remoteUrl = remoteUrl;
         this.remoteLengthBytes = remoteLengthBytes;
         this.remoteLastModified = new Date(remoteLastModified.getTime());
@@ -40,15 +48,18 @@ public class Download {
     }
 
     /** The remote URL to download from. */
+    @NotNull
     public final String remoteUrl;
 
     /** The length of the file to be downloaded from the remote URL. */
     public final long remoteLengthBytes;
 
     /** When the remote data was last modified, according to Mixcloud. */
+    @NotNull
     public final Date remoteLastModified;
 
     /** The full path of the local file to download to. */
+    @NotNull
     public final String localFilePath;
 
     /**
