@@ -17,6 +17,8 @@
 
 package jakshin.mixcaster.http;
 
+import java.io.Serial;
+
 /**
  * An exception raised directly by this application's code, related to HTTP processing.
  * Includes an appropriate HTTP response code.
@@ -49,5 +51,6 @@ class HttpException extends Exception {
     final int httpResponseCode;
 
     /** Serialization version number. */
+    @Serial
     private static final long serialVersionUID = 1L;  // update this whenever the class definition changes
 }
