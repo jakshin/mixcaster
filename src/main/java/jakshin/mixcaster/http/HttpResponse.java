@@ -30,6 +30,7 @@ import static jakshin.mixcaster.logging.Logging.*;
  * Provides a response to a single incoming HTTP request, first parsing headers to understand the request,
  * and delegating to an appropriate HttpResponder instance.
  */
+@SuppressWarnings("ClassCanBeRecord")
 class HttpResponse implements Runnable {
     /**
      * Creates a new instance of the class.
