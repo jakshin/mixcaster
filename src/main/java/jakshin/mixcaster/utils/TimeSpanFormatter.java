@@ -22,7 +22,7 @@ package jakshin.mixcaster.utils;
  */
 public class TimeSpanFormatter {
     /**
-     * Formats a span of time, given in seconds, as h:mm:ss or m:ss (0:ss if less than one minute in length).
+     * Formats a span of time, given in seconds, as h:mm:ss or m:ss (0:ss if less than one minute).
      *
      * @param seconds The time span in seconds.
      * @return A formatted representation of the time span.

@@ -17,11 +17,13 @@
 
 package jakshin.mixcaster.utils;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.*;
 import java.nio.charset.Charset;
 
 /**
- * Utility methods related to files.
+ * Utility functions for reading and writing files.
  * All methods are static.
  */
 public final class FileUtils {
@@ -32,11 +34,11 @@ public final class FileUtils {
      * @param fileName The file to read from.
      * @param charset The character set to use while reading the file.
      * @return The contents of the file.
-     * @throws IOException
-     * @throws SecurityException
      */
-    public static String readFileIntoString(String fileName, String charset)
+    @NotNull
+    public static String readFileIntoString(@NotNull String fileName, String charset)
             throws IOException, SecurityException {
+
         if (fileName.isEmpty()) {
             throw new FileNotFoundException("(No such file or directory)");
         }
@@ -68,11 +70,10 @@ public final class FileUtils {
      * @param fileName The file to write to, replacing if it already exists.
      * @param str The string to write to the file.
      * @param charset The character set to use while writing the file.
-     * @throws IOException
-     * @throws SecurityException
      */
-    public static void writeStringToFile(String fileName, String str, String charset)
+    public static void writeStringToFile(@NotNull String fileName, @NotNull String str, String charset)
             throws IOException, SecurityException {
+
         File file = new File(fileName);
 
         if (!Charset.isSupported(charset)) {

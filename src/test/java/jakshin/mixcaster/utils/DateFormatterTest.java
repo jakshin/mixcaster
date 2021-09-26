@@ -30,27 +30,28 @@ import static org.junit.Assert.*;
  * Unit tests for the DateFormatter class.
  */
 public class DateFormatterTest {
-    /** Scaffolding. */
     @BeforeClass
     public static void setUpClass() {
     }
 
-    /** Scaffolding. */
     @AfterClass
     public static void tearDownClass() {
     }
 
-    /** Scaffolding. */
     @Before
     public void setUp() {
     }
 
-    /** Scaffolding. */
     @After
     public void tearDown() {
     }
 
-    /** Test. */
+    @Test
+    public void formatShouldReturnEmptyStringForNullDate() {
+        String result = DateFormatter.format(null);
+        assertEquals("", result);
+    }
+
     @Test
     public void formatShouldWork() {
         Date date = new Date(1461292769391L);
@@ -59,10 +60,6 @@ public class DateFormatterTest {
         assertEquals(expResult, result);
     }
 
-    /**
-     * Test.
-     * @throws ParseException
-     */
     @Test
     public void parseShouldWork() throws ParseException {
         String dateStr = "Fri, 22 Apr 2016 02:39:29 GMT";

@@ -62,7 +62,7 @@ public class XmlEntities {
      * XML entities (character -> entity).
      * Used for escaping.
      */
-    private static final Map<String,String> charToEntity = new LinkedHashMap<>(5); {
+    private static final Map<String,String> charToEntity = new LinkedHashMap<>(5); static {
         // unescaped character -> escaped entity
         charToEntity.put("&",  "&amp;");  // must be first
         charToEntity.put("<",  "&lt;");
@@ -75,7 +75,7 @@ public class XmlEntities {
      * XML entities (entity -> character).
      * Used for unescaping.
      */
-    private static final Map<String,String> entityToChar = new LinkedHashMap<>(5); {
+    private static final Map<String,String> entityToChar = new LinkedHashMap<>(5); static {
         // escaped entity -> unescaped character
         entityToChar.put("&lt;",   "<");
         entityToChar.put("&gt;",   ">");

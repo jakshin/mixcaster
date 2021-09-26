@@ -17,6 +17,9 @@
 
 package jakshin.mixcaster.utils;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -34,10 +37,11 @@ public class DateFormatter {
      * so formatting a date with this function will effectively discard that information.
      *
      * @param date The date to format.
-     * @return A formatted date string.
+     * @return A formatted date string, or an empty string if the date is null.
      */
-    public static synchronized String format(Date date) {
-        return formatter.format(date);
+    @NotNull
+    public static synchronized String format(@Nullable Date date) {
+        return (date == null) ? "" : formatter.format(date);
     }
 
     /**
@@ -49,16 +53,15 @@ public class DateFormatter {
      *
      * @param dateStr The date/time string to parse.
      * @return A date object matching the parsed string.
-     * @throws ParseException
      */
-    public static synchronized Date parse(String dateStr) throws ParseException {
+    @NotNull
+    public static synchronized Date parse(@NotNull String dateStr) throws ParseException {
         return formatter.parse(dateStr);
     }
 
     /** The thingy which actually formats and parses dates. */
     private final static SimpleDateFormat formatter;
 
-    /** Static initialization. */
     static {
         // configure the formatter
         formatter = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss z", Locale.ENGLISH);
