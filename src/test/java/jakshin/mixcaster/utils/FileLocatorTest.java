@@ -52,7 +52,7 @@ public class FileLocatorTest {
         if (!expResult.endsWith("/")) expResult += "/";
         expResult += "Foo/ep1.m4a";
 
-        String result = FileLocator.getLocalPath("http://localhost:25683/Foo/ep1.m4a");
+        String result = FileLocator.getLocalPath("http://localhost:6499/Foo/ep1.m4a");
         assertEquals(expResult, result);
     }
 

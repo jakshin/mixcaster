@@ -384,7 +384,7 @@ public class Main {
         defaults.setProperty("episode_max_count", "25");          // must be an int > 0
         defaults.setProperty("http_cache_time_seconds", "3600");  // must be an int >= 0
         defaults.setProperty("http_hostname", "localhost");
-        defaults.setProperty("http_port", "25683");               // must be an int in [1024-65535]
+        defaults.setProperty("http_port", "6499");                // must be an int in [1024-65535]
         defaults.setProperty("log_max_count", "10");              // must be an int > 0
         defaults.setProperty("log_dir", "~/Library/Logs/Mixcaster");
         defaults.setProperty("log_level", "ALL");

@@ -106,7 +106,7 @@ class HttpRequest {
 
     /**
      * Returns the value of the Host header, if present.
-     * @return Host header value, including port (e.g. "localhost:25683"), or null if no Host header was received.
+     * @return Host header value, including port (e.g. "localhost:6499"), or null if no Host header was received.
      */
     String host() {
         return this.headers.get("Host");

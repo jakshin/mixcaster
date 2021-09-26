@@ -53,7 +53,7 @@ import static jakshin.mixcaster.logging.Logging.*;
 public class MixcloudClient {
     /**
      * Creates an instance, using configured values for host and port
-     * when creating URLs to music files (defaulting to localhost:25683).
+     * when creating URLs to music files (defaulting to localhost:6499).
      */
     public MixcloudClient() {
         this(null);
