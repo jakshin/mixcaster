@@ -18,6 +18,8 @@
 package jakshin.mixcaster.logging;
 
 import jakshin.mixcaster.Main;
+import org.jetbrains.annotations.NotNull;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.Locale;
@@ -30,9 +32,7 @@ import java.util.logging.*;
 public class Logging {
     /**
      * Initializes the global logger.
-     *
      * @param forService Whether to initialize for logging by the service (if false, initialize for manual downloading).
-     * @throws IOException
      */
     public static void initialize(boolean forService) throws IOException {
         if (initialized) return;
@@ -99,6 +99,7 @@ public class Logging {
      * Gets the log_dir configuration setting.
      * @return log_dir, as a string.
      */
+    @NotNull
     private static String getLogDirConfig() {
         String logDirStr = Main.config.getProperty("log_dir");
         if (logDirStr.startsWith("~/")) {
@@ -121,6 +122,7 @@ public class Logging {
      * Gets the log_level configuration setting.
      * @return log_level, as a Level object.
      */
+    @NotNull
     private static Level getLogLevelConfig() {
         String logLevelStr = Main.config.getProperty("log_level").toUpperCase(Locale.ENGLISH);  // already validated
         if (logLevelStr.equals("ERROR")) {
