@@ -38,7 +38,7 @@ public class MixcloudException extends Exception {
      * when the problem relates to a specific URL.
      *
      * @param message The detail message.
-     * @param url The URL related to the problem.
+     * @param url The URL related to the problem (optional).
      */
     public MixcloudException(@NotNull String message, @Nullable String url) {
         super(message);
