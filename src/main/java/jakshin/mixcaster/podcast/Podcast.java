@@ -145,7 +145,7 @@ public final class Podcast {
      * @return The resource's content.
      */
     @NotNull
-    private StringBuilder loadResource(String resourceName) throws IOException {
+    private StringBuilder loadResource(@NotNull String resourceName) throws IOException {
         StringBuilder sb = new StringBuilder(1024);
 
         try (InputStream in = this.getClass().getResourceAsStream(resourceName)) {
