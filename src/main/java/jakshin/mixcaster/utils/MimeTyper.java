@@ -26,7 +26,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * A thingy which gets the MIME content type of a file, based on its name.
+ * A thingy which gets the MIME content-type of a file, based on its name.
  * It doesn't work very well in the general case, as it only knows about a few types of files,
  * but it should be fine for our limited purposes here.
  */
