@@ -17,8 +17,12 @@
 
 package jakshin.mixcaster.utils;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Escapes and unescapes XML entities.
@@ -30,11 +34,12 @@ public class XmlEntities {
      * @param str The string to escape.
      * @return The escaped string.
      */
-    public String escape(String str) {
-        if (str == null) return null;
-
+    @NotNull
+    public String escape(@NotNull String str) {
         // this probably doesn't perform very well,
         // but it doesn't matter in our limited use case with small strings
+
+        str = str.replaceAll("&", "&amp;"); // must be first
         for (Map.Entry<String,String> entry : charToEntity.entrySet()) {
             str = str.replaceAll(entry.getKey(), entry.getValue());
         }
@@ -48,7 +53,8 @@ public class XmlEntities {
      * @param str The string to unescape.
      * @return The unescaped string.
      */
-    public String unescape(String str) {
+    @Nullable
+    public String unescape(@Nullable String str) {
         if (str == null) return null;
 
         for (Map.Entry<String,String> entry : entityToChar.entrySet()) {
@@ -62,9 +68,8 @@ public class XmlEntities {
      * XML entities (character -> entity).
      * Used for escaping.
      */
-    private static final Map<String,String> charToEntity = new LinkedHashMap<>(5); static {
+    private static final Map<String,String> charToEntity = new ConcurrentHashMap<>(4, 1.0f); static {
         // unescaped character -> escaped entity
-        charToEntity.put("&",  "&amp;");  // must be first
         charToEntity.put("<",  "&lt;");
         charToEntity.put(">",  "&gt;");
         charToEntity.put("\"", "&quot;");
@@ -75,7 +80,7 @@ public class XmlEntities {
      * XML entities (entity -> character).
      * Used for unescaping.
      */
-    private static final Map<String,String> entityToChar = new LinkedHashMap<>(5); static {
+    private static final Map<String,String> entityToChar = new LinkedHashMap<>(5); static { //NOPMD
         // escaped entity -> unescaped character
         entityToChar.put("&lt;",   "<");
         entityToChar.put("&gt;",   ">");

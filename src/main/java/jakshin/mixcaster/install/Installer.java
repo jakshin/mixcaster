@@ -57,14 +57,11 @@ public final class Installer {
             FileUtils.writeStringToFile(plistFile.toString(), plistXml, "UTF-8");
 
             this.log("Created %s", plistFile);
-
             this.log("%nLoading the service via launchd...");
 
-            if (this.checkLaunchdAgent()) {
-                if (this.removeLaunchdAgent() != 0) {
-                    this.log("Warning: Failed to remove the existing service registration");
-                    this.log("Uninstallation will continue, but you may need to reboot");
-                }
+            if (this.checkLaunchdAgent() && this.removeLaunchdAgent() != 0) {
+                this.log("Warning: Failed to remove the existing service registration");
+                this.log("Installation will continue, but you may need to reboot");
             }
 
             int result = this.loadLaunchdAgent(plistFile);

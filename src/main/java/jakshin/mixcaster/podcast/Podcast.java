@@ -35,67 +35,6 @@ import java.util.List;
  */
 public final class Podcast {
     /**
-     * Creates an XML string containing the podcast's RSS feed, including all of its episodes.
-     * @return RSS XML.
-     */
-    @NotNull
-    public String createXml() throws IOException {
-        // load our template resources, if we haven't already
-        synchronized (Podcast.class) {
-            if (podcastXmlTemplate == null)
-                podcastXmlTemplate = this.loadResource("podcast.xml");
-            if (episodeXmlTemplate == null)
-                episodeXmlTemplate = this.loadResource("podcastEpisode.xml");
-        }
-
-        // podcast properties
-        String p = podcastXmlTemplate.toString();
-        p = this.replaceTemplateTag(p, "{{podcast.title}}", this.title);
-        p = this.replaceTemplateTag(p, "{{podcast.link}}", this.link.toASCIIString());
-        p = this.replaceTemplateTag(p, "{{podcast.language}}", this.language.replace("_", "-"));
-        p = this.replaceTemplateTag(p, "{{podcast.description}}", this.description);
-
-        p = this.replaceTemplateTag(p, "{{podcast.iTunesAuthor}}", this.iTunesAuthor);
-        p = this.replaceTemplateTag(p, "{{podcast.iTunesCategory}}", this.iTunesCategory);
-        p = this.replaceTemplateTag(p, "{{podcast.iTunesExplicit}}", this.iTunesExplicit ? "yes" : "no");
-        p = this.replaceTemplateTag(p, "{{podcast.iTunesImageUrl}}", this.iTunesImageUrl.toASCIIString());
-        p = this.replaceTemplateTag(p, "{{podcast.iTunesOwnerName}}", this.iTunesOwnerName);
-        p = this.replaceTemplateTag(p, "{{podcast.iTunesOwnerEmail}}", this.iTunesOwnerEmail);
-
-        // episodes
-        StringBuilder episodeXml = new StringBuilder(1024 * this.episodes.size());
-
-        for (PodcastEpisode episode : this.episodes) {
-            String episodeTitle = episode.title;
-            String localPath = FileLocator.getLocalPath(episode.enclosureUrl.toString());
-            if (! (new File(localPath).exists())) {
-                episodeTitle += " [DOWNLOADING, CAN'T PLAY YET]";
-            }
-
-            String e = episodeXmlTemplate.toString();
-            e = this.replaceTemplateTag(e, "{{episode.title}}", episodeTitle);
-            e = this.replaceTemplateTag(e, "{{episode.link}}", episode.link.toASCIIString());
-            e = this.replaceTemplateTag(e, "{{episode.enclosureUrl}}", episode.enclosureUrl.toASCIIString());
-            e = this.replaceTemplateTag(e, "{{episode.enclosureLength}}", Long.toString(episode.enclosureLengthBytes));
-            e = this.replaceTemplateTag(e, "{{episode.enclosureMimeType}}", episode.enclosureMimeType);
-            e = this.replaceTemplateTag(e, "{{episode.pubDate}}", DateFormatter.format(episode.pubDate));
-            e = this.replaceTemplateTag(e, "{{episode.description}}",
-                    episode.description.replace("\r\n", "\n").replace("\n", " \n"));
-
-            e = this.replaceTemplateTag(e, "{{episode.iTunesAuthor}}", episode.iTunesAuthor);
-            e = this.replaceTemplateTag(e, "{{episode.iTunesDuration}}", episode.iTunesDuration.toString(),
-                                    "<itunes:duration>.*</itunes:duration>");
-            e = this.replaceTemplateTag(e, "{{episode.iTunesImageUrl}}", episode.iTunesImageUrl.toASCIIString(),
-                                    "<itunes:image .* />");
-
-            episodeXml.append(e);
-        }
-
-        p = p.replace("{{episodes}}", episodeXml.toString().trim());
-        return p;
-    }
-
-    /**
      * Timestamp of when this object was created and populated,
      * i.e. the time at which its data was known to be current.
      */
@@ -136,6 +75,69 @@ public final class Podcast {
 
     /** Podcast episodes. */
     public final List<PodcastEpisode> episodes = new LinkedList<>();
+
+    /**
+     * Creates an XML string containing the podcast's RSS feed, including all of its episodes.
+     * @return RSS XML.
+     */
+    @NotNull
+    public String createXml() throws IOException {
+        // load our template resources, if we haven't already
+        synchronized (Podcast.class) {
+            if (podcastXmlTemplate == null)
+                podcastXmlTemplate = this.loadResource("podcast.xml");
+            if (episodeXmlTemplate == null)
+                episodeXmlTemplate = this.loadResource("podcastEpisode.xml");
+        }
+
+        // podcast properties
+        String p = podcastXmlTemplate.toString();
+        p = this.replaceTemplateTag(p, "{{podcast.title}}", this.title);
+        p = this.replaceTemplateTag(p, "{{podcast.link}}", this.link.toASCIIString());
+        p = this.replaceTemplateTag(p, "{{podcast.language}}", this.language.replace("_", "-"));
+        p = this.replaceTemplateTag(p, "{{podcast.description}}", this.description);
+
+        p = this.replaceTemplateTag(p, "{{podcast.iTunesAuthor}}", this.iTunesAuthor);
+        p = this.replaceTemplateTag(p, "{{podcast.iTunesCategory}}", this.iTunesCategory);
+        p = this.replaceTemplateTag(p, "{{podcast.iTunesExplicit}}", this.iTunesExplicit ? "yes" : "no");
+        p = this.replaceTemplateTag(p, "{{podcast.iTunesImageUrl}}", this.iTunesImageUrl.toASCIIString());
+        p = this.replaceTemplateTag(p, "{{podcast.iTunesOwnerName}}", this.iTunesOwnerName);
+        p = this.replaceTemplateTag(p, "{{podcast.iTunesOwnerEmail}}", this.iTunesOwnerEmail);
+
+        // episodes
+        StringBuilder episodeXml = new StringBuilder(2048 * this.episodes.size());
+
+        for (PodcastEpisode episode : this.episodes) {
+            StringBuilder episodeTitle = new StringBuilder(episode.title.length() + 50);
+            episodeTitle.append(episode.title);
+
+            String localPath = FileLocator.getLocalPath(episode.enclosureUrl.toString());
+            if (! (new File(localPath).exists())) {
+                episodeTitle.append(" [DOWNLOADING, CAN'T PLAY YET]");
+            }
+
+            String e = episodeXmlTemplate.toString();
+            e = this.replaceTemplateTag(e, "{{episode.title}}", episodeTitle.toString());
+            e = this.replaceTemplateTag(e, "{{episode.link}}", episode.link.toASCIIString());
+            e = this.replaceTemplateTag(e, "{{episode.enclosureUrl}}", episode.enclosureUrl.toASCIIString());
+            e = this.replaceTemplateTag(e, "{{episode.enclosureLength}}", Long.toString(episode.enclosureLengthBytes));
+            e = this.replaceTemplateTag(e, "{{episode.enclosureMimeType}}", episode.enclosureMimeType);
+            e = this.replaceTemplateTag(e, "{{episode.pubDate}}", DateFormatter.format(episode.pubDate));
+            e = this.replaceTemplateTag(e, "{{episode.description}}",
+                    episode.description.replace("\r\n", "\n").replace("\n", " \n"));
+
+            e = this.replaceTemplateTag(e, "{{episode.iTunesAuthor}}", episode.iTunesAuthor);
+            e = this.replaceTemplateTag(e, "{{episode.iTunesDuration}}", episode.iTunesDuration.toString(),
+                                    "<itunes:duration>.*</itunes:duration>");
+            e = this.replaceTemplateTag(e, "{{episode.iTunesImageUrl}}", episode.iTunesImageUrl.toASCIIString(),
+                                    "<itunes:image .* />");
+
+            episodeXml.append(e);
+        }
+
+        p = p.replace("{{episodes}}", episodeXml.toString().trim());
+        return p;
+    }
 
     /**
      * Loads a resource.

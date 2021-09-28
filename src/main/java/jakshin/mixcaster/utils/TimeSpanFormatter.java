@@ -17,16 +17,19 @@
 
 package jakshin.mixcaster.utils;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * Provides formatting of time spans in an easily-readable format.
  */
-public class TimeSpanFormatter {
+public final class TimeSpanFormatter {
     /**
      * Formats a span of time, given in seconds, as h:mm:ss or m:ss (0:ss if less than one minute).
      *
      * @param seconds The time span in seconds.
      * @return A formatted representation of the time span.
      */
+    @NotNull
     public static String formatTimeSpan(int seconds) {
         if (seconds < 0) {
             return "-" + formatTimeSpan(-seconds);

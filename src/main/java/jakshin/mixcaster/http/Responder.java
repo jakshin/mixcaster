@@ -34,7 +34,7 @@ import static jakshin.mixcaster.logging.Logging.logger;
  * Base class for all responders, each of which handles a certain type of HTTP request.
  * This exists just to hold some shared code.
  */
-abstract class Responder {
+class Responder {
     /**
      * Delegates a request to PodcastXmlResponder, if it looks like a Mixcloud URL.
      * (Long ago, I tried redirecting to podcast.xml, but iTunes didn't handle that well.)
@@ -69,6 +69,11 @@ abstract class Responder {
         }
 
         return false;
+    }
+
+    /** Protected constructor to prevent instantiation except by subclasses. */
+    protected Responder() {
+        // nothing here
     }
 
     /** Music types and their synonyms, excluding playlist/playlists. */

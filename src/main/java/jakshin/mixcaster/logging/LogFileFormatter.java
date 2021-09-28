@@ -63,33 +63,27 @@ class LogFileFormatter extends Formatter {
         }
 
         // format the log entry
-        StringBuilder sb = new StringBuilder(200);
+        StringBuilder sb = new StringBuilder(4096);
 
         long logged = record.getMillis();
-        sb.append(this.dateFormatter.format(new Date(logged)));
-        sb.append('\t');
+        sb.append(this.dateFormatter.format(new Date(logged))).append('\t');
 
         Level level = record.getLevel();
         String levelStr = level.toString();
 
-        if (level == Level.SEVERE) {
+        if (level.equals(Level.SEVERE)) {
             levelStr = "ERROR";
         }
-        else if (level == Level.FINE) {
+        else if (level.equals(Level.FINE)) {
             levelStr = "DEBUG";
         }
 
-        sb.append(levelStr);
-        sb.append('\t');
-
-        sb.append(msg);
-        sb.append('\t');
-
-        sb.append(String.format("[thread %d]%n", record.getLongThreadID()));
+        sb.append(levelStr).append('\t')
+                .append(msg).append('\t')
+                .append(String.format("[thread %d]%n", record.getLongThreadID()));
 
         if (extra != null && !extra.isEmpty()) {
-            sb.append(extra);
-            sb.append(LogFileFormatter.lineBreak);
+            sb.append(extra).append(LogFileFormatter.lineBreak);
         }
 
         Throwable thrown = record.getThrown();
@@ -110,7 +104,7 @@ class LogFileFormatter extends Formatter {
      */
     @NotNull
     private String formatThrowable(@NotNull Throwable ex, boolean isCause) {
-        StringBuilder sb = new StringBuilder(500);
+        StringBuilder sb = new StringBuilder(4096);
 
         String msg = ex.getMessage();
         if (msg != null) {
@@ -122,17 +116,17 @@ class LogFileFormatter extends Formatter {
 
         if (ex instanceof MixcloudUserException) {
             String username = ((MixcloudUserException) ex).username;
-            sb.append(" (").append(username).append(")");
+            sb.append(" (").append(username).append(')');
         }
         else if (ex instanceof MixcloudPlaylistException) {
             String username = ((MixcloudPlaylistException) ex).username;
             String playlist = ((MixcloudPlaylistException) ex).playlist;
-            sb.append(" (").append(username).append(", ").append(playlist).append(")");
+            sb.append(" (").append(username).append(", ").append(playlist).append(')');
         }
         else if (ex instanceof MixcloudException) {
             String url = ((MixcloudException) ex).url;
             if (url != null && !url.isBlank()) {
-                sb.append(" (at URL: ").append(url).append(")");
+                sb.append(" (at URL: ").append(url).append(')');
             }
         }
 

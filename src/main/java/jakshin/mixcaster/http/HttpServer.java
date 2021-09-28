@@ -77,7 +77,7 @@ public class HttpServer implements Runnable {
             }
             catch (IOException ex) {
                 // a SocketException means the socket was closed
-                logger.log(ERROR, ex.getMessage(), ex);
+                logger.log(ERROR, ex, ex::getMessage);
             }
         }
     }

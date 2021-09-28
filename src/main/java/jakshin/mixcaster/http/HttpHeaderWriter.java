@@ -286,12 +286,8 @@ class HttpHeaderWriter {
                            @NotNull String format, @NotNull Object... params) {
 
         String header = (params.length > 0) ? String.format(format, params) : format;
-
-        out.append(header);
-        out.append("\r\n");
-
-        log.append(HttpHeaderWriter.headerPrefix);
-        log.append(header);
+        out.append(header).append("\r\n");
+        log.append(HttpHeaderWriter.headerPrefix).append(header);
     }
 
     /** The prefix used to put each logged header on its own line. */

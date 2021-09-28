@@ -22,13 +22,14 @@ import jakshin.mixcaster.podcast.Podcast;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * A cache for podcast objects we've generated, so if they're requested again
  * in a short period of time, we don't need to re-generate them.
  */
-class PodcastCache {
+final class PodcastCache {
     /**
      * Gets the instance of this singleton class.
      * @return The PodcastCache instance.
@@ -85,13 +86,13 @@ class PodcastCache {
     }
 
     /** The cached podcasts. */
-    private final HashMap<String,Podcast> cached = new HashMap<>(16);
+    private final Map<String,Podcast> cached = new ConcurrentHashMap<>();
 
     /** How long to cache podcasts for, in seconds. */
     private final int cacheTimeSeconds;
 
     /** The single instance of this class. */
-    private static PodcastCache instance = null;
+    private static PodcastCache instance;
 
     /** Private constructor to prevent instantiation except via getInstance(). */
     private PodcastCache() {

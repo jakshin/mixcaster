@@ -30,28 +30,23 @@ import static org.junit.Assert.*;
 public class XmlEntitiesTest {
     private XmlEntities instance;
 
-    /** Scaffolding. */
     @BeforeClass
     public static void setUpClass() {
     }
 
-    /** Scaffolding. */
     @AfterClass
     public static void tearDownClass() {
     }
 
-    /** Scaffolding. */
     @Before
     public void setUp() {
         this.instance = new XmlEntities();
     }
 
-    /** Scaffolding. */
     @After
     public void tearDown() {
     }
 
-    /** Test. */
     @Test
     public void escapeShouldEscapeAllEntities() {
         String test = "& <> \"' jason";
@@ -60,14 +55,6 @@ public class XmlEntitiesTest {
         assertEquals(expResult, result);
     }
 
-    /** Test. */
-    @Test
-    public void escapeShouldReturnNullWhenPassedNull() {
-        String result = instance.escape(null);
-        assertEquals(null, result);
-    }
-
-    /** Test. */
     @Test
     public void unescapeShouldUnescapeAllEntities() {
         String test = "&amp; &lt;&gt; &quot;&apos; jason &amp";
@@ -76,7 +63,6 @@ public class XmlEntitiesTest {
         assertEquals(expResult, result);
     }
 
-    /** Test. */
     @Test
     public void unescapeShouldReturnNullWhenPassedNull() {
         String result = instance.unescape(null);

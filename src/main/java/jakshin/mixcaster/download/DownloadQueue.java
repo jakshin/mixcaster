@@ -130,7 +130,7 @@ public final class DownloadQueue {
      * and only from synchronized methods (it's not synchronized itself).
      */
     private void exitIfEmpty() {
-        if (this.activeDownloads.size() == 0 && this.waitingDownloads.size() == 0) {
+        if (this.activeDownloads.isEmpty() && this.waitingDownloads.isEmpty()) {
             logger.log(DEBUG, "The download queue is empty, exiting as requested");
             System.exit(0);
         }
@@ -148,8 +148,8 @@ public final class DownloadQueue {
         /** Performs the download. */
         @Override
         public void run() {
-            logger.log(INFO, String.format("Starting download: %s%n    => %s",
-                    this.download.remoteUrl, this.download.localFilePath));
+            logger.log(INFO, "Starting download: {0}{1}    => {2}",
+                    new String[] {this.download.remoteUrl, System.lineSeparator(), this.download.localFilePath});
 
             HttpURLConnection conn = null;
             BufferedInputStream in = null;
@@ -224,13 +224,12 @@ public final class DownloadQueue {
                 long secondsTaken = (finished - started) / 1000;
                 String timeSpan = TimeSpanFormatter.formatTimeSpan((int) secondsTaken);
 
-                logger.log(INFO, String.format("Finished download: %s%n    => %s in %s",
-                        this.download.remoteUrl, this.download.localFilePath, timeSpan));
+                logger.log(INFO, "Finished download: {0}{1}    => {2} in {3}",
+                        new String[] {this.download.remoteUrl, System.lineSeparator(), this.download.localFilePath, timeSpan});
             }
             catch (IOException ex) {
-                String msg = String.format("Aborted download: %s%n    => %s",
-                        this.download.remoteUrl, this.download.localFilePath);
-                logger.log(ERROR, msg, ex);
+                logger.log(ERROR, ex, () -> String.format("Aborted download: %s%n    => %s",
+                        this.download.remoteUrl, this.download.localFilePath));
             }
             finally {
                 removeActiveDownload(this.download);
@@ -263,7 +262,7 @@ public final class DownloadQueue {
         private final Download download;
 
         /** Keeping track of when we've shown progress on stdout. */
-        private int progressShownAtPercent = 0;
+        private int progressShownAtPercent;
     }
 
     /** The pool of download threads. */
@@ -273,16 +272,16 @@ public final class DownloadQueue {
     private final DownloadComparator downloadComparator;
 
     /** The queue of URLs waiting for download. */
-    private final LinkedList<Download> waitingDownloads = new LinkedList<>();
+    private final LinkedList<Download> waitingDownloads = new LinkedList<>(); //NOPMD - suppressed LooseCoupling
 
     /** The queue of URLs being downloaded. */
-    private final LinkedList<Download> activeDownloads = new LinkedList<>();
+    private final LinkedList<Download> activeDownloads = new LinkedList<>();  //NOPMD - suppressed LooseCoupling
 
     /** Whether to call System.exit() after finishing processing the queue. */
-    private boolean exitWhenEmpty = false;
+    private boolean exitWhenEmpty;
 
     /** The single instance of this class. */
-    private static DownloadQueue instance = null;
+    private static DownloadQueue instance;
 
     /** Private constructor to prevent instantiation except via getInstance(). */
     private DownloadQueue() {

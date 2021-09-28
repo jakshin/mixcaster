@@ -27,7 +27,7 @@ import java.nio.file.Paths;
 /**
  * A thing which knows the locations of files, especially music files.
  */
-public class FileLocator {
+public final class FileLocator {
     /**
      * Provides the local path to a music file, given its local URL.
      * The local URL can be complete, like http://host:port/...,
@@ -74,7 +74,7 @@ public class FileLocator {
             localHostAndPort = Main.config.getProperty("http_hostname") + ":" + Main.config.getProperty("http_port");
         }
 
-        int pos = mixcloudUrl.indexOf("?");
+        int pos = mixcloudUrl.indexOf('?');
         if (pos != -1) {
             // found a query string, strip it
             mixcloudUrl = mixcloudUrl.substring(0, pos);

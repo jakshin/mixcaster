@@ -22,7 +22,7 @@ import java.net.URL;
 /**
  * The application's version info.
  */
-public class AppVersion {
+public final class AppVersion {
     /** The application's version, in raw format: "dev" or major.minor.patch. */
     public static final String raw;
 
@@ -35,5 +35,13 @@ public class AppVersion {
                 ? AppVersion.class.getPackage().getImplementationVersion()
                 : "dev";  // Running in an IDE, presumably
         display = "dev".equals(raw) ? "(development version)" : "v" + raw;
+    }
+
+    /**
+     * Private constructor to prevent instantiation.
+     * This class's properties are all static, and it shouldn't be instantiated.
+     */
+    private AppVersion() {
+        // nothing here
     }
 }

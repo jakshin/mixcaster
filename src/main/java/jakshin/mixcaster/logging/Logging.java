@@ -29,12 +29,12 @@ import java.util.logging.*;
  * Provides logging services to the application.
  * This initializes a global logger and makes it available to any code which needs it.
  */
-public class Logging {
+public final class Logging {
     /**
      * Initializes the global logger.
      * @param forService Whether to initialize for logging by the service (if false, initialize for manual downloading).
      */
-    public static void initialize(boolean forService) throws IOException {
+    public static synchronized void initialize(boolean forService) throws IOException {
         if (initialized) return;
         initialized = true;
 
@@ -84,7 +84,7 @@ public class Logging {
     public static final Level DEBUG = Level.FINE;
 
     /** Whether logging has been initialized or not. */
-    private static boolean initialized = false;
+    private static boolean initialized;
 
     /**
      * Gets the log_max_count configuration setting.

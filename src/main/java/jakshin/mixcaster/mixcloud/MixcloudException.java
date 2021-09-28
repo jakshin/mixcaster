@@ -20,6 +20,8 @@ package jakshin.mixcaster.mixcloud;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.Serial;
+
 /**
  * Thrown by Mixcaster code when something has gone wrong interfacing with Mixcloud.
  */
@@ -48,4 +50,9 @@ public class MixcloudException extends Exception {
     /** A URL related to the problem (optional). */
     @Nullable
     public final String url;
+
+    /** Serialization version number.
+        This should be updated whenever the class definition changes. */
+    @Serial
+    private static final long serialVersionUID = 1L;
 }

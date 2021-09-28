@@ -47,7 +47,7 @@ class HttpResponse implements Runnable {
     @Override
     public void run() {
         // we manually close readers/writers/streams because the socket gets closed when any of them are closed,
-        // so we need to control their life-cycle carefully
+        // so we need to control their life cycle carefully
         BufferedReader reader = null;
         BufferedWriter writer = null;
         BufferedOutputStream out = null;
@@ -111,7 +111,7 @@ class HttpResponse implements Runnable {
         }
         catch (Throwable ex) {
             try {
-                HttpException httpException = (ex instanceof HttpException) ? (HttpException) ex : null;
+                HttpException httpException = (ex instanceof HttpException) ? (HttpException) ex : null; //NOPMD
                 String message = ex.getMessage();
 
                 if (httpException != null && httpException.httpResponseCode < 500) {

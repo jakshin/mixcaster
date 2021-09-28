@@ -102,7 +102,7 @@ public class PodcastXmlResponder extends Responder {
             thing = String.format("%s's %s playlist", username, playlist);
         }
 
-        musicType = switch (musicType) {
+        musicType = switch (musicType) {  //NOPMD - suppressed UseStringBufferForStringAppends (WTF PMD?)
           case "stream", "shows", "favorites", "history", "playlist" -> musicType;
           case "uploads" -> "shows";
           case "listens" -> "history";
@@ -126,11 +126,11 @@ public class PodcastXmlResponder extends Responder {
                 cache.addToCache(username, musicType, playlist, podcast);
             }
             catch (MixcloudUserException ex) {
-                logger.log(ERROR, String.format("There's no Mixcloud user with username %s", ex.username));
+                logger.log(ERROR, "There''s no Mixcloud user with username {0}", ex.username);
                 throw new HttpException(404, "Not Found", ex);
             }
             catch (MixcloudPlaylistException ex) {
-                logger.log(ERROR, String.format("%s doesn't have a \"%s\" playlist", ex.username, ex.playlist));
+                logger.log(ERROR, "{0} doesn''t have a \"{1}\" playlist", new String[] {ex.username, ex.playlist});
                 throw new HttpException(404, "Not Found", ex);
             }
         }

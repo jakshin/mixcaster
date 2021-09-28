@@ -29,7 +29,7 @@ import java.util.TimeZone;
 /**
  * Provides date/time formatting in a standard format required by RSS and HTTP.
  */
-public class DateFormatter {
+public final class DateFormatter {
     /**
      * Formats the given date.
      *

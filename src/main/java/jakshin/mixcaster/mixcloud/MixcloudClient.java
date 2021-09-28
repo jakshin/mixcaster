@@ -135,7 +135,7 @@ public class MixcloudClient {
         // we don't try to handle system clock changes or DST entry/exit here
         long elapsedSeconds = (System.nanoTime() - started) / 1_000_000_000;
         String timeSpan = TimeSpanFormatter.formatTimeSpan((int) elapsedSeconds);
-        logger.log(INFO, String.format("Finished querying %s's %s in %s", username, musicType, timeSpan));
+        logger.log(INFO, "Finished querying {0}''s {1} in {2}", new String[] {username, musicType, timeSpan});
 
         return podcast;
     }
@@ -173,7 +173,7 @@ public class MixcloudClient {
                 var item = edge.node();
 
                 if (Boolean.TRUE.equals(item.isExclusive())) {
-                    logger.log(INFO, "Skipping subscriber exclusive: " + item.name());
+                    logger.log(INFO, () -> "Skipping subscriber exclusive: " + item.name());
                     continue;
                 }
 
@@ -207,20 +207,22 @@ public class MixcloudClient {
                     );
                 }
                 catch (Exception ex) {
-                    logger.log(WARNING, String.format("Skipping item: %s\n\t Because: %s", item.name(), ex));
+                    logger.log(WARNING, "Skipping item: {0}{1}\t Because: {2}",
+                            new String[] { item.name(), System.lineSeparator(), ex.toString() });
                     continue;
                 }
 
                 episodeCount++;
                 if (episodeCount >= maxEpisodeCount) {
-                    logger.log(DEBUG, String.format("%s reached max episode count: %d", queryDescription, maxEpisodeCount));
+                    logger.log(DEBUG, "{0} reached max episode count: {1}",
+                            new String[] { queryDescription, String.valueOf(maxEpisodeCount) });
                     break;
                 }
             }
 
             if (episodeCount >= maxEpisodeCount) break;
             if (! stream.pageInfo().hasNextPage()) {
-                logger.log(DEBUG, String.format("%s has no more pages", queryDescription));
+                logger.log(DEBUG, "{0} has no more pages", queryDescription);
                 break;
             }
 
@@ -264,7 +266,7 @@ public class MixcloudClient {
                 var item = edge.node();
 
                 if (Boolean.TRUE.equals(item.isExclusive())) {
-                    logger.log(INFO, "Skipping subscriber exclusive: " + item.name());
+                    logger.log(INFO, () -> "Skipping subscriber exclusive: " + item.name());
                     continue;
                 }
 
@@ -298,20 +300,22 @@ public class MixcloudClient {
                     );
                 }
                 catch (Exception ex) {
-                    logger.log(WARNING, String.format("Skipping item: %s\n\t Because: %s", item.name(), ex));
+                    logger.log(WARNING, "Skipping item: {0}{1}\t Because: {2}",
+                            new String[] { item.name(), System.lineSeparator(), ex.toString() });
                     continue;
                 }
 
                 episodeCount++;
                 if (episodeCount >= maxEpisodeCount) {
-                    logger.log(DEBUG, String.format("%s reached max episode count: %d", queryDescription, maxEpisodeCount));
+                    logger.log(DEBUG, "{0} reached max episode count: {1}",
+                            new String[] { queryDescription, String.valueOf(maxEpisodeCount) });
                     break;
                 }
             }
 
             if (episodeCount >= maxEpisodeCount) break;
             if (! uploads.pageInfo().hasNextPage()) {
-                logger.log(DEBUG, String.format("%s has no more pages", queryDescription));
+                logger.log(DEBUG, "{0} has no more pages", queryDescription);
                 break;
             }
 
@@ -354,7 +358,7 @@ public class MixcloudClient {
                 var item = edge.node();
 
                 if (Boolean.TRUE.equals(item.isExclusive())) {
-                    logger.log(INFO, "Skipping subscriber exclusive: " + item.name());
+                    logger.log(INFO, () -> "Skipping subscriber exclusive: " + item.name());
                     continue;
                 }
 
@@ -388,20 +392,22 @@ public class MixcloudClient {
                     );
                 }
                 catch (Exception ex) {
-                    logger.log(WARNING, String.format("Skipping item: %s\n\t Because: %s", item.name(), ex));
+                    logger.log(WARNING, "Skipping item: {0}{1}\t Because: {2}",
+                            new String[] { item.name(), System.lineSeparator(), ex.toString() });
                     continue;
                 }
 
                 episodeCount++;
                 if (episodeCount >= maxEpisodeCount) {
-                    logger.log(DEBUG, String.format("%s reached max episode count: %d", queryDescription, maxEpisodeCount));
+                    logger.log(DEBUG, "{0} reached max episode count: {1}",
+                            new String[] { queryDescription, String.valueOf(maxEpisodeCount) });
                     break;
                 }
             }
 
             if (episodeCount >= maxEpisodeCount) break;
             if (! favorites.pageInfo().hasNextPage()) {
-                logger.log(DEBUG, String.format("%s has no more pages", queryDescription));
+                logger.log(DEBUG, "{0} has no more pages", queryDescription);
                 break;
             }
 
@@ -444,7 +450,7 @@ public class MixcloudClient {
                 var item = edge.node().cloudcast();
 
                 if (Boolean.TRUE.equals(item.isExclusive())) {
-                    logger.log(INFO, "Skipping subscriber exclusive: " + item.name());
+                    logger.log(INFO, () -> "Skipping subscriber exclusive: " + item.name());
                     continue;
                 }
 
@@ -477,7 +483,8 @@ public class MixcloudClient {
                     );
                 }
                 catch (Exception ex) {
-                    logger.log(WARNING, String.format("Skipping item: %s\n\t Because: %s", item.name(), ex));
+                    logger.log(WARNING, "Skipping item: {0}{1}\t Because: {2}",
+                            new String[] { item.name(), System.lineSeparator(), ex.toString() });
                     continue;
                 }
 
@@ -485,7 +492,7 @@ public class MixcloudClient {
                 boolean dupe = false;
                 for (PodcastEpisode ep : podcast.episodes) {
                     if (ep.enclosureUrl.equals(episode.enclosureUrl)) {
-                        logger.log(DEBUG, "Skipping duplicate history item: " + item.name());
+                        logger.log(DEBUG, () -> "Skipping duplicate history item: " + item.name());
                         dupe = true;
                         break;
                     }
@@ -496,14 +503,15 @@ public class MixcloudClient {
 
                 episodeCount++;
                 if (episodeCount >= maxEpisodeCount) {
-                    logger.log(DEBUG, String.format("%s reached max episode count: %d", queryDescription, maxEpisodeCount));
+                    logger.log(DEBUG, "{0} reached max episode count: {1}",
+                            new String[] { queryDescription, String.valueOf(maxEpisodeCount) });
                     break;
                 }
             }
 
             if (episodeCount >= maxEpisodeCount) break;
             if (! history.pageInfo().hasNextPage()) {
-                logger.log(DEBUG, String.format("%s has no more pages", queryDescription));
+                logger.log(DEBUG, "{0} has no more pages", queryDescription);
                 break;
             }
 
@@ -609,7 +617,7 @@ public class MixcloudClient {
                 var item = edge.node().cloudcast();
 
                 if (Boolean.TRUE.equals(item.isExclusive())) {
-                    logger.log(INFO, "Skipping subscriber exclusive: " + item.name());
+                    logger.log(INFO, () -> "Skipping subscriber exclusive: " + item.name());
                     continue;
                 }
 
@@ -643,20 +651,22 @@ public class MixcloudClient {
                     );
                 }
                 catch (Exception ex) {
-                    logger.log(WARNING, String.format("Skipping item: %s\n\t Because: %s", item.name(), ex));
+                    logger.log(WARNING, "Skipping item: {0}{1}\t Because: {2}",
+                            new String[] { item.name(), System.lineSeparator(), ex.toString() });
                     continue;
                 }
 
                 episodeCount++;
                 if (episodeCount >= maxEpisodeCount) {
-                    logger.log(DEBUG, String.format("%s reached max episode count: %d", queryDescription, maxEpisodeCount));
+                    logger.log(DEBUG, "{0} reached max episode count: {1}",
+                            new String[] { queryDescription, String.valueOf(maxEpisodeCount) });
                     break;
                 }
             }
 
             if (episodeCount >= maxEpisodeCount) break;
             if (! playlist.items().pageInfo().hasNextPage()) {
-                logger.log(DEBUG, String.format("%s has no more pages", queryDescription));
+                logger.log(DEBUG, "{0} has no more pages", queryDescription);
                 break;
             }
 
@@ -744,13 +754,13 @@ public class MixcloudClient {
         if (location != null && !location.isBlank()) {
             if (city != null && !city.isBlank()) location = city + ", " + location;
 
-            if (desc.length() > 0) desc.append("\n");
+            if (desc.length() > 0) desc.append('\n');
             desc.append("\uD83C\uDF0E ");
             desc.append(location);
         }
 
         if (biog != null && !biog.isBlank()) {
-            if (desc.length() > 0) desc.append("\n");
+            if (desc.length() > 0) desc.append('\n');
             desc.append(biog.trim());
         }
 
@@ -834,7 +844,7 @@ public class MixcloudClient {
             @Override
             public void onFailure(@NotNull ApolloException ex) {
                 // request parsing failed, request cancelled, network error, etc.
-                logger.log(DEBUG, String.format("%s failed: %s", queryDescription, ex.getMessage()));
+                logger.log(DEBUG, "{0} failed: {1}", new String[] { queryDescription, ex.getMessage() });
                 var result = new QueryResult<Response<QT.Data>, ApolloException>(null, ex);
                 queue.offer(result);
             }
@@ -850,7 +860,7 @@ public class MixcloudClient {
         }
 
         List<com.apollographql.apollo.api.Error> errors = result.response.getErrors();
-        if (errors != null && errors.size() != 0) {
+        if (errors != null && !errors.isEmpty()) {
             String msg = String.format("Error from %s: %s", queryDescription, errors.get(0).getMessage());
             throw new MixcloudException(msg);
         }
@@ -937,6 +947,7 @@ public class MixcloudClient {
     }
 
     /** A container for a few HTTP response headers. */
+    @SuppressWarnings("PMD.CommentRequired")
     private static class ResponseHeaders {
         long contentLength;
         String contentType;

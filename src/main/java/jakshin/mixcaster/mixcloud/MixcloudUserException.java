@@ -18,6 +18,7 @@
 package jakshin.mixcaster.mixcloud;
 
 import org.jetbrains.annotations.NotNull;
+import java.io.Serial;
 
 /**
  * Thrown by Mixcaster code when a Mixcloud user doesn't exist.
@@ -37,4 +38,9 @@ public class MixcloudUserException extends MixcloudException {
     /** The Mixcloud user that doesn't exist. */
     @NotNull
     public final String username;
+
+    /** Serialization version number.
+     This should be updated whenever the class definition changes. */
+    @Serial
+    private static final long serialVersionUID = 1L;
 }

@@ -116,7 +116,7 @@ public class Main {
                         || arg.equalsIgnoreCase("history")
                         || arg.equalsIgnoreCase("favorites")
                         || arg.equalsIgnoreCase("playlist"))
-                    musicType = arg.toLowerCase();
+                    musicType = arg.toLowerCase(Locale.ROOT);
                 else if (arg.equals("uploads"))
                     musicType = "shows";
                 else if (arg.equals("listens"))
@@ -250,12 +250,12 @@ public class Main {
             return 0;
         }
         catch (MixcloudUserException ex) {
-            logger.log(ERROR, String.format("There's no Mixcloud user with username %s", ex.username));
+            logger.log(ERROR, "There''s no Mixcloud user with username {0}", ex.username);
             logger.log(DEBUG, "", ex);
             return 2;
         }
         catch (MixcloudPlaylistException ex) {
-            logger.log(ERROR, String.format("%s doesn't have a \"%s\" playlist", ex.username, ex.playlist));
+            logger.log(ERROR, "{0} doesn''t have a \"{1}\" playlist", new String[] {ex.username, ex.playlist});
             logger.log(DEBUG, "", ex);
             return 2;
         }
@@ -282,7 +282,7 @@ public class Main {
             server.run();
         }
         catch (Throwable ex) {
-            logger.log(ERROR, ex.getMessage(), ex);
+            logger.log(ERROR, ex, ex::getMessage);
         }
     }
 
@@ -397,22 +397,15 @@ public class Main {
         Properties cfg = new Properties(defaults);
 
         try {
-            // load our properties file, if we can find it next to the jar or in any parent directory
+            // load our properties file, if we can find it next to the jar file
             // (if we don't find the properties file, we'll silently carry on with default settings)
             Path path = Paths.get(Main.class.getProtectionDomain().getCodeSource().getLocation().getPath());
+            Path propsPath = Paths.get(path.getParent().toString(), "mixcaster-settings.properties");
 
-            while (path.getNameCount() > 0) {
-                Path propsPath = Paths.get(path.toString(), "mixcaster-settings.properties");
-                if (!Files.exists(propsPath)) {
-                    path = path.getParent();
-                    continue;
-                }
-
-                try (InputStream in = new FileInputStream(propsPath.toString())) {
+            if (Files.exists(propsPath)) {
+                try (InputStream in = Files.newInputStream(propsPath)) {
                     cfg.load(in);
                 }
-
-                break;
             }
 
             // validate numeric properties

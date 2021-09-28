@@ -22,8 +22,8 @@ import org.jetbrains.annotations.NotNull;
 import java.net.URLConnection;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * A thingy which gets the MIME content-type of a file, based on its name.
@@ -62,9 +62,8 @@ public class MimeTyper {
     }
 
     /** A map of known extensions to their MIME types. */
-    private static final Map<String,String> mimeTypes = new HashMap<>(17);
+    private static final Map<String,String> mimeTypes = new ConcurrentHashMap<>(17, 1.0f);
 
-    /* Static initialization. */
     static {
         // common audio types
         mimeTypes.put(".aac", "audio/aac");

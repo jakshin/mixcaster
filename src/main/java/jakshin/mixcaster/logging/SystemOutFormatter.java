@@ -39,19 +39,17 @@ class SystemOutFormatter extends Formatter {
         }
 
         Level level = record.getLevel();
-        String prefix = (level == Level.WARNING) ? "Warning: " : "";
+        String prefix = (level.equals(Level.WARNING)) ? "Warning: " : "";
 
         msg = String.format("%s%s%n", prefix, msg.trim());
 
-        if (level == Level.SEVERE) {
-            StringBuilder sb = new StringBuilder(500);
-            sb.append("Error: ");
-            sb.append(msg);
+        if (level.equals(Level.SEVERE)) {
+            StringBuilder sb = new StringBuilder(4096);
+            sb.append("Error: ").append(msg);
 
             Throwable thrown = record.getThrown();
             if (thrown != null) {
-                sb.append(this.formatThrowable(thrown, false));
-                sb.append(lineBreak);
+                sb.append(this.formatThrowable(thrown, false)).append(lineBreak);
             }
 
             return sb.toString();
@@ -70,7 +68,7 @@ class SystemOutFormatter extends Formatter {
      */
     @NotNull
     private String formatThrowable(@NotNull Throwable ex, boolean isCause) {
-        StringBuilder sb = new StringBuilder(500);
+        StringBuilder sb = new StringBuilder(4096);
 
         String msg = ex.getMessage();
         if (msg != null) {
