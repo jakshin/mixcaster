@@ -1,6 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ExternalStorageConfigurationManager" enabled="true" />
+  <component name="PDMPlugin">
+    <option name="customRuleSets">
+      <list>
+        <option value="$PROJECT_DIR$/definitions/pmd-rules.xml" />
+      </list>
+    </option>
+    <option name="options">
+      <map>
+        <entry key="Statistics URL" value="" />
+        <entry key="Target JDK" value="16" />
+      </map>
+    </option>
+    <option name="skipTestSources" value="false" />
+  </component>
   <component name="PWA">
     <option name="enabled" value="true" />
     <option name="wasEnabledAtLeastOnce" value="true" />

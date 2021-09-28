@@ -1,0 +1,60 @@
+<?xml version="1.0"?>
+
+<ruleset name="PMD Rules"
+	xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0 https://pmd.sourceforge.io/ruleset_2_0_0.xsd">
+
+	<description>
+		Customized rules for PMD
+		https://pmd.github.io/
+	</description>
+
+	<!--
+	See https://pmd.github.io/latest/pmd_userdocs_making_rulesets.html
+	and https://pmd.github.io/latest/pmd_rules_java.html
+	-->
+	<rule ref="category/java/bestpractices.xml">
+		<exclude name="AvoidReassigningParameters"/>
+		<exclude name="AvoidStringBufferField"/>
+		<exclude name="LiteralsFirstInComparisons"/>
+		<exclude name="OneDeclarationPerLine"/>
+		<exclude name="SwitchStmtsShouldHaveDefault"/> <!-- Doesn't detect default case in an enhanced switch -->
+		<exclude name="SystemPrintln"/>
+		<exclude name="UseVarargs"/>
+	</rule>
+	<rule ref="category/java/design.xml">
+		<exclude name="AvoidCatchingGenericException"/>
+		<exclude name="LawOfDemeter"/> <!-- Way too noisy to be useful -->
+		<exclude name="UseObjectForClearerAPI"/>
+	</rule>
+	<rule ref="category/java/documentation.xml">
+		<exclude name="CommentSize"/>
+	</rule>
+	<rule ref="category/java/errorprone.xml">
+		<exclude name="AssignmentInOperand"/>
+		<exclude name="AvoidCatchingThrowable"/>
+		<exclude name="AvoidDuplicateLiterals"/>
+		<exclude name="AvoidLiteralsInIfCondition"/>
+		<exclude name="BeanMembersShouldSerialize"/>
+		<exclude name="DoNotTerminateVM"/>
+		<exclude name="NullAssignment"/>
+	</rule>
+	<rule ref="category/java/multithreading.xml">
+		<exclude name="AvoidSynchronizedAtMethodLevel"/>
+		<exclude name="DoNotUseThreads"/>
+	</rule>
+	<rule ref="category/java/performance.xml">
+		<exclude name="AvoidInstantiatingObjectsInLoops"/>
+		<exclude name="InsufficientStringBufferDeclaration"/> <!-- Doesn't appear to work right -->
+	</rule>
+	<rule ref="category/java/security.xml"/>
+
+	<rule ref="category/java/errorprone.xml/EmptyCatchBlock">
+		<properties>
+			<property name="allowCommentedBlocks" value="true" />
+			<property name="allowExceptionNameRegex" value="^(ignored|expected)$" />
+		</properties>
+	</rule>
+
+</ruleset>
