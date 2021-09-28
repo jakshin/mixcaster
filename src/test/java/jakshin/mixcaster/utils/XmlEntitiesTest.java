@@ -54,18 +54,4 @@ public class XmlEntitiesTest {
         String result = instance.escape(test);
         assertEquals(expResult, result);
     }
-
-    @Test
-    public void unescapeShouldUnescapeAllEntities() {
-        String test = "&amp; &lt;&gt; &quot;&apos; jason &amp";
-        String expResult = "& <> \"' jason &amp";
-        String result = instance.unescape(test);
-        assertEquals(expResult, result);
-    }
-
-    @Test
-    public void unescapeShouldReturnNullWhenPassedNull() {
-        String result = instance.unescape(null);
-        assertEquals(null, result);
-    }
 }

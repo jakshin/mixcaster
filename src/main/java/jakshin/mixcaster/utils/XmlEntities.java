@@ -18,9 +18,7 @@
 package jakshin.mixcaster.utils;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -48,23 +46,6 @@ public class XmlEntities {
     }
 
     /**
-     * Unescapes XML entities in the given string, returning the result as a new string.
-     *
-     * @param str The string to unescape.
-     * @return The unescaped string.
-     */
-    @Nullable
-    public String unescape(@Nullable String str) {
-        if (str == null) return null;
-
-        for (Map.Entry<String,String> entry : entityToChar.entrySet()) {
-            str = str.replaceAll(entry.getKey(), entry.getValue());
-        }
-
-        return str;
-    }
-
-    /**
      * XML entities (character -> entity).
      * Used for escaping.
      */
@@ -74,18 +55,5 @@ public class XmlEntities {
         charToEntity.put(">",  "&gt;");
         charToEntity.put("\"", "&quot;");
         charToEntity.put("'",  "&apos;");
-    }
-
-    /**
-     * XML entities (entity -> character).
-     * Used for unescaping.
-     */
-    private static final Map<String,String> entityToChar = new LinkedHashMap<>(5); static { //NOPMD
-        // escaped entity -> unescaped character
-        entityToChar.put("&lt;",   "<");
-        entityToChar.put("&gt;",   ">");
-        entityToChar.put("&quot;", "\"");
-        entityToChar.put("&apos;", "'");
-        entityToChar.put("&amp;",  "&");  // must be last
     }
 }
