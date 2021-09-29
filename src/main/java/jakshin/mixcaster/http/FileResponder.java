@@ -33,7 +33,7 @@ import static jakshin.mixcaster.logging.Logging.*;
 /**
  * Responds to an HTTP request for a file, or part of a file.
  */
-public class FileResponder extends Responder {
+class FileResponder extends Responder {
     /**
      * Responds to the file request.
      *

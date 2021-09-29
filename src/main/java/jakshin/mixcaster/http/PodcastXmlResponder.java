@@ -40,7 +40,7 @@ import static jakshin.mixcaster.logging.Logging.*;
 /**
  * Responds to an HTTP request for RSS XML.
  */
-public class PodcastXmlResponder extends Responder {
+class PodcastXmlResponder extends Responder {
     /**
      * Responds to the RSS XML request.
      * Expected RSS URLs are like /username.xml (e.g. /NTSRadio.xml), /username/musicType.xml (e.g. /NTSRadio/shows.xml),
