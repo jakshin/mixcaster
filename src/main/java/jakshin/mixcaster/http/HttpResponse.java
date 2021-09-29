@@ -46,14 +46,14 @@ class HttpResponse implements Runnable {
      */
     @Override
     public void run() {
-        // we manually close readers/writers/streams because the socket gets closed when any of them are closed,
-        // so we need to control their life cycle carefully
         BufferedReader reader = null;     //NOPMD closed via Closer
         BufferedWriter writer = null;     //NOPMD closed via Closer
         BufferedOutputStream out = null;  //NOPMD closed via Closer
         HttpRequest request = null;
 
-        try {
+        try {   //NOPMD we manually close the reader, writer, and stream because the socket gets closed
+                // when any of them are closed, so we need to control their life cycle carefully
+
             // initialize
             reader = new BufferedReader(new InputStreamReader(this.socket.getInputStream(), StandardCharsets.ISO_8859_1));
             writer = new BufferedWriter(new OutputStreamWriter(this.socket.getOutputStream(), StandardCharsets.UTF_8), 100_000);
