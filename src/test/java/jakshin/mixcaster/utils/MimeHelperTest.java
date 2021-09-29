@@ -25,10 +25,10 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 
 /**
- * Unit tests for the MimeTyper class.
+ * Unit tests for the MimeHelper class.
  */
-public class MimeTyperTest {
-    private MimeTyper instance;
+public class MimeHelperTest {
+    private MimeHelper instance;
 
     @BeforeClass
     public static void setUpClass() {
@@ -40,7 +40,7 @@ public class MimeTyperTest {
 
     @Before
     public void setUp() {
-        this.instance = new MimeTyper();
+        this.instance = new MimeHelper();
     }
 
     @After

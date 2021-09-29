@@ -19,7 +19,7 @@ package jakshin.mixcaster.http;
 
 import jakshin.mixcaster.mixcloud.MixcloudException;
 import jakshin.mixcaster.utils.FileLocator;
-import jakshin.mixcaster.utils.MimeTyper;
+import jakshin.mixcaster.utils.MimeHelper;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
@@ -88,7 +88,7 @@ class FileResponder extends Responder {
                 }
 
                 // send the response headers
-                String contentType = new MimeTyper().guessContentTypeFromName(localPathStr);
+                String contentType = new MimeHelper().guessContentTypeFromName(localPathStr);
 
                 if (range == null) {
                     headerWriter.sendSuccessHeaders(writer, lastModified, contentType, localFile.length());

@@ -26,11 +26,11 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * A thingy which gets the MIME content-type of a file, based on its name.
+ * A thingy which guesses the MIME content-type of a file, based on its name.
  * It doesn't work very well in the general case, as it only knows about a few types of files,
  * but it should be fine for our limited purposes here.
  */
-public class MimeTyper {
+public class MimeHelper {
     /**
      * Guesses a files MIME content type, based on its name.
      *
