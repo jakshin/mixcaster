@@ -29,7 +29,7 @@ import static jakshin.mixcaster.logging.Logging.logger;
 /**
  * A safe, boilerplate-reducing way to close things that might need closing.
  */
-public class Closer {
+public final class Closer {
     /**
      * Convenience method which closes something that can be closed.
      *
@@ -48,5 +48,13 @@ public class Closer {
         catch (IOException ex) {
             logger.log(WARNING, ex, () -> String.format("Failed to close %s", description));
         }
+    }
+
+    /**
+     * Private constructor to prevent instantiation.
+     * This class's methods are all static, and it shouldn't be instantiated.
+     */
+    private Closer() {
+        // nothing here
     }
 }
