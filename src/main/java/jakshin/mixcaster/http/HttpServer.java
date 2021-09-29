@@ -18,6 +18,7 @@
 package jakshin.mixcaster.http;
 
 import jakshin.mixcaster.Main;
+
 import java.net.*;
 import java.io.IOException;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -66,7 +67,7 @@ public class HttpServer implements Runnable {
         while (true) {
             try {
                 // listen for connections; this will block until a connection is received
-                Socket socket = serverSocket.accept();
+                Socket socket = serverSocket.accept();  //NOPMD closed by HttpResponse
 
                 // connection received, process it on a separate thread
                 HttpResponse response = new HttpResponse(socket);
