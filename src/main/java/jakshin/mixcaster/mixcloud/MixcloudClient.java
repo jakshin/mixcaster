@@ -151,7 +151,7 @@ public class MixcloudClient {
             throws InterruptedException, MixcloudException, TimeoutException, URISyntaxException {
 
         Podcast podcast = queryUserInfo(username);
-        podcast.title = String.format("%s's stream", podcast.iTunesAuthor);
+        podcast.title = String.format("%s's stream", podcast.iTunesAuthorAndOwnerName);
         podcast.link = new URI(MIXCLOUD_WEB + username + "/stream/");
 
         int episodeCount = 0, maxEpisodeCount = getEpisodeMaxCountConfig();
@@ -243,7 +243,7 @@ public class MixcloudClient {
             throws InterruptedException, MixcloudException, TimeoutException, URISyntaxException {
 
         Podcast podcast = queryUserInfo(username);
-        podcast.title = String.format("%s's shows", podcast.iTunesAuthor);
+        podcast.title = String.format("%s's shows", podcast.iTunesAuthorAndOwnerName);
         podcast.link = new URI(MIXCLOUD_WEB + username + "/uploads/");
 
         int episodeCount = 0, maxEpisodeCount = getEpisodeMaxCountConfig();
@@ -336,7 +336,7 @@ public class MixcloudClient {
             throws InterruptedException, MixcloudException, TimeoutException, URISyntaxException {
 
         Podcast podcast = queryUserInfo(username);
-        podcast.title = String.format("%s's favorites", podcast.iTunesAuthor);
+        podcast.title = String.format("%s's favorites", podcast.iTunesAuthorAndOwnerName);
         podcast.link = new URI(MIXCLOUD_WEB + username + "/favorites/");
 
         int episodeCount = 0, maxEpisodeCount = getEpisodeMaxCountConfig();
@@ -428,7 +428,7 @@ public class MixcloudClient {
             throws InterruptedException, MixcloudException, TimeoutException, URISyntaxException {
 
         Podcast podcast = queryUserInfo(username);
-        podcast.title = String.format("%s's history", podcast.iTunesAuthor);
+        podcast.title = String.format("%s's history", podcast.iTunesAuthorAndOwnerName);
         podcast.link = new URI(MIXCLOUD_WEB + username + "/listens/");
 
         int episodeCount = 0, maxEpisodeCount = getEpisodeMaxCountConfig();
@@ -575,7 +575,6 @@ public class MixcloudClient {
                 podcast.userID = playlist.owner().id();
                 podcast.title = playlist.name();  // "%s's playlist: %s" might also be nice
                 podcast.link = new URI(MIXCLOUD_WEB + username + "/playlists/" + slug + "/");
-                podcast.language = "en_US";
 
                 podcast.description = playlist.description();
                 if (podcast.description == null || podcast.description.isBlank()) {
@@ -594,9 +593,7 @@ public class MixcloudClient {
                                                                     owner.city(), owner.country(), owner.biog());
                 }
 
-                podcast.iTunesAuthor = playlist.owner().displayName();
-                podcast.iTunesCategory = "Music";
-                podcast.iTunesExplicit = false;
+                podcast.iTunesAuthorAndOwnerName = playlist.owner().displayName();
 
                 String picUrlRoot = null;
                 var playlistPic = playlist.picture();
@@ -609,8 +606,6 @@ public class MixcloudClient {
                 }
 
                 podcast.iTunesImageUrl = new URI(MIXCLOUD_IMAGES + picUrlRoot);
-                podcast.iTunesOwnerName = playlist.owner().displayName();
-                podcast.iTunesOwnerEmail = "nobody@example.com";
             }
 
             for (var edge : playlist.items().edges()) {
@@ -701,7 +696,6 @@ public class MixcloudClient {
         podcast.userID = user.id();
         podcast.title = user.displayName();
         podcast.link = new URI(MIXCLOUD_WEB + username + "/");
-        podcast.language = "en_US";
 
         String selectPrice = null;
         Boolean isSelect = user.fragments().selectUpsellButton_user().isSelect();
@@ -715,9 +709,7 @@ public class MixcloudClient {
         podcast.description = buildPodcastDescription(user.username(), user.displayName(), selectPrice,
                                         user.city(), user.country(), user.fragments().shareUserButton_user().biog());
 
-        podcast.iTunesAuthor = user.displayName();
-        podcast.iTunesCategory = "Music";
-        podcast.iTunesExplicit = false;
+        podcast.iTunesAuthorAndOwnerName = user.displayName();
 
         UserProfileHeaderQuery.Picture pic = user.picture();
         if (pic != null) {
@@ -726,8 +718,6 @@ public class MixcloudClient {
                 podcast.iTunesImageUrl = new URI(MIXCLOUD_IMAGES + urlRoot);
         }
 
-        podcast.iTunesOwnerName = user.displayName();
-        podcast.iTunesOwnerEmail = "nobody@example.com";
         return podcast;
     }
 

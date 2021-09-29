@@ -4,16 +4,16 @@
 
 <title>{{podcast.title}}</title>
 <link>{{podcast.link}}</link>
-<language>{{podcast.language}}</language>
+<language>en-US</language>
 <description>{{podcast.description}}</description>
 
-<itunes:author>{{podcast.iTunesAuthor}}</itunes:author>
-<itunes:category text="{{podcast.iTunesCategory}}" />
-<itunes:explicit>{{podcast.iTunesExplicit}}</itunes:explicit>
+<itunes:author>{{podcast.iTunesAuthorAndOwnerName}}</itunes:author>
+<itunes:category text="Music" />
+<itunes:explicit>no</itunes:explicit>
 <itunes:image href="{{podcast.iTunesImageUrl}}" />
 <itunes:owner>
-  <itunes:name>{{podcast.iTunesOwnerName}}</itunes:name>
-  <itunes:email>{{podcast.iTunesOwnerEmail}}</itunes:email>
+  <itunes:name>{{podcast.iTunesAuthorAndOwnerName}}</itunes:name>
+  <itunes:email>nobody@example.com</itunes:email>
 </itunes:owner>
 <itunes:summary>{{podcast.description}}</itunes:summary>
 

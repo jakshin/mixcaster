@@ -48,16 +48,11 @@ public class PodcastTest {
         this.instance = new Podcast();
         this.instance.userID = "foo";
         this.instance.link = new URI("http://example.com");
-        this.instance.language = "en_US";
         this.instance.title = "Title";
         this.instance.description = "Podcast description";
 
-        this.instance.iTunesAuthor = "Author";
-        this.instance.iTunesCategory = "Music";
-        this.instance.iTunesExplicit = true;
+        this.instance.iTunesAuthorAndOwnerName = "Author";
         this.instance.iTunesImageUrl = new URI("http://example.com/image.jpg");
-        this.instance.iTunesOwnerEmail = "nobody@example.com";
-        this.instance.iTunesOwnerName = "Owner";
     }
 
     @After

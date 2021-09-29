@@ -49,29 +49,14 @@ public final class Podcast {
     /** The podcast's web page's URL (for human consumption, not the URL of the RSS XML). */
     public URI link;
 
-    /** The language the podcast is in. */
-    public String language;
-
     /** A description of the podcast (4000 chars max for Apple Podcasts). */
     public String description;
 
-    /** The podcast's overall author (individual episodes may have a different author). */
-    public String iTunesAuthor;
-
-    /** The podcast's category. */
-    public String iTunesCategory;
-
-    /** Whether the podcast contains explicit language. */
-    public boolean iTunesExplicit;
+    /** The podcast's overall author/owner (individual episodes may have a different author). */
+    public String iTunesAuthorAndOwnerName;
 
     /** The URL of a cover image for the podcast. */
     public URI iTunesImageUrl;
-
-    /** The podcast's owner's name. */
-    public String iTunesOwnerName;
-
-    /** The podcast's owner's email address. */
-    public String iTunesOwnerEmail;
 
     /** Podcast episodes. */
     public final List<PodcastEpisode> episodes = new LinkedList<>();
@@ -94,15 +79,10 @@ public final class Podcast {
         String p = podcastXmlTemplate.toString();
         p = this.replaceTemplateTag(p, "{{podcast.title}}", this.title);
         p = this.replaceTemplateTag(p, "{{podcast.link}}", this.link.toASCIIString());
-        p = this.replaceTemplateTag(p, "{{podcast.language}}", this.language.replace("_", "-"));
         p = this.replaceTemplateTag(p, "{{podcast.description}}", this.description);
 
-        p = this.replaceTemplateTag(p, "{{podcast.iTunesAuthor}}", this.iTunesAuthor);
-        p = this.replaceTemplateTag(p, "{{podcast.iTunesCategory}}", this.iTunesCategory);
-        p = this.replaceTemplateTag(p, "{{podcast.iTunesExplicit}}", this.iTunesExplicit ? "yes" : "no");
+        p = this.replaceTemplateTag(p, "{{podcast.iTunesAuthorAndOwnerName}}", this.iTunesAuthorAndOwnerName);
         p = this.replaceTemplateTag(p, "{{podcast.iTunesImageUrl}}", this.iTunesImageUrl.toASCIIString());
-        p = this.replaceTemplateTag(p, "{{podcast.iTunesOwnerName}}", this.iTunesOwnerName);
-        p = this.replaceTemplateTag(p, "{{podcast.iTunesOwnerEmail}}", this.iTunesOwnerEmail);
 
         // episodes
         StringBuilder episodeXml = new StringBuilder(2048 * this.episodes.size());
