@@ -132,7 +132,6 @@ public class MixcloudClient {
             default -> throw new IllegalArgumentException("Unexpected music type: " + musicType);
         };
 
-        // we don't try to handle system clock changes or DST entry/exit here
         long elapsedSeconds = (System.nanoTime() - started) / 1_000_000_000;
         String timeSpan = TimeSpanFormatter.formatTimeSpan((int) elapsedSeconds);
         logger.log(INFO, "Finished querying {0}''s {1} in {2}", new String[] {username, musicType, timeSpan});
