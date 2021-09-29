@@ -49,7 +49,7 @@ class SystemOutFormatter extends Formatter {
 
             Throwable thrown = record.getThrown();
             if (thrown != null) {
-                sb.append(this.formatThrowable(thrown, false)).append(lineBreak);
+                sb.append(this.formatThrowable(thrown, false)).append(System.lineSeparator());
             }
 
             return sb.toString();
@@ -90,7 +90,4 @@ class SystemOutFormatter extends Formatter {
 
         return sb.toString();
     }
-
-    /** The line break string which is appropriate for this platform. */
-    private static final String lineBreak = String.format("%n");
 }

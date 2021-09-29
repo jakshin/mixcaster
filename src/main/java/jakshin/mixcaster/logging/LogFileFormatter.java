@@ -83,7 +83,7 @@ class LogFileFormatter extends Formatter {
                 .append(String.format("[thread %d]%n", record.getLongThreadID()));
 
         if (extra != null && !extra.isEmpty()) {
-            sb.append(extra).append(LogFileFormatter.lineBreak);
+            sb.append(extra).append(System.lineSeparator());
         }
 
         Throwable thrown = record.getThrown();
@@ -130,7 +130,7 @@ class LogFileFormatter extends Formatter {
             }
         }
 
-        sb.append(lineBreak);
+        sb.append(System.lineSeparator());
 
         StackTraceElement[] stack = ex.getStackTrace();
         for (StackTraceElement el : stack) {
@@ -147,7 +147,4 @@ class LogFileFormatter extends Formatter {
 
     /** The thingy which formats dates. */
     private final SimpleDateFormat dateFormatter;
-
-    /** The line break string which is appropriate for this platform. */
-    private static final String lineBreak = String.format("%n");
 }
