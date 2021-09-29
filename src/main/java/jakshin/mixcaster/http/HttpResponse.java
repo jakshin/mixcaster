@@ -17,8 +17,8 @@
 
 package jakshin.mixcaster.http;
 
+import jakshin.mixcaster.utils.Closer;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.net.Socket;
@@ -48,9 +48,9 @@ class HttpResponse implements Runnable {
     public void run() {
         // we manually close readers/writers/streams because the socket gets closed when any of them are closed,
         // so we need to control their life cycle carefully
-        BufferedReader reader = null;
-        BufferedWriter writer = null;
-        BufferedOutputStream out = null;
+        BufferedReader reader = null;     //NOPMD closed via Closer
+        BufferedWriter writer = null;     //NOPMD closed via Closer
+        BufferedOutputStream out = null;  //NOPMD closed via Closer
         HttpRequest request = null;
 
         try {
@@ -141,9 +141,10 @@ class HttpResponse implements Runnable {
             }
         }
         finally {
-            this.closeAThing(reader, "the socket's reader");
-            this.closeAThing(writer, "the socket's writer");
-            this.closeAThing(out, "the socket's output stream");
+            Closer.close(reader, "the socket's reader");
+            Closer.close(writer, "the socket's writer");
+            Closer.close(out, "the socket's output stream");
+            Closer.close(this.socket, "the socket");
         }
     }
 
@@ -207,24 +208,6 @@ class HttpResponse implements Runnable {
         }
 
         return request;
-    }
-
-    /**
-     * Convenience method which closes something which can be closed.
-     *
-     * @param thing The thing to be closed.
-     * @param description A description of the thing which will be closed.
-     */
-    private void closeAThing(@Nullable Closeable thing, @NotNull String description) {
-        if (thing == null) return;
-
-        try {
-            thing.close();
-        }
-        catch (IOException ex) {
-            // responders are expected to flush at the end of finishResponse(), making this unlikely
-            logger.log(WARNING, ex, () -> String.format("Failed to close %s", description));
-        }
     }
 
     /** The socket on which the HTTP request was received. */
