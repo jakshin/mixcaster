@@ -56,15 +56,12 @@ public class HttpServer implements Runnable {
         try {
             // bind to the configured TCP port
             serverSocket = new ServerSocket(this.port);
+            logger.log(INFO, () -> String.format("Listening for HTTP connections on port %d", this.port));
         }
         catch (IOException ex) {
-            String msg = String.format("HTTP server failed to bind to TCP port %d", this.port);
-            logger.log(ERROR, msg, ex);
+            logger.log(ERROR, ex, () -> String.format("HTTP server failed to bind to TCP port %d", this.port));
             return;
         }
-
-        String msg = String.format("Listening for HTTP connections on port %d", this.port);
-        logger.log(INFO, msg);
 
         while (true) {
             try {

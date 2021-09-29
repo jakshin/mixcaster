@@ -168,8 +168,8 @@ class HttpHeaderWriter {
         }
         catch (ParseException ex) {
             // log and continue without If-Modified-Since handling
-            String msg = String.format("Invalid If-Modified-Since header: %s", request.headers.get("If-Modified-Since"));
-            logger.log(WARNING, msg, ex);
+            logger.log(WARNING, ex,
+                    () -> String.format("Invalid If-Modified-Since header: %s", request.headers.get("If-Modified-Since")));
         }
 
         return false;  // response was not satisfied

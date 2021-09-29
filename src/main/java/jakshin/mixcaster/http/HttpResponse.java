@@ -116,8 +116,8 @@ class HttpResponse implements Runnable {
 
                 if (httpException != null && httpException.httpResponseCode < 500) {
                     // log non-5xx HTTP exceptions as INFO
-                    String msg = String.format("HTTP error: %d %s", httpException.httpResponseCode, message);
-                    logger.log(INFO, msg);
+                    logger.log(INFO, "HTTP error: {0} {1}",
+                            new String[] {String.valueOf(httpException.httpResponseCode), message});
                 }
                 else {
                     logger.log(ERROR, message, ex);
@@ -223,8 +223,7 @@ class HttpResponse implements Runnable {
         }
         catch (IOException ex) {
             // responders are expected to flush at the end of finishResponse(), making this unlikely
-            String msg = String.format("Failed to close %s", description);
-            logger.log(WARNING, msg, ex);
+            logger.log(WARNING, ex, () -> String.format("Failed to close %s", description));
         }
     }
 
