@@ -17,6 +17,7 @@
 
 package jakshin.mixcaster.install;
 
+import jakshin.mixcaster.utils.ResourceLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,7 +50,9 @@ public final class Installer {
 
             this.log("%nCreating the service's launchd configuration file...");
 
-            String plistXml = this.loadPlistResource();
+            String resourcePath = "install/launchd-plist.xml";
+            String plistXml = ResourceLoader.loadResourceAsText(resourcePath, 600).toString();
+
             plistXml = plistXml.replace("{{serviceLabel}}", this.getServiceLabel());
             plistXml = plistXml.replace("{{mixcaster.jar}}", jarPath);
 
@@ -209,34 +212,6 @@ public final class Installer {
         Process proc = Runtime.getRuntime().exec(cmd);
         int result = proc.waitFor();
         return (result == 0);  // assume any failure means "service doesn't exist"
-    }
-
-    /**
-     * Loads the launchd-plist.xml resource.
-     * @return The resource's XML content.
-     */
-    @NotNull
-    private String loadPlistResource() throws IOException {
-        StringBuilder sb = new StringBuilder(600);
-
-        try (InputStream in = this.getClass().getResourceAsStream("launchd-plist.xml")) {
-            if (in == null) {
-                throw new IOException("Could not load resource: launchd-plist.xml");
-            }
-
-            final char[] buf = new char[600];
-
-            try (Reader reader = new InputStreamReader(in, StandardCharsets.UTF_8)) {
-                while (true) {
-                    int count = reader.read(buf, 0, buf.length);
-                    if (count < 0) break;
-
-                    sb.append(buf, 0, count);
-                }
-            }
-        }
-
-        return sb.toString();
     }
 
     /**

@@ -18,6 +18,7 @@
 package jakshin.mixcaster.http;
 
 import jakshin.mixcaster.utils.DateFormatter;
+import jakshin.mixcaster.utils.ResourceLoader;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
@@ -57,24 +58,8 @@ class FavIconResponder extends Responder {
         synchronized (FavIconResponder.iconBufferLock) {
             if (FavIconResponder.iconBuffer == null) {
                 logger.log(DEBUG, "Loading favicon.ico resource");
-                ByteArrayOutputStream buffer = new ByteArrayOutputStream(16_000);  // a bit larger than favicon.ico
-
-                try (InputStream in = this.getClass().getResourceAsStream("favicon.ico")) {
-                    if (in == null) {
-                        throw new IOException("Could not load resource: favicon.ico");
-                    }
-
-                    final byte[] buf = new byte[2000];
-
-                    while (true) {
-                        int count = in.read(buf);
-                        if (count < 0) break;
-
-                        buffer.write(buf, 0, count);
-                    }
-                }
-
-                FavIconResponder.iconBuffer = buffer;
+                int capacityNeeded = 16_000;  // a bit larger than favicon.ico
+                FavIconResponder.iconBuffer = ResourceLoader.loadResourceAsBytes("http/favicon.ico", capacityNeeded);
             }
             else {
                 logger.log(DEBUG, "Retrieved favicon.ico from cache");
@@ -83,7 +68,8 @@ class FavIconResponder extends Responder {
 
         // send the response headers;
         // we don't expect to receive a Range header for this type of request
-        headerWriter.sendSuccessHeaders(writer, lastModified, "image/x-icon", FavIconResponder.iconBuffer.size());
+        String contentType = "image/x-icon";
+        headerWriter.sendSuccessHeaders(writer, lastModified, contentType, FavIconResponder.iconBuffer.length);
 
         if (request.isHead()) {
             logger.log(INFO, "Done responding to HEAD request for favicon.ico");
@@ -91,13 +77,13 @@ class FavIconResponder extends Responder {
         }
 
         // send the icon
-        FavIconResponder.iconBuffer.writeTo(out);
+        out.write(FavIconResponder.iconBuffer);
         out.flush();
         logger.log(INFO, "Done responding to GET request for favicon.ico");
     }
 
     /** A buffer where we cache the icon resource on first use. */
-    private static ByteArrayOutputStream iconBuffer;
+    private static byte[] iconBuffer;
 
     /** An object on which we synchronize writes to iconBuffer. */
     private static final Object iconBufferLock = new Object();

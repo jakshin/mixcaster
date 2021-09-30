@@ -19,14 +19,15 @@ package jakshin.mixcaster.http;
 
 import jakshin.mixcaster.utils.AppVersion;
 import jakshin.mixcaster.utils.DateFormatter;
+import jakshin.mixcaster.utils.ResourceLoader;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
-import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.LinkedHashMap;
+
 import static jakshin.mixcaster.logging.Logging.*;
 
 /**
@@ -57,25 +58,7 @@ class BannerResponder extends Responder {
         synchronized (BannerResponder.resourceBufferLock) {
             if (BannerResponder.resourceBuffer == null) {
                 logger.log(DEBUG, "Loading banner.html resource");
-                StringBuilder sb = new StringBuilder(41_000);  // a bit larger than banner.html
-
-                try (InputStream in = this.getClass().getResourceAsStream("banner.html")) {
-                    if (in == null) {
-                        throw new IOException("Could not load resource: banner.html");
-                    }
-
-                    final char[] buf = new char[1024];
-
-                    try (Reader reader = new InputStreamReader(in, StandardCharsets.UTF_8)) {
-                        while (true) {
-                            int count = reader.read(buf, 0, buf.length);
-                            if (count < 0) break;
-
-                            sb.append(buf, 0, count);
-                        }
-                    }
-                }
-
+                StringBuilder sb = ResourceLoader.loadResourceAsText("http/banner.html", 41_000);
                 BannerResponder.resourceBuffer = sb.toString().replace("{{version}}", AppVersion.display);
             }
             else {

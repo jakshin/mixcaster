@@ -19,13 +19,13 @@ package jakshin.mixcaster.podcast;
 
 import jakshin.mixcaster.utils.DateFormatter;
 import jakshin.mixcaster.utils.FileLocator;
+import jakshin.mixcaster.utils.ResourceLoader;
 import jakshin.mixcaster.utils.XmlEntities;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -70,9 +70,9 @@ public final class Podcast {
         // load our template resources, if we haven't already
         synchronized (Podcast.class) {
             if (podcastXmlTemplate == null)
-                podcastXmlTemplate = this.loadResource("podcast.xml");
+                podcastXmlTemplate = ResourceLoader.loadResourceAsText("podcast/podcast.xml", 1000);
             if (episodeXmlTemplate == null)
-                episodeXmlTemplate = this.loadResource("podcastEpisode.xml");
+                episodeXmlTemplate = ResourceLoader.loadResourceAsText("podcast/podcastEpisode.xml", 1000);
         }
 
         // podcast properties
@@ -117,37 +117,6 @@ public final class Podcast {
 
         p = p.replace("{{episodes}}", episodeXml.toString().trim());
         return p;
-    }
-
-    /**
-     * Loads a resource.
-     * Used to load the XML templates, which are expected to be UTF-8 encoded.
-     *
-     * @param resourceName The resource's file name.
-     * @return The resource's content.
-     */
-    @NotNull
-    private StringBuilder loadResource(@NotNull String resourceName) throws IOException {
-        StringBuilder sb = new StringBuilder(1024);
-
-        try (InputStream in = this.getClass().getResourceAsStream(resourceName)) {
-            if (in == null) {
-                throw new IOException("Could not load resource: " + resourceName);
-            }
-
-            final char[] buf = new char[1024];
-
-            try (Reader reader = new InputStreamReader(in, StandardCharsets.UTF_8)) {
-                while (true) {
-                    int count = reader.read(buf, 0, buf.length);
-                    if (count < 0) break;
-
-                    sb.append(buf, 0, count);
-                }
-            }
-        }
-
-        return sb;
     }
 
     /**
