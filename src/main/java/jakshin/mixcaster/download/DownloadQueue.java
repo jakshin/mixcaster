@@ -28,7 +28,10 @@ import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+
 import static jakshin.mixcaster.logging.Logging.*;
+import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
+import static java.nio.file.StandardOpenOption.*;
 
 /**
  * Downloads music files from Mixcloud.
@@ -148,69 +151,66 @@ public final class DownloadQueue {
         /** Performs the download. */
         @Override
         public void run() {
-            logger.log(INFO, "Starting download: {0}{1}    => {2}",
-                    new String[] {this.download.remoteUrl, System.lineSeparator(), this.download.localFilePath});
-
             HttpURLConnection conn = null;
-            BufferedInputStream in = null;
-            FileOutputStream out = null;
-
-            long started = System.currentTimeMillis();
-            int totalBytesWritten = 0;
-            int percentComplete = 0;
 
             try {
-                // set up the HTTP connection
+                long started = System.nanoTime();
+                logger.log(INFO, "Starting download: {0}{1}    => {2}",
+                        new String[] {this.download.remoteUrl, System.lineSeparator(), this.download.localFilePath});
+
+                // set up the HTTP connection we'll download from
                 URL url = new URL(this.download.remoteUrl);
-                conn = (HttpURLConnection) url.openConnection();
+                conn = (HttpURLConnection) url.openConnection();  // no actual network connection yet
                 conn.setInstanceFollowRedirects(true);
                 conn.setRequestProperty("User-Agent", Main.config.getProperty("user_agent"));
                 conn.setRequestProperty("Referer", this.download.remoteUrl);
 
-                // open the HTTP connection; this code will throw FileNotFoundException on 404s
-                in = new BufferedInputStream(conn.getInputStream());
-
-                // download to a *.part file
+                // set up the destination directory we'll download into
                 File localPartFile = new File(this.download.localFilePath + ".part");
                 File localDir = localPartFile.getParentFile();
 
-                if (!localDir.exists() && !localDir.mkdirs()) {
-                    throw new IOException(String.format("Could not create directory \"%s\"", localPartFile.getParent()));
-                }
-
-                out = new FileOutputStream(localPartFile);
-                final byte[] buf = new byte[50_000];
-
-                while (true) {
-                    int byteCount = in.read(buf, 0, buf.length);
-                    if (byteCount < 0) break;
-
-                    out.write(buf, 0, byteCount);
-
-                    totalBytesWritten += byteCount;  // overflow if file is over 2^31 bytes in length
-                    int percentNowComplete = (int) ((totalBytesWritten * 100f) / this.download.remoteLengthBytes);
-
-                    if (percentNowComplete > percentComplete) {
-                        // flush to disk each time we've downloaded another 1% of the file
-                        percentComplete = percentNowComplete;
-                        out.flush();
-                        out.getFD().sync();
-                    }
-
-                    // show some progress info every so often, directly to stdout, so we don't clutter logs
-                    if (percentComplete % 10 == 0 && progressShownAtPercent < percentComplete && percentComplete < 100) {
-                        String name = new File(download.localFilePath).getName();
-                        System.out.printf("  %d%% %s%n", percentComplete, name);
-                        progressShownAtPercent = percentComplete;
+                synchronized (DownloadRunnable.class) {
+                    if (!localDir.isDirectory() && !localDir.mkdirs()) {
+                        throw new IOException(String.format("Could not create directory \"%s\"", localPartFile.getParent()));
                     }
                 }
 
-                out.close();
-                out = null;
+                if (Files.isSymbolicLink(localPartFile.toPath())) {
+                    // remove the symlink; if it's created again before we open our output stream below,
+                    // an IOException will be thrown: "Too many levels of symbolic links (NOFOLLOW_LINKS specified)"
+                    Files.deleteIfExists(localPartFile.toPath());
+                }
+
+                // open the HTTP connection; this code will throw FileNotFoundException on 404s
+                try (BufferedInputStream in = new BufferedInputStream(conn.getInputStream());
+                     OutputStream out = Files.newOutputStream(localPartFile.toPath(),
+                             CREATE, SYNC, TRUNCATE_EXISTING, WRITE, NOFOLLOW_LINKS)) {
+
+                    long totalBytesWritten = 0;
+                    final byte[] buf = new byte[65536];  // 64 KiB
+
+                    while (true) {
+                        int byteCount = in.read(buf, 0, buf.length);
+                        if (byteCount < 0) break;
+
+                        out.write(buf, 0, byteCount);
+
+                        // show some progress info every so often, directly to stdout, so we don't clutter logs
+                        totalBytesWritten += byteCount;
+                        int percentComplete = (int) ((totalBytesWritten * 100f) / this.download.remoteLengthBytes);
+
+                        if (percentComplete % 10 == 0 && percentComplete < 100 && progressShownAtPercent < percentComplete) {
+                            String name = new File(download.localFilePath).getName();
+                            System.out.printf("  %d%% %s%n", percentComplete, name);
+                            progressShownAtPercent = percentComplete;
+                        }
+                    }
+                }
 
                 // set the file's last-modified timestamp to match the value from Mixcloud's server
                 if (!localPartFile.setLastModified(this.download.remoteLastModified.getTime())) {
-                    String errMsg = String.format("Could not set file's last-modified timestamp (%s)", this.download.localFilePath);
+                    String errMsg = String.format("Could not set file's last-modified timestamp (%s)",
+                                                   this.download.localFilePath);
                     throw new IOException(errMsg);
                 }
 
@@ -219,42 +219,28 @@ public final class DownloadQueue {
                 Files.deleteIfExists(localPath);
                 Files.move(localPartFile.toPath(), localPath, StandardCopyOption.ATOMIC_MOVE);
 
-                // log download time (we don't try to handle clock changes or DST entry/exit)
-                long finished = System.currentTimeMillis();
-                long secondsTaken = (finished - started) / 1000;
-                String timeSpan = TimeSpanFormatter.formatTimeSpan((int) secondsTaken);
+                // log download time
+                long elapsedSeconds = (System.nanoTime() - started) / 1_000_000_000;
+                String timeSpan = TimeSpanFormatter.formatTimeSpan((int) elapsedSeconds);
 
-                logger.log(INFO, "Finished download: {0}{1}    => {2} in {3}",
-                        new String[] {this.download.remoteUrl, System.lineSeparator(), this.download.localFilePath, timeSpan});
+                logger.log(INFO, () -> String.format("Finished download: %s%n    => %s in %s",
+                                       this.download.remoteUrl, this.download.localFilePath, timeSpan));
             }
-            catch (IOException ex) {
+            catch (Throwable ex) {
                 logger.log(ERROR, ex, () -> String.format("Aborted download: %s%n    => %s",
-                        this.download.remoteUrl, this.download.localFilePath));
-            }
-            finally {
-                removeActiveDownload(this.download);
+                                            this.download.remoteUrl, this.download.localFilePath));
 
                 if (conn != null) {
+                    // we don't close the underlying connection after a successful download,
+                    // so it can be reused, but do disconnect and discard it after failure,
+                    // to avoid potential problems with the next download that tries to use it;
+                    // see https://stackoverflow.com/a/2010103 and https://stackoverflow.com/a/1441491
                     conn.disconnect();  // doesn't throw
                 }
-
-                try {
-                    if (in != null) {
-                        in.close();
-                    }
-                }
-                catch (IOException ex) {
-                    logger.log(WARNING, "Error closing HTTP input stream", ex);
-                }
-
-                try {
-                    if (out != null) {
-                        out.close();
-                    }
-                }
-                catch (IOException ex) {
-                    logger.log(WARNING, "Error closing file output stream", ex);
-                }
+            }
+            finally {
+                // we're done with this download, whether it worked or not
+                removeActiveDownload(this.download);
             }
         }
 
