@@ -40,8 +40,14 @@ public final class DateFormatter {
      * @return A formatted date string, or an empty string if the date is null.
      */
     @NotNull
-    public static synchronized String format(@Nullable Date date) {
-        return (date == null) ? "" : formatter.format(date);
+    public static String format(@Nullable Date date) {
+        if (date == null) {
+            return "";
+        }
+
+        synchronized (formatter) {
+            return formatter.format(date);
+        }
     }
 
     /**
@@ -55,8 +61,10 @@ public final class DateFormatter {
      * @return A date object matching the parsed string.
      */
     @NotNull
-    public static synchronized Date parse(@NotNull String dateStr) throws ParseException {
-        return formatter.parse(dateStr);
+    public static Date parse(@NotNull String dateStr) throws ParseException {
+        synchronized (formatter) {
+            return formatter.parse(dateStr);
+        }
     }
 
     /** The thingy which actually formats and parses dates. */
@@ -64,8 +72,9 @@ public final class DateFormatter {
 
     static {
         // configure the formatter
-        formatter = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss z", Locale.ENGLISH);
-        formatter.setTimeZone(TimeZone.getTimeZone("GMT"));
+        var sdf = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss z", Locale.ENGLISH);
+        sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
+        formatter = sdf;
     }
 
     /**
