@@ -26,7 +26,7 @@ import java.nio.charset.StandardCharsets;
 /**
  * A thing that loads resources.
  */
-public class ResourceLoader {
+public final class ResourceLoader {
     /**
      * Loads a text resource, which is expected to be UTF-8 encoded.
      *
