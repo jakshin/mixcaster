@@ -29,10 +29,10 @@ import jakshin.mixcaster.podcast.Podcast;
 import jakshin.mixcaster.podcast.PodcastEpisode;
 import jakshin.mixcaster.utils.AppVersion;
 import jakshin.mixcaster.utils.FileLocator;
-import jakshin.mixcaster.utils.FileUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.Locale;
 import java.util.Properties;
@@ -211,7 +211,7 @@ public class Main {
 
             if (rssPath != null) {
                 logger.log(INFO, "Writing podcast RSS to {0}", rssPath);
-                FileUtils.writeStringToFile(rssPath, podcast.createXml(), "UTF-8");
+                Files.writeString(Paths.get(rssPath), podcast.createXml(), StandardCharsets.UTF_8);
             }
 
             var queue = DownloadQueue.getInstance();

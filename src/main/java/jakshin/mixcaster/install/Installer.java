@@ -17,12 +17,12 @@
 
 package jakshin.mixcaster.install;
 
-import jakshin.mixcaster.utils.FileUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Locale;
@@ -54,7 +54,7 @@ public final class Installer {
             plistXml = plistXml.replace("{{mixcaster.jar}}", jarPath);
 
             File plistFile = new File(this.getPlistPath());
-            FileUtils.writeStringToFile(plistFile.toString(), plistXml, "UTF-8");
+            Files.writeString(plistFile.toPath(), plistXml, StandardCharsets.UTF_8);
 
             this.log("Created %s", plistFile);
             this.log("%nLoading the service via launchd...");
