@@ -19,11 +19,11 @@ Downloads from Mixcloud take quite a while — the first ~5 MB is typically sent
 
 ### Installation and use as a service
 
-After downloading a release, unzip it to wherever you'd like to keep it, and take a glance through its settings in `mixcaster-config.properties`, tweaking them as desired. Then open a terminal and run `mixcaster -service` to run the service, or `mixcaster -install` to set the service up as a launchd agent which will run whenever you're logged in. 
+After downloading a release, unzip it to wherever you'd like to keep it, and take a glance through its settings in `mixcaster-settings.properties`, tweaking them as desired. Then open a terminal and run `mixcaster -service` to run the service, or `mixcaster -install` to set the service up as a launchd agent which will run whenever you're logged in.
 
 Then open your podcast app and add a URL. For example, in macOS's Podcasts app, use File > Add a Show by URL; in iOS's, use Library > (...) button in the upper right-hand corner > Add a Show by URL.
 
-The Mixcaster URL's hostname is `localhost` if your podcast app is running on same machine as Mixcaster, or something like MachineName.local if you're on a different device connected to the same network, like say a mobile device. Mixcaster runs on port 6499 by default (configurable in `mixcaster-config.properties`), so add that after the hostname.
+The Mixcaster URL's hostname is `localhost` if your podcast app is running on same machine as Mixcaster, or something like MachineName.local if you're on a different device connected to the same network, like say a mobile device. Mixcaster runs on port 6499 by default (configurable in `mixcaster-settings.properties`), so add that after the hostname.
 
 The URL's path starts with the Mixcloud user's username, which you can see in their URL. Then add which music collection you want to subscribe to: `stream`, `shows`, `favorites`, `history`, or `playlist`. You can use `uploads` as a synonym for `shows`, and `listens` as a synonym for `history`. If it's a playlist you're interested in, you'll need to also add the last path component from its Mixcloud URL. And lastly, you can add `.xml` at the end if it makes your podcast client happier.
 
