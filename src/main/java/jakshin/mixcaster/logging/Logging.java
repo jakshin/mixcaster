@@ -17,7 +17,6 @@
 
 package jakshin.mixcaster.logging;
 
-import jakshin.mixcaster.Main;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -34,7 +33,7 @@ public final class Logging {
      * Initializes the global logger.
      * @param forService Whether to initialize for logging by the service (if false, initialize for manual downloading).
      */
-    public static synchronized void initialize(boolean forService) throws IOException {
+    public static synchronized void initLogging(boolean forService) throws IOException {
         if (initialized) return;
         initialized = true;
 
@@ -45,10 +44,10 @@ public final class Logging {
         SystemOutHandler soh = new SystemOutHandler(new SystemOutFormatter(), Level.INFO);
         logger.addHandler(soh);
 
-        // get logging configuration
-        int logCount = Logging.getLogMaxCountConfig();
-        String logDirStr = Logging.getLogDirConfig();
-        Level logLevel = Logging.getLogLevelConfig();
+        // get logging settings
+        int logCount = Logging.getLogMaxCountSetting();
+        String logDirStr = Logging.getLogDirSetting();  // has a trailing slash
+        Level logLevel = Logging.getLogLevelSetting();
 
         // create the log directory if it doesn't already exist
         File logDir = new File(logDirStr);
@@ -58,8 +57,8 @@ public final class Logging {
 
         // set up file logging
         FileHandler fh = (forService)
-                ? new FileHandler(logDirStr + "/service.log", 1_000_000, logCount, true)  // 1 MB per log
-                : new FileHandler(logDirStr + "/download.log", 0, logCount, false);       // one log per run
+                ? new FileHandler(logDirStr + "service.log", 1_000_000, logCount, true)  // 1 MB per log
+                : new FileHandler(logDirStr + "download.log", 0, logCount, false);       // one log per run
         fh.setFormatter(new LogFileFormatter());
         fh.setLevel(logLevel);
         logger.addHandler(fh);
@@ -90,8 +89,8 @@ public final class Logging {
      * Gets the log_max_count configuration setting.
      * @return log_max_value, converted to an int.
      */
-    private static int getLogMaxCountConfig() {
-        String countStr = Main.config.getProperty("log_max_count");
+    private static int getLogMaxCountSetting() {
+        String countStr = System.getProperty("log_max_count");
         return Integer.parseInt(countStr);  // already validated
     }
 
@@ -100,19 +99,15 @@ public final class Logging {
      * @return log_dir, as a string.
      */
     @NotNull
-    private static String getLogDirConfig() {
-        String logDirStr = Main.config.getProperty("log_dir");
+    private static String getLogDirSetting() {
+        String logDirStr = System.getProperty("log_dir");
+
         if (logDirStr.startsWith("~/")) {
             logDirStr = System.getProperty("user.home") + logDirStr.substring(1);
         }
 
-        if (!logDirStr.isEmpty()) {
-            int lastIndex = logDirStr.length() - 1;
-            char last = logDirStr.charAt(lastIndex);
-
-            if (last == '/' || last == '\\') {
-                logDirStr = logDirStr.substring(0, lastIndex);  // no slash at end
-            }
+        if (!logDirStr.isEmpty() && !logDirStr.endsWith("/")) {
+            logDirStr += "/";
         }
 
         return logDirStr;
@@ -123,8 +118,8 @@ public final class Logging {
      * @return log_level, as a Level object.
      */
     @NotNull
-    private static Level getLogLevelConfig() {
-        String logLevelStr = Main.config.getProperty("log_level").toUpperCase(Locale.ENGLISH);  // already validated
+    private static Level getLogLevelSetting() {
+        String logLevelStr = System.getProperty("log_level").toUpperCase(Locale.ENGLISH);  // already validated
         if (logLevelStr.equals("ERROR")) {
             logLevelStr = "SEVERE";
         }

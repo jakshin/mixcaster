@@ -17,7 +17,6 @@
 
 package jakshin.mixcaster.utils;
 
-import jakshin.mixcaster.Main;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,7 +44,7 @@ public final class FileLocator {
             localUrl = localUrl.substring(index + 1);
         }
 
-        String localMusicDir = Main.config.getProperty("music_dir");
+        String localMusicDir = System.getProperty("music_dir");
         if (localMusicDir.startsWith("~/")) {
             localMusicDir = System.getProperty("user.home") + localMusicDir.substring(1);
         }
@@ -71,7 +70,7 @@ public final class FileLocator {
                                       @NotNull String slug, @NotNull String mixcloudUrl) {
 
         if (localHostAndPort == null || localHostAndPort.isEmpty()) {
-            localHostAndPort = Main.config.getProperty("http_hostname") + ":" + Main.config.getProperty("http_port");
+            localHostAndPort = System.getProperty("http_hostname") + ":" + System.getProperty("http_port");
         }
 
         int pos = mixcloudUrl.indexOf('?');

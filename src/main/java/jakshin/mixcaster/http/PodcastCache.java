@@ -17,7 +17,6 @@
 
 package jakshin.mixcaster.http;
 
-import jakshin.mixcaster.Main;
 import jakshin.mixcaster.podcast.Podcast;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,10 +52,12 @@ final class PodcastCache {
         Podcast existing = this.cached.get(key);
 
         if (existing != null) {
+            int cacheTimeSeconds = Integer.parseInt(System.getProperty("http_cache_time_seconds"));
+
             // using a wall-clock timestamp instead of a monotonic clock like System.nanoTime() here,
             // because we also use it to handle If-Modified-Since, and using multiple timestamps seems overkill,
             // since over/under-caching isn't a big deal in this case
-            if ((System.currentTimeMillis() - existing.createdAt) / 1000 < this.cacheTimeSeconds) {
+            if ((System.currentTimeMillis() - existing.createdAt) / 1000 < cacheTimeSeconds) {
                 return existing;
             }
             else {
@@ -88,15 +89,11 @@ final class PodcastCache {
     /** The cached podcasts. */
     private final Map<String,Podcast> cached = new ConcurrentHashMap<>();
 
-    /** How long to cache podcasts for, in seconds. */
-    private final int cacheTimeSeconds;
-
     /** The single instance of this class. */
     private static PodcastCache instance;
 
     /** Private constructor to prevent instantiation except via getInstance(). */
     private PodcastCache() {
-        String cacheTimeSecondsStr = Main.config.getProperty("http_cache_time_seconds");
-        this.cacheTimeSeconds = Integer.parseInt(cacheTimeSecondsStr);  // already validated
+        // nothing here
     }
 }

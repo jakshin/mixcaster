@@ -17,7 +17,6 @@
 
 package jakshin.mixcaster.utils;
 
-import jakshin.mixcaster.Main;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -47,7 +46,7 @@ public class FileLocatorTest {
 
     @Test
     public void getLocalPathShouldWorkWithFullUrl() {
-        String expResult = Main.config.getProperty("music_dir");
+        String expResult = System.getProperty("music_dir");
         expResult = expResult.replace("~", System.getProperty("user.home"));
         if (!expResult.endsWith("/")) expResult += "/";
         expResult += "Foo/ep1.m4a";
@@ -58,7 +57,7 @@ public class FileLocatorTest {
 
     @Test
     public void getLocalPathShouldWorkWithAbsoluteUrl() {
-        Main.config.setProperty("music_dir", "/music/");
+        System.setProperty("music_dir", "/music/");
         String expResult = "/music/Foo/ep1.m4a";
 
         String result = FileLocator.getLocalPath("/Foo/ep1.m4a");
@@ -67,7 +66,7 @@ public class FileLocatorTest {
 
     @Test
     public void getLocalPathShouldBeSecure() {
-        Main.config.setProperty("music_dir", "/music");
+        System.setProperty("music_dir", "/music");
         String[] urls = {"", ".", "..", "../..", "..//..", "//..//", "foo/..", "../foo/..", "..//foo//.." };
 
         for (var url : urls) {
@@ -78,8 +77,8 @@ public class FileLocatorTest {
 
     @Test
     public void makeLocalUrlShouldWork() {
-        String host = Main.config.getProperty("http_hostname");
-        String port = Main.config.getProperty("http_port");
+        String host = System.getProperty("http_hostname");
+        String port = System.getProperty("http_port");
         String expResult = "http://" + host + ":" + port + "/Foo/some-lovely-music.m4a";
         String result = FileLocator.makeLocalUrl(null, "Foo",
                 "some-lovely-music", "https://stream.mixcloud.com/a/b/c/d.m4a?sig=blah");

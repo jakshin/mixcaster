@@ -17,7 +17,6 @@
 
 package jakshin.mixcaster.download;
 
-import jakshin.mixcaster.Main;
 import jakshin.mixcaster.utils.TimeSpanFormatter;
 import org.jetbrains.annotations.NotNull;
 
@@ -162,7 +161,7 @@ public final class DownloadQueue {
                 URL url = new URL(this.download.remoteUrl);
                 conn = (HttpURLConnection) url.openConnection();  // no actual network connection yet
                 conn.setInstanceFollowRedirects(true);
-                conn.setRequestProperty("User-Agent", Main.config.getProperty("user_agent"));
+                conn.setRequestProperty("User-Agent", System.getProperty("user_agent"));
                 conn.setRequestProperty("Referer", this.download.remoteUrl);
 
                 // set up the destination directory we'll download into
@@ -271,14 +270,14 @@ public final class DownloadQueue {
 
     /** Private constructor to prevent instantiation except via getInstance(). */
     private DownloadQueue() {
-        String downloadThreadsStr = Main.config.getProperty("download_threads");
+        String downloadThreadsStr = System.getProperty("download_threads");
         int threads = Integer.parseInt(downloadThreadsStr);  // already validated
 
         // "threads" threads max (1-50), wait 5s before killing idle threads, don't retain any idle threads
         this.pool = new ThreadPoolExecutor(threads, threads, 5L, TimeUnit.SECONDS, new LinkedBlockingQueue<>());
         this.pool.allowCoreThreadTimeOut(true);
 
-        boolean downloadOldestFirst = Boolean.parseBoolean(Main.config.getProperty("download_oldest_first"));
+        boolean downloadOldestFirst = Boolean.parseBoolean(System.getProperty("download_oldest_first"));
         this.downloadComparator = new DownloadComparator(downloadOldestFirst);
     }
 }

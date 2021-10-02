@@ -17,7 +17,10 @@
 
 package jakshin.mixcaster.download;
 
+import java.io.IOException;
 import java.util.Date;
+
+import jakshin.mixcaster.utils.AppSettings;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -29,27 +32,23 @@ import static org.junit.Assert.*;
  * Unit tests for the DownloadQueue class.
  */
 public class DownloadQueueTest {
-    /** Scaffolding. */
     @BeforeClass
-    public static void setUpClass() {
+    public static void setUpClass() throws IOException {
+        AppSettings.initSettings();
     }
 
-    /** Scaffolding. */
     @AfterClass
     public static void tearDownClass() {
     }
 
-    /** Scaffolding. */
     @Before
     public void setUp() {
     }
 
-    /** Scaffolding. */
     @After
     public void tearDown() {
     }
 
-    /** Test. */
     @Test
     public void getInstanceShouldAlwaysReturnTheSameInstance() {
         DownloadQueue q1 = DownloadQueue.getInstance();
@@ -57,7 +56,6 @@ public class DownloadQueueTest {
         assertSame(q1, q2);
     }
 
-    /** Test. */
     @Test
     public void enqueueShouldWork() {
         DownloadQueue q = DownloadQueue.getInstance();

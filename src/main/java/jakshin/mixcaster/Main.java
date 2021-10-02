@@ -27,15 +27,16 @@ import jakshin.mixcaster.mixcloud.MixcloudPlaylistException;
 import jakshin.mixcaster.mixcloud.MixcloudUserException;
 import jakshin.mixcaster.podcast.Podcast;
 import jakshin.mixcaster.podcast.PodcastEpisode;
+import jakshin.mixcaster.utils.AppSettings;
 import jakshin.mixcaster.utils.AppVersion;
 import jakshin.mixcaster.utils.FileLocator;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.*;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
+import java.util.List;
 import java.util.Locale;
-import java.util.Properties;
 
 import static jakshin.mixcaster.logging.Logging.*;
 
@@ -55,7 +56,7 @@ public class Main {
 
         switch (cmd) {
             case "-download" -> exitCode = main.download(args);
-            case "-service" -> main.runService();
+            case "-service" -> exitCode = main.runService();
             case "-install" -> exitCode = main.installService();
             case "-uninstall" -> exitCode = main.uninstallService();
             case "-version" -> main.printVersion();
@@ -72,11 +73,6 @@ public class Main {
     }
 
     /**
-     * Properties which may be used across the application.
-     */
-    public static final Properties config = Main.initConfig();
-
-    /**
      * Downloads a user's music files to a local directory, music_dir by default,
      * mostly like PodcastXmlResponder would do, but with some tweaks and additional options.
      *
@@ -86,9 +82,8 @@ public class Main {
      */
     private int download(@NotNull String[] args) {
         try {
-            // initialize logging (if this fails, the program will show error info on stdout and abort)
-            Logging.initialize(false);
-            logger.log(INFO, "Mixcaster {0}", AppVersion.display);
+            // initialize settings and logging
+            this.init(String.format("Mixcaster %s", AppVersion.display), false);
 
             // parse our command-line arguments
             String musicType = null;
@@ -137,7 +132,7 @@ public class Main {
             try {
                 if (maxEpisodes != null && !maxEpisodes.isBlank()) {
                     int max = Integer.parseInt(maxEpisodes);
-                    if (max > 0) Main.config.setProperty("episode_max_count", maxEpisodes);
+                    if (max > 0) System.setProperty("episode_max_count", maxEpisodes);
                 }
             }
             catch (NumberFormatException e) {
@@ -202,9 +197,6 @@ public class Main {
                 username = username.substring(0, username.length() - 2);
             }
 
-            // warn if we failed to load configuration from our properties file
-            this.warnAboutConfigError();
-
             // query and download
             if (client == null) client = new MixcloudClient();
             Podcast podcast = client.query(username, musicType, playlist);
@@ -260,6 +252,7 @@ public class Main {
             return 2;
         }
         catch (Throwable ex) {
+            // if we haven't initialized logging, logs just go to stdout
             logger.log(ERROR, "Download failed", ex);
             return 2;
         }
@@ -268,21 +261,21 @@ public class Main {
     /**
      * Starts a minimal HTTP server which serves podcast RSS XML and downloaded music files.
      */
-    private void runService() {
+    private int runService() {
         try {
-            // initialize logging (if this fails, the program will show error info on stdout and abort)
-            Logging.initialize(true);
-            logger.log(INFO, "Mixcaster {0} starting up", AppVersion.display);
+            String serviceVersion = AppVersion.display.startsWith("(")
+                    ? AppVersion.display : String.format("(%s)", AppVersion.display);
+            this.init(String.format("Mixcaster service starting up %s", serviceVersion), true);
 
-            // warn if we failed to load configuration from our properties file
-            this.warnAboutConfigError();
-
-            // run the service
             HttpServer server = new HttpServer();
             server.run();
+
+            return 0;  // we don't actually reach here
         }
         catch (Throwable ex) {
+            // if we haven't initialized logging, logs just go to stdout
             logger.log(ERROR, ex, ex::getMessage);
+            return 2;
         }
     }
 
@@ -356,129 +349,48 @@ public class Main {
         System.out.println("specify it on the command line as \"some-super-great-music\".\n");
 
         System.out.println("Options with -download:");
-        System.out.println("  -max-episodes=NUM  Allow NUM episodes, overriding the episode_max_count config");
-        System.out.println("  -out=DIRECTORY     Save music files to DIRECTORY, overriding the music_dir config");
+        System.out.println("  -max-episodes=NUM  Allow NUM episodes, overriding the episode_max_count setting");
+        System.out.println("  -out=DIRECTORY     Save music files to DIRECTORY, overriding the music_dir setting");
         System.out.println("  -rss=FILE          Write podcast RSS to the given path/file (overwrite existing)");
     }
 
     /**
-     * Logs a warning if we failed to load configuration settings from our properties file.
-     * To be useful, this should be called after the logger has been initialized, obviously.
+     * Initializes application settings and then logging.
+     * Logs the given banner text and then any settings validation failures.
+     *
+     * @param bannerText Text to display as a startup banner in the first log line.
+     * @param forService Whether to initialize logging for the service (if false, initialize for manual downloading).
      */
-    private void warnAboutConfigError() {
-        if (Main.errorLoadingProperties != null) {
-            String msg = String.format("Problem loading mixcaster-settings.properties (%s)",
-                    Main.errorLoadingProperties.getMessage());
-            logger.log(WARNING, msg, Main.errorLoadingProperties);
-        }
-    }
-
-    /**
-     * Initializes the global configuration by reading mixcaster-settings.properties.
-     */
-    private static Properties initConfig() {
-        // set up default values; there should be a 1-to-1 correspondence between values here and in the properties file
-        Properties defaults = new Properties();
-        defaults.setProperty("download_oldest_first", "false");
-        defaults.setProperty("download_threads", "3");            // must be an int in [1-50]
-        defaults.setProperty("episode_max_count", "25");          // must be an int > 0
-        defaults.setProperty("http_cache_time_seconds", "3600");  // must be an int >= 0
-        defaults.setProperty("http_hostname", "localhost");
-        defaults.setProperty("http_port", "6499");                // must be an int in [1024-65535]
-        defaults.setProperty("log_max_count", "10");              // must be an int > 0
-        defaults.setProperty("log_dir", "~/Library/Logs/Mixcaster");
-        defaults.setProperty("log_level", "ALL");
-        defaults.setProperty("music_dir", "~/Music/Mixcloud");
-        defaults.setProperty("subscribed_to", "");                // whitespace-delimited list of usernames
-        defaults.setProperty("user_agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)" +
-                " AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.63 Safari/537.36");
-
-        // populate the properties from disk, falling back to the hard-coded defaults above
-        Properties cfg = new Properties(defaults);
+    private void init(String bannerText, boolean forService) throws AppException {
+        // this code looks weird; it's like this because we need to initialize settings before logging,
+        // but if we fail to initialize settings, we want to try to log that problem
+        Exception settingsException = null, loggingException = null;
+        List<String> validationFailures = null;
 
         try {
-            // load our properties file, if we can find it next to the jar file
-            // (if we don't find the properties file, we'll silently carry on with default settings)
-            Path path = Paths.get(Main.class.getProtectionDomain().getCodeSource().getLocation().getPath());
-            Path propsPath = Paths.get(path.getParent().toString(), "mixcaster-settings.properties");
-
-            if (Files.exists(propsPath)) {
-                try (InputStream in = Files.newInputStream(propsPath)) {
-                    cfg.load(in);
-                }
-            }
-
-            // validate numeric properties
-            Main.validateIntegerProperty(cfg, "download_threads", 1, 50);
-            Main.validateIntegerProperty(cfg, "episode_max_count", 1, Integer.MAX_VALUE);
-            Main.validateIntegerProperty(cfg, "http_cache_time_seconds", 0, Integer.MAX_VALUE);
-            Main.validateIntegerProperty(cfg, "http_port", 1024, 65535);
-            Main.validateIntegerProperty(cfg, "log_max_count", 1, Integer.MAX_VALUE);
-
-            // validate string properties
-            Main.validateStringProperty(cfg, "log_level",
-                    new String[] { "ERROR", "WARNING", "INFO", "DEBUG", "ALL" });
+            validationFailures = AppSettings.initSettings();
         }
-        catch (IOException ex) {
-            // our logger isn't initialized yet, so we save the exception for later logging,
-            // and carry on with defaults
-            Main.errorLoadingProperties = ex;
-            return defaults;
+        catch (IOException | SecurityException ex) {
+            settingsException = ex;
         }
 
-        return cfg;
-    }
-
-    /**
-     * Validates that the given property contains a string representing an integer within the given range,
-     * removing it from the properties object if it does not.
-     *
-     * @param cfg The properties object.
-     * @param propertyName The name of the property to check.
-     * @param minValue The minimum allowed value.
-     * @param maxValue The maximum allowed value.
-     */
-    private static void validateIntegerProperty(@NotNull Properties cfg,
-                                                @NotNull String propertyName,
-                                                int minValue,
-                                                int maxValue) {
         try {
-            String value = cfg.getProperty(propertyName);
-            int num = Integer.parseInt(value);
-            if (minValue <= num && num <= maxValue) return;  // things are A-OK
+            Logging.initLogging(forService);
         }
-        catch (NumberFormatException ex) {
-            // fall through
+        catch (IOException | SecurityException ex) {
+            loggingException = ex;
         }
 
-        // remove the errant value from the properties file, so the hard-coded valid default will be used
-        cfg.remove(propertyName);
+        // if we haven't initialized logging, logs just go to stdout
+        logger.log(INFO, bannerText);
+
+        if (settingsException != null)
+            throw new AppException("Couldn't initialize application settings", settingsException);
+        else if (loggingException != null)
+            throw new AppException("Couldn't initialize logging", loggingException);
+
+        for (String failure : validationFailures) {
+            logger.log(WARNING, failure);
+        }
     }
-
-    /**
-     * Validates that the given property contains a string which is recognized as meaningful,
-     * removing it from the properties object if it is not.
-     *
-     * @param cfg The properties object.
-     * @param propertyName The name of the property to check.
-     * @param validValues A list of valid potential values.
-     */
-    @SuppressWarnings("SameParameterValue")
-    private static void validateStringProperty(@NotNull Properties cfg,
-                                               @NotNull String propertyName,
-                                               @NotNull String[] validValues) {
-        String value = cfg.getProperty(propertyName);
-
-        for (String validValue : validValues) {
-            if (validValue.equalsIgnoreCase(value)) {
-                return;  // this is a valid value
-            }
-        }
-
-        // remove the errant value from the properties file, so the hard-coded valid default will be used
-        cfg.remove(propertyName);
-    }
-
-    /** An exception which occurred while loading our properties file, or null if things are okay. */
-    private static Exception errorLoadingProperties;
 }

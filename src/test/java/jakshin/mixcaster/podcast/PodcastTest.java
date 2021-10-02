@@ -17,7 +17,6 @@
 
 package jakshin.mixcaster.podcast;
 
-import jakshin.mixcaster.Main;
 import java.io.*;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
@@ -160,7 +159,7 @@ public class PodcastTest {
      * @return Whether the RSS XML validates or not.
      */
     @SuppressWarnings("BooleanMethodIsAlwaysInverted")
-    private boolean validateFeed(String rssXml) throws IOException {
+    private boolean validateFeed(String rssXml) {
         HttpURLConnection conn = null;
         InputStream in = null;
         OutputStream out = null;
@@ -169,7 +168,7 @@ public class PodcastTest {
             URL url = new URL("http://validator.w3.org/feed/check.cgi");
             conn = (HttpURLConnection) url.openConnection();
             conn.setInstanceFollowRedirects(true);
-            conn.setRequestProperty("User-Agent", Main.config.getProperty("user_agent"));
+            conn.setRequestProperty("User-Agent", System.getProperty("user_agent"));
             conn.setRequestMethod("POST");
             conn.setDoOutput(true);
 

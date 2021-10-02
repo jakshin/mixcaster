@@ -153,7 +153,7 @@ public class MixcloudClient {
         podcast.title = String.format("%s's stream", podcast.iTunesAuthorAndOwnerName);
         podcast.link = new URI(MIXCLOUD_WEB + username + "/stream/");
 
-        int episodeCount = 0, maxEpisodeCount = getEpisodeMaxCountConfig();
+        int episodeCount = 0, maxEpisodeCount = getEpisodeMaxCountSetting();
         String cursor = null;
 
         while (true) {
@@ -245,7 +245,7 @@ public class MixcloudClient {
         podcast.title = String.format("%s's shows", podcast.iTunesAuthorAndOwnerName);
         podcast.link = new URI(MIXCLOUD_WEB + username + "/uploads/");
 
-        int episodeCount = 0, maxEpisodeCount = getEpisodeMaxCountConfig();
+        int episodeCount = 0, maxEpisodeCount = getEpisodeMaxCountSetting();
         String cursor = null;
 
         while (true) {
@@ -338,7 +338,7 @@ public class MixcloudClient {
         podcast.title = String.format("%s's favorites", podcast.iTunesAuthorAndOwnerName);
         podcast.link = new URI(MIXCLOUD_WEB + username + "/favorites/");
 
-        int episodeCount = 0, maxEpisodeCount = getEpisodeMaxCountConfig();
+        int episodeCount = 0, maxEpisodeCount = getEpisodeMaxCountSetting();
         String cursor = null;
 
         while (true) {
@@ -430,7 +430,7 @@ public class MixcloudClient {
         podcast.title = String.format("%s's history", podcast.iTunesAuthorAndOwnerName);
         podcast.link = new URI(MIXCLOUD_WEB + username + "/listens/");
 
-        int episodeCount = 0, maxEpisodeCount = getEpisodeMaxCountConfig();
+        int episodeCount = 0, maxEpisodeCount = getEpisodeMaxCountSetting();
         String cursor = null;
 
         while (true) {
@@ -533,7 +533,7 @@ public class MixcloudClient {
             throws InterruptedException, MixcloudException, TimeoutException, URISyntaxException {
 
         var podcast = new Podcast();
-        int episodeCount = 0, maxEpisodeCount = getEpisodeMaxCountConfig();
+        int episodeCount = 0, maxEpisodeCount = getEpisodeMaxCountSetting();
         String cursor = null;
 
         while (true) {
@@ -735,7 +735,7 @@ public class MixcloudClient {
 
         StringBuilder desc = new StringBuilder(2000);
 
-        if (selectPrice != null && !selectPrice.isBlank() && !getSubscribedToConfig().contains(username)) {
+        if (selectPrice != null && !selectPrice.isBlank() && !getSubscribedToSetting().contains(username)) {
             desc.append(String.format("\uD83E\uDD29 Support %s! Subscribe for %s/month", displayName, selectPrice));
         }
 
@@ -871,8 +871,8 @@ public class MixcloudClient {
      * Gets the episode_max_count configuration setting.
      * @return episode_max_count, converted to an int.
      */
-    private int getEpisodeMaxCountConfig() {
-        String countStr = Main.config.getProperty("episode_max_count");
+    private int getEpisodeMaxCountSetting() {
+        String countStr = System.getProperty("episode_max_count");
         return Integer.parseInt(countStr);  // already validated
     }
 
@@ -881,8 +881,8 @@ public class MixcloudClient {
      * @return subscribed_to, as a list of username strings.
      */
     @NotNull
-    private List<String> getSubscribedToConfig() {
-        String[] subscribedTo = Main.config.getProperty("subscribed_to").split("\s+");
+    private List<String> getSubscribedToSetting() {
+        String[] subscribedTo = System.getProperty("subscribed_to").split("\s+");
         return Arrays.asList(subscribedTo);
     }
 
@@ -902,7 +902,7 @@ public class MixcloudClient {
             URL url = new URL(urlStr);
             conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("HEAD");
-            conn.setRequestProperty("User-Agent", Main.config.getProperty("user_agent"));
+            conn.setRequestProperty("User-Agent", System.getProperty("user_agent"));
             conn.setRequestProperty("Referer", urlStr);
             conn.connect();
 

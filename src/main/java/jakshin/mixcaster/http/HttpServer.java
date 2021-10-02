@@ -17,13 +17,12 @@
 
 package jakshin.mixcaster.http;
 
-import jakshin.mixcaster.Main;
-
 import java.net.*;
 import java.io.IOException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+
 import static jakshin.mixcaster.logging.Logging.*;
 
 /**
@@ -36,7 +35,7 @@ public class HttpServer implements Runnable {
      * Creates a new instance of the class.
      */
     public HttpServer() {
-        String httpPortStr = Main.config.getProperty("http_port");
+        String httpPortStr = System.getProperty("http_port");
         this.port = Integer.parseInt(httpPortStr);  // already validated
 
         // 3 threads min, 300 threads max, wait 30s before killing idle threads;
