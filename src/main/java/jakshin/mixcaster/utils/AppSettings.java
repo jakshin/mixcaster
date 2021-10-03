@@ -90,7 +90,7 @@ public final class AppSettings {
         // there should be a 1-to-1 correspondence between values here and in the properties file,
         // and each value here should also have a line in validateProperties()
         defaults.setProperty("download_oldest_first", "false");   // must be "true" or "false"
-        defaults.setProperty("download_threads", "3");            // must be an int in [1-50]
+        defaults.setProperty("download_threads", "auto");         // must be "auto" or an int in [1-50]
         defaults.setProperty("episode_max_count", "25");          // must be an int > 0
         defaults.setProperty("http_cache_time_seconds", "3600");  // must be an int >= 0
         defaults.setProperty("http_hostname", "localhost");
@@ -110,7 +110,8 @@ public final class AppSettings {
      */
     private static void validateProperties(@NotNull Properties properties) {
         validateEnum(properties, "download_oldest_first", new String[] {"true", "false"});
-        validateInteger(properties, "download_threads", 1, 50);
+        if (! "auto".equalsIgnoreCase(properties.getProperty("download_threads")))
+            validateInteger(properties, "download_threads", 1, 50);
         validateInteger(properties, "episode_max_count", 1, Integer.MAX_VALUE);
         validateInteger(properties, "http_cache_time_seconds", 0, Integer.MAX_VALUE);
         validateString(properties, "http_hostname");
@@ -124,7 +125,7 @@ public final class AppSettings {
     }
 
     /**
-     * Validates that the given property contains a one of the given valid values,
+     * Validates that the given property contains one of the given valid values,
      * removing it from the properties object if it does not.
      *
      * @param properties The Properties object.
@@ -151,7 +152,7 @@ public final class AppSettings {
     }
 
     /**
-     * Validates that the given property contains a string representing an integer within the given range,
+     * Validates that the given property's value represents an integer within the given range,
      * removing it from the properties object if it does not.
      *
      * @param properties The Properties object.
@@ -187,7 +188,7 @@ public final class AppSettings {
     }
 
     /**
-     * Validates that the given property contains a string plausibly representing a path,
+     * Validates that the given property's value plausibly represents a path,
      * removing it from the properties object if it does not.
      *
      * @param properties The Properties object.

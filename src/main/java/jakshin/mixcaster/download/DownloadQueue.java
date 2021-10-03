@@ -271,7 +271,9 @@ public final class DownloadQueue {
     /** Private constructor to prevent instantiation except via getInstance(). */
     private DownloadQueue() {
         String downloadThreadsStr = System.getProperty("download_threads");
-        int threads = Integer.parseInt(downloadThreadsStr);  // already validated
+        int threads = "auto".equalsIgnoreCase(downloadThreadsStr)
+                ? Runtime.getRuntime().availableProcessors()
+                : Integer.parseInt(downloadThreadsStr);  // already validated
 
         // "threads" threads max (1-50), wait 5s before killing idle threads, don't retain any idle threads
         this.pool = new ThreadPoolExecutor(threads, threads, 5L, TimeUnit.SECONDS, new LinkedBlockingQueue<>());
