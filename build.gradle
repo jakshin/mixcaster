@@ -53,7 +53,8 @@ installDist {
 
     doLast {
         def settingsFile = new File(destinationDir.getPath() + '/mixcaster-settings.properties')
-        def newSettings = settingsFile.text.replace('http_port = 6499', 'http_port = 6498')
+        def newSettings = "http_port = 6498\n" +
+                        "log_dir = ~/Library/Logs/Mixcaster-dist\n"
         settingsFile.text = newSettings
 
         exec {
