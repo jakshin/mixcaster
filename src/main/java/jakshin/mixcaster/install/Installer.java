@@ -48,6 +48,25 @@ public final class Installer {
                 return 1;
             }
 
+            if (this.checkLaunchdAgent()) {
+                this.log("%nThe service is already registered with launchd");
+                this.log("Removing the existing service registration so reinstallation can continue");
+
+                boolean removed = (this.removeLaunchdAgent() == 0);
+
+                if (removed) {
+                    // 'launchctl remove' returns without waiting for the service to be removed,
+                    // and barreling ahead attempting to install it again will fail (silently);
+                    // before continuing, wait up to 10s for the service to actually be removed
+                    removed = this.waitForLaunchdAgentRemoval();
+                }
+
+                if (! removed) {
+                    this.log("%nWARNING: Failed to remove the existing service registration");
+                    this.log("Installation will continue, but you may need to reboot to complete it");
+                }
+            }
+
             this.log("%nCreating the service's launchd configuration file...");
 
             String resourcePath = "install/launchd-plist.xml";
@@ -61,11 +80,6 @@ public final class Installer {
 
             this.log("Created %s", plistFile);
             this.log("%nLoading the service via launchd...");
-
-            if (this.checkLaunchdAgent() && this.removeLaunchdAgent() != 0) {
-                this.log("Warning: Failed to remove the existing service registration");
-                this.log("Installation will continue, but you may need to reboot");
-            }
 
             int result = this.loadLaunchdAgent(plistFile);
 
@@ -212,6 +226,35 @@ public final class Installer {
         Process proc = Runtime.getRuntime().exec(cmd);
         int result = proc.waitFor();
         return (result == 0);  // assume any failure means "service doesn't exist"
+    }
+
+    /**
+     * Waits for up to 10 seconds for removal of the service to complete.
+     *
+     * ('launchctl remove' returns immediately, without waiting for success/completion,
+     * which causes silent installation failure if we're reinstalling -- we install
+     * while the service is still being removed).
+     *
+     * @return Whether removal of the service completed before our 10s timeout.
+     */
+    private boolean waitForLaunchdAgentRemoval() throws IOException, InterruptedException {
+        int waitMillis = 50;
+        long start = System.nanoTime();
+
+        while (this.checkLaunchdAgent()) {
+            if (System.nanoTime() - start >= 10_000_000_000L) {
+                return false;
+            }
+
+            //noinspection BusyWait
+            Thread.sleep(waitMillis);
+
+            if (waitMillis < 800) {
+                waitMillis *= 2;
+            }
+        }
+
+        return true;
     }
 
     /**
