@@ -111,7 +111,7 @@ class FileResponder extends Responder {
                 }
 
                 long bytesLeftToSend = range.size();
-                final byte[] buf = new byte[100_000];
+                final byte[] buf = new byte[65536];
 
                 while (true) {
                     int byteCount = in.read(buf, 0, buf.length);
