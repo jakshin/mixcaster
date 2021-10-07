@@ -56,8 +56,8 @@ class HttpResponse implements Runnable {
 
             // initialize
             reader = new BufferedReader(new InputStreamReader(this.socket.getInputStream(), StandardCharsets.ISO_8859_1));
-            writer = new BufferedWriter(new OutputStreamWriter(this.socket.getOutputStream(), StandardCharsets.UTF_8), 100_000);
-            out = new BufferedOutputStream(this.socket.getOutputStream(), 100_000);
+            writer = new BufferedWriter(new OutputStreamWriter(this.socket.getOutputStream(), StandardCharsets.UTF_8), 65536);
+            out = new BufferedOutputStream(this.socket.getOutputStream(), 65536);
 
             // parse and check the request
             request = this.parseRequestHeaders(reader);
