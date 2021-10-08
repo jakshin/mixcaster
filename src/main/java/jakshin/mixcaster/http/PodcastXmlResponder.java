@@ -23,6 +23,7 @@ import jakshin.mixcaster.mixcloud.*;
 import jakshin.mixcaster.podcast.Podcast;
 import jakshin.mixcaster.podcast.PodcastEpisode;
 import jakshin.mixcaster.utils.FileLocator;
+import jakshin.mixcaster.utils.MemoryCache;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -31,8 +32,6 @@ import java.io.Writer;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeoutException;
 
 import static jakshin.mixcaster.logging.Logging.*;
@@ -66,12 +65,12 @@ class PodcastXmlResponder extends Responder {
 
         if (components.length == 1) {
             username = components[0];
-            musicType = userDefaultViews.get(username);
+            musicType = defaultViewCache.get(username);
 
             if (musicType == null) {
                 var client = new MixcloudClient(request.host());
                 musicType = client.queryDefaultView(username);
-                userDefaultViews.put(username, musicType);
+                defaultViewCache.put(username, musicType);
             }
         }
         else {
@@ -115,15 +114,13 @@ class PodcastXmlResponder extends Responder {
         }
 
         logger.log(INFO, "The podcast will contain {0}", thing);
-
-        PodcastCache cache = PodcastCache.getInstance();
-        Podcast podcast = cache.getFromCache(username, musicType, playlist);
+        Podcast podcast = podcastCache.get(thing);
 
         if (podcast == null) {
             try {
                 var client = new MixcloudClient(request.host());
                 podcast = client.query(username, musicType, playlist);
-                cache.addToCache(username, musicType, playlist, podcast);
+                podcastCache.put(thing, podcast);
             }
             catch (MixcloudUserException ex) {
                 logger.log(ERROR, "There''s no Mixcloud user with username {0}", ex.username);
@@ -194,6 +191,15 @@ class PodcastXmlResponder extends Responder {
         logger.log(INFO, "Done responding to GET request for podcast: {0}", request.path);
     }
 
-    /** A never-expiring "cache" of Mixcloud users' default views. */
-    private static final Map<String,String> userDefaultViews = new ConcurrentHashMap<>();
+    /** A cache of Podcast objects we've already built. */
+    private static final MemoryCache<String,Podcast> podcastCache;
+
+    /** A cache of Mixcloud users' default views. */
+    private static final MemoryCache<String,String> defaultViewCache;
+
+    static {
+        int cacheTimeSeconds = Integer.parseInt(System.getProperty("http_cache_time_seconds"));
+        podcastCache = new MemoryCache<>(cacheTimeSeconds);
+        defaultViewCache = new MemoryCache<>(cacheTimeSeconds);
+    }
 }
