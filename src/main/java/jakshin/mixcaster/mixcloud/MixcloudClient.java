@@ -780,7 +780,7 @@ public class MixcloudClient {
         String localUrl = FileLocator.makeLocalUrl(localHostAndPort, author, slug, mixcloudUrl);
         // String localPath = FileLocator.getLocalPath(localUrl);
 
-        ResponseHeaders headers = getMusicUrlHeaders(mixcloudUrl);
+        MixcloudMusicUrl.ResponseHeaders headers = new MixcloudMusicUrl(mixcloudUrl).getHeaders();
         episode.enclosureLastModified = new Date(headers.lastModified.getTime());
         episode.enclosureLengthBytes = headers.contentLength;
         episode.enclosureMimeType = headers.contentType;
@@ -887,63 +887,6 @@ public class MixcloudClient {
     private List<String> getSubscribedToSetting() {
         String[] subscribedTo = System.getProperty("subscribed_to").split("\s+");
         return Arrays.asList(subscribedTo);
-    }
-
-    /**
-     * Gets some HTTP response headers from a music URL, using a HEAD request.
-     *
-     * @param urlStr The music URL. Should not be or need to be URL-encoded.
-     * @return Some HTTP response headers from the URL.
-     */
-    @NotNull
-    private ResponseHeaders getMusicUrlHeaders(@NotNull String urlStr) throws IOException, MixcloudException {
-        HttpURLConnection conn = null;
-
-        try {
-            logger.log(DEBUG, "Getting HEAD of URL: {0}", urlStr);
-
-            URL url = new URL(urlStr);
-            conn = (HttpURLConnection) url.openConnection();
-            conn.setRequestMethod("HEAD");
-            conn.setRequestProperty("User-Agent", System.getProperty("user_agent"));
-            conn.setRequestProperty("Referer", urlStr);
-            conn.connect();
-
-            String contentType = conn.getContentType();
-            if (!contentType.startsWith("audio/") && !contentType.startsWith("video/")) {
-                String msg = String.format("Unexpected Content-Type header: %s", contentType);
-                throw new MixcloudException(msg, urlStr);
-            }
-
-            long length = conn.getContentLengthLong();
-            if (length < 0) {
-                throw new MixcloudException("The content length is not known", urlStr);
-            }
-
-            long lastModified = conn.getLastModified();
-            if (lastModified == 0) {
-                throw new MixcloudException("The last-modified date/time is not known", urlStr);
-            }
-
-            var headers = new ResponseHeaders();
-            headers.contentType = contentType;
-            headers.contentLength = length;
-            headers.lastModified = new Date(lastModified);
-            return headers;
-        }
-        finally {
-            if (conn != null) {
-                conn.disconnect();
-            }
-        }
-    }
-
-    /** A container for a few HTTP response headers. */
-    @SuppressWarnings("PMD.CommentRequired")
-    private static class ResponseHeaders {
-        long contentLength;
-        String contentType;
-        Date lastModified;
     }
 
     /**
