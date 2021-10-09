@@ -30,7 +30,7 @@ public class MixcloudException extends Exception {
      * Constructs a new exception with the specified detail message.
      * @param message The detail message.
      */
-    public MixcloudException(@NotNull String message) {
+    MixcloudException(@NotNull String message) {
         super(message);
         this.url = null;
     }
