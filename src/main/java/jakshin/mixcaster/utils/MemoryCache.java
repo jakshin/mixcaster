@@ -20,6 +20,7 @@ package jakshin.mixcaster.utils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.ref.SoftReference;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -47,7 +48,8 @@ public class MemoryCache<K, V> {
      */
     public synchronized void put(@NotNull K key, @NotNull V value) {
         var item = new CachedItem<V>(System.nanoTime(), value);
-        this.items.put(key, item);
+        var ref = new SoftReference<>(item);
+        this.items.put(key, ref);
     }
 
     /**
@@ -59,7 +61,8 @@ public class MemoryCache<K, V> {
      */
     @Nullable
     public synchronized V get(@NotNull K key) {
-        CachedItem<V> existing = this.items.get(key);
+        SoftReference<CachedItem<V>> existingRef = this.items.get(key);
+        CachedItem<V> existing = (existingRef == null) ? null : existingRef.get();
 
         if (existing != null) {
             long cachedForSeconds = (System.nanoTime() - existing.cachedAt) / 1_000_000_000;
@@ -83,14 +86,19 @@ public class MemoryCache<K, V> {
     public synchronized boolean scrub() {
         long now = System.nanoTime();
         long cacheTimeNanoSecs = this.cacheTimeSeconds * 1_000_000_000L;
-        return this.items.entrySet().removeIf(entry -> now - entry.getValue().cachedAt > cacheTimeNanoSecs);
+
+        return this.items.entrySet().removeIf(entry -> {
+            var item = entry.getValue().get();
+            if (item == null) return true;
+            return (now - item.cachedAt > cacheTimeNanoSecs);
+        });
     }
 
     /** How long items should be cached before expiring. */
     private final int cacheTimeSeconds;
 
     /** Our backing store for cached items. */
-    private final Map<K, CachedItem<V>> items = new ConcurrentHashMap<>();
+    private final Map<K, SoftReference<CachedItem<V>>> items = new ConcurrentHashMap<>();
 
     /** A way to store a timestamp and arbitrary other value together. */
     private static record CachedItem<V>(long cachedAt, V value) { }
