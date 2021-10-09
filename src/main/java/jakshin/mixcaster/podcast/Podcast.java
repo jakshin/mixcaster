@@ -17,8 +17,8 @@
 
 package jakshin.mixcaster.podcast;
 
+import jakshin.mixcaster.http.ServableFile;
 import jakshin.mixcaster.utils.DateFormatter;
-import jakshin.mixcaster.utils.FileLocator;
 import jakshin.mixcaster.utils.ResourceLoader;
 import jakshin.mixcaster.utils.XmlEntities;
 import org.jetbrains.annotations.NotNull;
@@ -91,8 +91,8 @@ public final class Podcast {
             StringBuilder episodeTitle = new StringBuilder(episode.title.length() + 50);
             episodeTitle.append(episode.title);
 
-            String localPath = FileLocator.getLocalPath(episode.enclosureUrl.toString());
-            if (! (new File(localPath).exists())) {
+            var file = new ServableFile(episode.enclosureUrl.toString());
+            if (! file.exists()) {
                 episodeTitle.append(" [DOWNLOADING, CAN'T PLAY YET]");
             }
 

@@ -27,7 +27,31 @@ import java.util.Date;
 import static jakshin.mixcaster.logging.Logging.DEBUG;
 import static jakshin.mixcaster.logging.Logging.logger;
 
+/**
+ * The URL of a Mixcloud music file, including a query string. For example:
+ * https://stream1.mixcloud.com/secure/c/m4a/64/7/6/d/2/ea68-9849-4bd4-a2d7-500b34b4f091.m4a?sig=lUzqTvegL68sOJJj_mXXqA
+ * (the subdomain can range from "stream1" to "stream18", and they all seem to hold the same music files).
+ */
 record MixcloudMusicUrl(@NotNull String urlStr) {
+    /**
+     * Provides the local URL for a music file, given some Mixcloud info about it.
+     *
+     * @param localHostAndPort The local HTTP server's host:port.
+     * @param mixcloudUsername The username of the Mixcloud user who owns the music.
+     * @param slug The last path component of Mixcloud's web URL about the music
+     *             (which their GraphQL API calls "slug").
+     * @return The music file's complete local URL.
+     */
+    @NotNull
+    String localUrl(@NotNull String localHostAndPort, @NotNull String mixcloudUsername, @NotNull String slug) {
+        // strip any query string (expected to be present)
+        int pos = urlStr.indexOf('?');
+        String url = (pos == -1) ? urlStr : urlStr.substring(0, pos);
+
+        String extension = url.substring(url.lastIndexOf('.'));  // includes the dot, e.g. ".m4a"
+        return "http://" + localHostAndPort + "/" + mixcloudUsername + "/" + slug + extension;
+    }
+
     /**
      * Gets some HTTP response headers from the music URL, using a HEAD request.
      */

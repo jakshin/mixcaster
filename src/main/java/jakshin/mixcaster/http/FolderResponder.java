@@ -18,7 +18,6 @@
 package jakshin.mixcaster.http;
 
 import jakshin.mixcaster.mixcloud.MixcloudException;
-import jakshin.mixcaster.utils.FileLocator;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
@@ -42,8 +41,9 @@ class FolderResponder extends Responder {
     void respond(@NotNull HttpRequest request, @NotNull Writer writer, @NotNull OutputStream out)
             throws HttpException, InterruptedException, IOException, MixcloudException, TimeoutException, URISyntaxException {
 
-        String localPathStr = FileLocator.getLocalPath(request.path);
-        logger.log(INFO, "Responding to request for folder: {0}", localPathStr);
+        var folder = new ServableFile(request.path);
+        String localPath = folder.getPath();
+        logger.log(INFO, "Responding to request for folder: {0}", localPath);
 
         // delegate to PodcastXmlResponder if this looks like a Mixcloud URL
         if (delegateToPodcastXmlResponder(request, writer, out)) {
@@ -51,20 +51,18 @@ class FolderResponder extends Responder {
         }
 
         // check on disk
-        File localFolder = new File(localPathStr);
+        if (folder.isFile()) {
+            logger.log(INFO, "Folder is actually a file, redirecting: {0}", localPath);
 
-        if (localFolder.isFile()) {
-            logger.log(INFO, "Folder is actually a file, redirecting: {0}", localPathStr);
-
-            String filePathStr = request.path;
-            if (filePathStr.endsWith("/")) filePathStr = filePathStr.substring(0, filePathStr.length() - 1);
+            String filePath = request.path;
+            if (filePath.endsWith("/")) filePath = filePath.substring(0, filePath.length() - 1);
 
             HttpHeaderWriter headerWriter = new HttpHeaderWriter();
-            headerWriter.sendRedirectHeadersAndBody(writer, filePathStr, request.isHead());
+            headerWriter.sendRedirectHeadersAndBody(writer, filePath, request.isHead());
             return;
         }
 
-        if (localFolder.isDirectory()) {
+        if (folder.isDirectory()) {
             // we don't allow folder contents to be listed
             throw new HttpException(403, "Forbidden");
         }

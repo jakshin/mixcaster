@@ -20,6 +20,7 @@ package jakshin.mixcaster;
 import jakshin.mixcaster.download.Download;
 import jakshin.mixcaster.download.DownloadQueue;
 import jakshin.mixcaster.http.HttpServer;
+import jakshin.mixcaster.http.ServableFile;
 import jakshin.mixcaster.install.Installer;
 import jakshin.mixcaster.logging.Logging;
 import jakshin.mixcaster.mixcloud.MixcloudClient;
@@ -29,7 +30,6 @@ import jakshin.mixcaster.podcast.Podcast;
 import jakshin.mixcaster.podcast.PodcastEpisode;
 import jakshin.mixcaster.utils.AppSettings;
 import jakshin.mixcaster.utils.AppVersion;
-import jakshin.mixcaster.utils.FileLocator;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -150,11 +150,12 @@ public class Main {
             }
 
             // more checks and fix-ups for command-line arguments
+            String localHostAndPort = System.getProperty("http_hostname") + ":" + System.getProperty("http_port");
             MixcloudClient client = null;
 
             if (musicType == null || musicType.isBlank()) {
                 // use the user's default view
-                client = new MixcloudClient();
+                client = new MixcloudClient(localHostAndPort);
                 musicType = client.queryDefaultView(username);
             }
 
@@ -165,7 +166,7 @@ public class Main {
             if (outPath != null) {
                 if (rssPath != null) {
                     // if we're downloading to an arbitrary directory, outside our server's content root,
-                    // i.e. the music_dir, we can't give a valid path to the files in RSS
+                    // i.e. the music_dir, there aren't valid URLs for the files, that we can put in the RSS
                     System.out.println("Sorry, the -out and -rss options can't be used together");
                     return 1;
                 }
@@ -198,7 +199,7 @@ public class Main {
             }
 
             // query and download
-            if (client == null) client = new MixcloudClient();
+            if (client == null) client = new MixcloudClient(localHostAndPort);
             Podcast podcast = client.query(username, musicType, playlist);
 
             if (rssPath != null) {
@@ -208,7 +209,7 @@ public class Main {
 
             var queue = DownloadQueue.getInstance();
             for (PodcastEpisode episode : podcast.episodes) {
-                String localPath = FileLocator.getLocalPath(episode.enclosureUrl.toString());
+                String localPath = ServableFile.getLocalPath(episode.enclosureUrl.toString());
 
                 if (outPath != null) {
                     // use the normal filename, but in the requested output directory,

@@ -22,7 +22,6 @@ import jakshin.mixcaster.download.DownloadQueue;
 import jakshin.mixcaster.mixcloud.*;
 import jakshin.mixcaster.podcast.Podcast;
 import jakshin.mixcaster.podcast.PodcastEpisode;
-import jakshin.mixcaster.utils.FileLocator;
 import jakshin.mixcaster.utils.MemoryCache;
 import org.jetbrains.annotations.NotNull;
 
@@ -157,7 +156,7 @@ class PodcastXmlResponder extends Responder {
             int queued = 0;
 
             for (PodcastEpisode episode : podcast.episodes) {
-                String localPath = FileLocator.getLocalPath(episode.enclosureUrl.toString());
+                String localPath = ServableFile.getLocalPath(episode.enclosureUrl.toString());
                 Download download = new Download(episode.enclosureMixcloudUrl.toString(),
                         episode.enclosureLengthBytes, episode.enclosureLastModified, localPath);
 

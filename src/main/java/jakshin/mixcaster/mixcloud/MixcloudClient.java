@@ -24,12 +24,13 @@ import com.apollographql.apollo.api.Query;
 import com.apollographql.apollo.api.Response;
 import com.apollographql.apollo.exception.ApolloException;
 import jakshin.mixcaster.*;
+import jakshin.mixcaster.http.ServableFile;
 import jakshin.mixcaster.podcast.Podcast;
 import jakshin.mixcaster.podcast.PodcastEpisode;
 import jakshin.mixcaster.type.CloudcastOrderByEnum;
 import jakshin.mixcaster.type.PlaylistLookup;
 import jakshin.mixcaster.type.UserLookup;
-import jakshin.mixcaster.utils.FileLocator;
+import jakshin.mixcaster.utils.MimeHelper;
 import jakshin.mixcaster.utils.TimeSpanFormatter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,18 +53,10 @@ import static jakshin.mixcaster.logging.Logging.*;
  */
 public class MixcloudClient {
     /**
-     * Creates an instance, using configured values for host and port
-     * when creating URLs to music files (defaulting to localhost:6499).
-     */
-    public MixcloudClient() {
-        this(null);
-    }
-
-    /**
      * Creates an instance, using the given host and port when creating URLs to music files.
      * @param localHostAndPort The local host and port from which music files will be served.
      */
-    public MixcloudClient(@Nullable String localHostAndPort) {
+    public MixcloudClient(@NotNull String localHostAndPort) {
         this.localHostAndPort = localHostAndPort;
     }
 
@@ -776,16 +769,24 @@ public class MixcloudClient {
         PodcastEpisode episode = new PodcastEpisode();
         episode.description = Objects.requireNonNullElse(description, "");
 
-        String mixcloudUrl = new MixcloudDecoder().decodeUrl(encodedMusicUrl);
-        String localUrl = FileLocator.makeLocalUrl(localHostAndPort, author, slug, mixcloudUrl);
-        // String localPath = FileLocator.getLocalPath(localUrl);
+        String decodedUrl = new MixcloudDecoder().decodeUrl(encodedMusicUrl);
+        var mixcloudMusicUrl = new MixcloudMusicUrl(decodedUrl);
+        String localUrl = mixcloudMusicUrl.localUrl(localHostAndPort, author, slug);
 
-        MixcloudMusicUrl.ResponseHeaders headers = new MixcloudMusicUrl(mixcloudUrl).getHeaders();
-        episode.enclosureLastModified = new Date(headers.lastModified.getTime());
-        episode.enclosureLengthBytes = headers.contentLength;
-        episode.enclosureMimeType = headers.contentType;
+        var file = new ServableFile(localUrl);
+        if (file.isFile()) {
+            episode.enclosureLastModified = new Date(file.lastModified());
+            episode.enclosureLengthBytes = file.length();
+            episode.enclosureMimeType = new MimeHelper().guessContentTypeFromName(file.getName());
+        }
+        else {
+            MixcloudMusicUrl.ResponseHeaders headers = mixcloudMusicUrl.getHeaders();
+            episode.enclosureLastModified = new Date(headers.lastModified.getTime());
+            episode.enclosureLengthBytes = headers.contentLength;
+            episode.enclosureMimeType = headers.contentType;
+        }
 
-        episode.enclosureMixcloudUrl = new URI(mixcloudUrl);
+        episode.enclosureMixcloudUrl = new URI(mixcloudMusicUrl.urlStr());
         episode.enclosureUrl = new URI(localUrl);
         episode.link = new URI(MIXCLOUD_WEB + author + "/" + slug);
         if (publishDate != null)
@@ -889,11 +890,8 @@ public class MixcloudClient {
         return Arrays.asList(subscribedTo);
     }
 
-    /**
-     * The local host and port from which music files will be served.
-     * Configured values are used if no value is specified here.
-     */
-    @Nullable
+    /** The local host and port from which music files will be served. */
+    @NotNull
     private final String localHostAndPort;
 
     /** Reusing a single ApolloClient instance allows us to reuse the underlying OkHttp instance

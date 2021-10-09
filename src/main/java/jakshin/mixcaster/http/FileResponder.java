@@ -18,7 +18,6 @@
 package jakshin.mixcaster.http;
 
 import jakshin.mixcaster.mixcloud.MixcloudException;
-import jakshin.mixcaster.utils.FileLocator;
 import jakshin.mixcaster.utils.MimeHelper;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,20 +44,26 @@ class FileResponder extends Responder {
             throws HttpException, InterruptedException, IOException, MixcloudException, TimeoutException, URISyntaxException {
 
         try {
-            String localPathStr = FileLocator.getLocalPath(request.path);
-            logger.log(INFO, "Responding to request for file: {0}", localPathStr);
+            var file = new ServableFile(request.path);
+            String localPath = file.getPath();
+            logger.log(INFO, "Responding to request for file: {0}", localPath);
 
             // delegate to PodcastXmlResponder if this looks like a Mixcloud URL
             if (delegateToPodcastXmlResponder(request, writer, out)) {
                 return;
             }
 
+            // ensure the file really is in our music_dir
+            if (! file.getCanonicalPath().startsWith(getMusicDirSetting())) {
+                logger.log(WARNING, "Refusing to serve file outside music_dir: {0}", localPath);
+                throw new HttpException(403, "Forbidden");
+            }
+
             // if the file is actually a folder, redirect
             HttpHeaderWriter headerWriter = new HttpHeaderWriter();
-            File localFile = new File(localPathStr);
 
-            if (localFile.isDirectory()) {
-                logger.log(INFO, "File is actually a folder, redirecting: {0}", localPathStr);
+            if (file.isDirectory()) {
+                logger.log(INFO, "File is actually a folder, redirecting: {0}", localPath);
 
                 String folderPathStr = request.path;
                 if (!folderPathStr.endsWith("/")) folderPathStr += "/";
@@ -69,18 +74,18 @@ class FileResponder extends Responder {
 
             // handle If-Modified-Since
             // this date is only valid if the file exists, so don't use it otherwise
-            Date lastModified = new Date(localFile.lastModified() / 1000 * 1000);  // truncate milliseconds for comparison
+            Date lastModified = new Date(file.lastModified() / 1000 * 1000);  // truncate milliseconds for comparison
 
-            if (localFile.isFile() && headerWriter.sendNotModifiedHeadersIfNeeded(request, writer, lastModified)) {
-                logger.log(INFO, "Responding with 304 for unmodified file: {0}", localPathStr);
+            if (file.isFile() && headerWriter.sendNotModifiedHeadersIfNeeded(request, writer, lastModified)) {
+                logger.log(INFO, "Responding with 304 for unmodified file: {0}", localPath);
                 return;  // the request was satisfied via not-modified response headers
             }
 
             // open the file for reading before we send the response headers,
             // so that if it fails, we can send error response headers cleanly
-            try (RandomAccessFile in = new RandomAccessFile(localFile, "r")) {
+            try (RandomAccessFile in = new RandomAccessFile(file, "r")) {
                 // check for a range retrieval request
-                long fileSize = localFile.length();
+                long fileSize = file.length();
                 ByteRange range = request.byteRange(fileSize);
 
                 if (range != null) {
@@ -88,10 +93,10 @@ class FileResponder extends Responder {
                 }
 
                 // send the response headers
-                String contentType = new MimeHelper().guessContentTypeFromName(localPathStr);
+                String contentType = new MimeHelper().guessContentTypeFromName(localPath);
 
                 if (range == null) {
-                    headerWriter.sendSuccessHeaders(writer, lastModified, contentType, localFile.length());
+                    headerWriter.sendSuccessHeaders(writer, lastModified, contentType, file.length());
                     range = new ByteRange(0, fileSize - 1);
                 }
                 else {
@@ -100,7 +105,7 @@ class FileResponder extends Responder {
                 }
 
                 if (request.isHead()) {
-                    logger.log(INFO, "Done responding to HEAD request for file: {0}", localPathStr);
+                    logger.log(INFO, "Done responding to HEAD request for file: {0}", localPath);
                     return;
                 }
 
@@ -125,7 +130,7 @@ class FileResponder extends Responder {
                 }
 
                 out.flush();
-                logger.log(INFO, "Done responding to GET request for file: {0}", localPathStr);
+                logger.log(INFO, "Done responding to GET request for file: {0}", localPath);
             }
             catch (FileNotFoundException ex) {
                 throw new HttpException(404, "Not Found", ex);
@@ -146,4 +151,22 @@ class FileResponder extends Responder {
             throw ex;
         }
     }
-}
+
+    /**
+     * Gets the music_dir configuration setting.
+     * @return music_dir, as an absolute path, with a trailing slash.
+     */
+    @NotNull
+    private static String getMusicDirSetting() {
+        String musicDir = System.getProperty("music_dir");
+
+        if (musicDir.startsWith("~/")) {
+            musicDir = System.getProperty("user.home") + musicDir.substring(1);
+        }
+
+        if (! musicDir.endsWith("/")) {
+            musicDir += "/";
+        }
+
+        return musicDir;
+    }}

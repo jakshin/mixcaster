@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Jason Jackson
+ * Copyright (c) 2021 Jason Jackson
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,27 +15,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package jakshin.mixcaster.utils;
+package jakshin.mixcaster.http;
 
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
+
 import static org.junit.Assert.*;
 
-/**
- * Unit tests for the FileLocator class.
- */
-public class FileLocatorTest {
-    @BeforeClass
-    public static void setUpClass() {
-    }
-
-    @AfterClass
-    public static void tearDownClass() {
-    }
-
+public class ServableFileTest {
     @Before
     public void setUp() {
     }
@@ -45,43 +33,33 @@ public class FileLocatorTest {
     }
 
     @Test
-    public void getLocalPathShouldWorkWithFullUrl() {
+    public void getLocalPathWorksWithFullUrl() {
         String expResult = System.getProperty("music_dir");
         expResult = expResult.replace("~", System.getProperty("user.home"));
         if (!expResult.endsWith("/")) expResult += "/";
         expResult += "Foo/ep1.m4a";
 
-        String result = FileLocator.getLocalPath("http://localhost:6499/Foo/ep1.m4a");
+        String result = ServableFile.getLocalPath("http://localhost:6499/Foo/ep1.m4a");
         assertEquals(expResult, result);
     }
 
     @Test
-    public void getLocalPathShouldWorkWithAbsoluteUrl() {
+    public void getLocalPathWorksWithAbsoluteUrl() {
         System.setProperty("music_dir", "/music/");
         String expResult = "/music/Foo/ep1.m4a";
 
-        String result = FileLocator.getLocalPath("/Foo/ep1.m4a");
+        String result = ServableFile.getLocalPath("/Foo/ep1.m4a");
         assertEquals(expResult, result);
     }
 
     @Test
-    public void getLocalPathShouldBeSecure() {
+    public void getLocalPathIsSecure() {
         System.setProperty("music_dir", "/music");
         String[] urls = {"", ".", "..", "../..", "..//..", "//..//", "foo/..", "../foo/..", "..//foo//.." };
 
         for (var url : urls) {
-            String result = FileLocator.getLocalPath(url);
+            String result = ServableFile.getLocalPath(url);
             assertEquals("/music", result);
         }
-    }
-
-    @Test
-    public void makeLocalUrlShouldWork() {
-        String host = System.getProperty("http_hostname");
-        String port = System.getProperty("http_port");
-        String expResult = "http://" + host + ":" + port + "/Foo/some-lovely-music.m4a";
-        String result = FileLocator.makeLocalUrl(null, "Foo",
-                "some-lovely-music", "https://stream.mixcloud.com/a/b/c/d.m4a?sig=blah");
-        assertEquals(expResult, result);
     }
 }
