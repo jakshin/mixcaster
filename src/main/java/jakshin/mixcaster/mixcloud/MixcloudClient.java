@@ -78,7 +78,7 @@ public class MixcloudClient {
     public String queryDefaultView(@NotNull String username)
             throws InterruptedException, MixcloudException, TimeoutException {
 
-        logger.log(INFO, "Querying user''s default view: {0}", username);
+        logger.log(INFO, "Querying {0}''s default view", username);
         var query = new UserDefaultQuery(UserLookup.builder().username(username).build());
         var queryDescription = String.format("UserDefaultQuery for %s", username);
         var data = (UserDefaultQuery.Data) runQuery(query, queryDescription);
@@ -115,9 +115,6 @@ public class MixcloudClient {
             throws InterruptedException, MixcloudException, TimeoutException, URISyntaxException {
 
         long started = System.nanoTime();
-        logger.log(INFO, musicType.equals("playlist")
-                ? String.format("Querying %s's playlist: %s", username, playlist)
-                : String.format("Querying user's %s: %s", musicType, username));
 
         Podcast podcast = switch (musicType) {
             case "stream" -> this.queryStream(username);
@@ -153,6 +150,7 @@ public class MixcloudClient {
         podcast.title = String.format("%s's stream", podcast.iTunesAuthorAndOwnerName);
         podcast.link = new URI(MIXCLOUD_WEB + username + "/stream/");
 
+        logger.log(INFO, "Querying {0}''s stream", username);
         int episodeCount = 0, maxEpisodeCount = getEpisodeMaxCountSetting();
         String cursor = null;
 
@@ -245,6 +243,7 @@ public class MixcloudClient {
         podcast.title = String.format("%s's shows", podcast.iTunesAuthorAndOwnerName);
         podcast.link = new URI(MIXCLOUD_WEB + username + "/uploads/");
 
+        logger.log(INFO, "Querying {0}''s shows", username);
         int episodeCount = 0, maxEpisodeCount = getEpisodeMaxCountSetting();
         String cursor = null;
 
@@ -338,6 +337,7 @@ public class MixcloudClient {
         podcast.title = String.format("%s's favorites", podcast.iTunesAuthorAndOwnerName);
         podcast.link = new URI(MIXCLOUD_WEB + username + "/favorites/");
 
+        logger.log(INFO, "Querying {0}''s favorites", username);
         int episodeCount = 0, maxEpisodeCount = getEpisodeMaxCountSetting();
         String cursor = null;
 
@@ -430,6 +430,7 @@ public class MixcloudClient {
         podcast.title = String.format("%s's history", podcast.iTunesAuthorAndOwnerName);
         podcast.link = new URI(MIXCLOUD_WEB + username + "/listens/");
 
+        logger.log(INFO, "Querying {0}''s history", username);
         int episodeCount = 0, maxEpisodeCount = getEpisodeMaxCountSetting();
         String cursor = null;
 
@@ -531,6 +532,8 @@ public class MixcloudClient {
     @NotNull
     private Podcast queryPlaylist(@NotNull String username, @NotNull String slug)
             throws InterruptedException, MixcloudException, TimeoutException, URISyntaxException {
+
+        logger.log(INFO, "Querying {0}''s playlist: {1}", new String[] { username, slug });
 
         var podcast = new Podcast();
         int episodeCount = 0, maxEpisodeCount = getEpisodeMaxCountSetting();
@@ -680,7 +683,7 @@ public class MixcloudClient {
     private Podcast queryUserInfo(@NotNull String username)
             throws InterruptedException, MixcloudException, TimeoutException, URISyntaxException {
 
-        logger.log(INFO, "Querying user''s info: {0}", username);
+        logger.log(INFO, "Querying {0}''s info", username);
         var query = new UserProfileHeaderQuery(UserLookup.builder().username(username).build());
         var queryDescription = String.format("UserProfileHeaderQuery for %s", username);
         var data = (UserProfileHeaderQuery.Data) runQuery(query, queryDescription);
