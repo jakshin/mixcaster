@@ -201,6 +201,9 @@ class HttpResponse implements Runnable {
         if (request == null) {
             throw new HttpException(400, "No request headers received");
         }
+        else if (request.host() == null || request.host().isBlank()) {
+            throw new HttpException(400, "No Host header received");
+        }
 
         logger.log(DEBUG, "Received HTTP request headers{0}", loggedHeaders);
         for (String header : unparsableHeaders) {
