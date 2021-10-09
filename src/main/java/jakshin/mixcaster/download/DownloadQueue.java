@@ -60,12 +60,12 @@ public final class DownloadQueue {
         File localFile = new File(download.localFilePath);
 
         if (localFile.exists()) {
-            logger.log(DEBUG, "File not enqueued (already downloaded): {0}", localFile);
+            logger.log(DEBUG, "File already exists: {0}", localFile);
             return false;  // already downloaded
         }
 
         if (this.waitingDownloads.contains(download) || this.activeDownloads.contains(download)) {
-            logger.log(DEBUG, "File already queued: {0}", localFile);
+            logger.log(DEBUG, "File already in queue: {0}", localFile);
             return false;  // already queued, doesn't yet exist locally
         }
 
