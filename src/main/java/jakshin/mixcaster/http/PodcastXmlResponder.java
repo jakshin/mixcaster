@@ -121,6 +121,7 @@ class PodcastXmlResponder extends Responder {
                 var client = new MixcloudClient(request.host());
                 podcast = client.query(username, musicType, playlist);
                 podcastCache.put(thing, podcast);
+                podcastCache.scrub();
             }
             catch (MixcloudUserException ex) {
                 logger.log(ERROR, "There''s no Mixcloud user with username {0}", ex.username);
