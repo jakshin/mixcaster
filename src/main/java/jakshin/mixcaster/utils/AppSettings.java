@@ -95,9 +95,9 @@ public final class AppSettings {
         defaults.setProperty("http_cache_time_seconds", "3600");  // must be an int >= 0
         defaults.setProperty("http_hostname", "localhost");
         defaults.setProperty("http_port", "6499");                // must be an int in [1024-65535]
-        defaults.setProperty("log_max_count", "10");              // must be an int > 0
         defaults.setProperty("log_dir", "~/Library/Logs/Mixcaster");
         defaults.setProperty("log_level", "ALL");
+        defaults.setProperty("log_max_count", "10");              // must be an int > 0, values above 1000 are lowered
         defaults.setProperty("music_dir", "~/Music/Mixcloud");
         defaults.setProperty("subscribed_to", "");                // whitespace-delimited list of usernames, empty is OK
         defaults.setProperty("user_agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)" +
@@ -116,12 +116,18 @@ public final class AppSettings {
         validateInteger(properties, "http_cache_time_seconds", 0, Integer.MAX_VALUE);
         validateString(properties, "http_hostname");
         validateInteger(properties, "http_port", 1024, 65535);
-        validateInteger(properties, "log_max_count", 1, Integer.MAX_VALUE);
         validatePath(properties, "log_dir");
         validateEnum(properties, "log_level", new String[] {"ERROR", "WARNING", "INFO", "DEBUG", "ALL"});
+        validateInteger(properties, "log_max_count", 1, Integer.MAX_VALUE);
         validatePath(properties, "music_dir");
         // subscribed_to can contain any string or be empty
         validateString(properties, "user_agent");
+
+        // keep log_max_count from being too high (FileHandler allocates an array of this size)
+        if (properties.containsKey("log_max_count") &&
+                Integer.parseInt(properties.getProperty("log_max_count")) > 1000) {
+            properties.setProperty("log_max_count", "1000");
+        }
     }
 
     /**
