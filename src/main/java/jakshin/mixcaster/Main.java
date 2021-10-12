@@ -22,6 +22,7 @@ import jakshin.mixcaster.download.DownloadQueue;
 import jakshin.mixcaster.http.HttpServer;
 import jakshin.mixcaster.http.ServableFile;
 import jakshin.mixcaster.install.Installer;
+import jakshin.mixcaster.logging.LogCleaner;
 import jakshin.mixcaster.logging.Logging;
 import jakshin.mixcaster.mixcloud.MixcloudClient;
 import jakshin.mixcaster.mixcloud.MixcloudPlaylistException;
@@ -50,6 +51,10 @@ public class Main {
      * @param args The command line arguments.
      */
     public static void main(@NotNull String[] args) {
+        // because we use the java.awt.Desktop class (to send files to the trash),
+        // the JVM shows a goofy Java icon in macOS's dock; this prevents that
+        System.setProperty("apple.awt.UIElement", "true");
+
         int exitCode = 0;
         Main main = new Main();
         String cmd = (args.length > 0) ? args[0].trim() : "";
@@ -84,6 +89,7 @@ public class Main {
         try {
             // initialize settings and logging
             this.init(String.format("Mixcaster %s", AppVersion.display), false);
+            startLogCleanup();
 
             // parse our command-line arguments
             String musicType = null;
@@ -232,6 +238,7 @@ public class Main {
             if (downloadCount == 0) {
                 logger.log(INFO, podcast.episodes.isEmpty() ?
                         "Nothing to download" : "All music files have already been downloaded");
+                waitForLogCleanup();
                 System.exit(0);
             }
             else {
@@ -257,6 +264,9 @@ public class Main {
             logger.log(ERROR, "Download failed", ex);
             return 2;
         }
+        finally {
+            waitForLogCleanup();  // in case we caught an exception
+        }
     }
 
     /**
@@ -267,6 +277,9 @@ public class Main {
             String serviceVersion = AppVersion.display.startsWith("(")
                     ? AppVersion.display : String.format("(%s)", AppVersion.display);
             this.init(String.format("Mixcaster service starting up %s", serviceVersion), true);
+
+            startLogCleanup();  // we only exit by being interrupted, so there's no point
+                                // in waiting for this to complete before returning below
 
             HttpServer server = new HttpServer();
             server.run();
@@ -394,4 +407,31 @@ public class Main {
             logger.log(WARNING, failure);
         }
     }
+
+    /**
+     * Starts cleaning up logs, in its own thread.
+     */
+    private void startLogCleanup() {
+        if (logCleanerThread == null) {
+            logCleanerThread = new Thread(new LogCleaner(1000));
+            logCleanerThread.start();
+        }
+    }
+
+    /**
+     * Waits up to 5 seconds for the log cleanup thread to finish.
+     */
+    private void waitForLogCleanup() {
+        try {
+            if (logCleanerThread != null) {
+                logCleanerThread.join(5000);
+            }
+        }
+        catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    /** The thread in which log cleanup is done. */
+    private Thread logCleanerThread;
 }

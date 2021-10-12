@@ -44,23 +44,30 @@ public final class Logging {
         SystemOutHandler soh = new SystemOutHandler(new SystemOutFormatter(), Level.INFO);
         logger.addHandler(soh);
 
-        // get logging settings
-        int logCount = Logging.getLogMaxCountSetting();
-        String logDirStr = Logging.getLogDirSetting();  // has a trailing slash
-        Level logLevel = Logging.getLogLevelSetting();
-
         // create the log directory if it doesn't already exist
-        File logDir = new File(logDirStr);
-        if (!logDir.exists() && !logDir.mkdirs()) {
-            throw new IOException(String.format("Unable to create logging directory \"%s\"", logDirStr));
+        String logDirPath = Logging.getLogDirSetting();
+        File logDir = new File(logDirPath);
+
+        if (!logDir.exists() && !logDir.mkdirs() && !logDir.exists()) {
+            throw new IOException(String.format("Unable to create logging directory \"%s\"", logDirPath));
         }
 
-        // set up file logging
-        FileHandler fh = (forService)
-                ? new FileHandler(logDirStr + "service.log", 1_000_000, logCount, true)  // 1 MB per log
-                : new FileHandler(logDirStr + "download.log", 0, logCount, false);       // one log per run
+        // set up file logging;
+        // note that LogCleaner also knows the log file name patterns below
+        int logCount = Logging.getLogMaxCountSetting();
+        FileHandler fh;
+
+        if (forService) {
+            // create a new log file every time the service starts, rotate log files at ~1 MB
+            fh = new FileHandler(logDirPath + "service.%g.log", 1_000_000, logCount, false);
+        }
+        else {
+            // create a new log file for every download run, with no size limit
+            fh = new FileHandler(logDirPath + "download.%g.log", 0, logCount, false);
+        }
+
         fh.setFormatter(new LogFileFormatter());
-        fh.setLevel(logLevel);
+        fh.setLevel(Logging.getLogLevelSetting());
         logger.addHandler(fh);
     }
 
@@ -96,7 +103,7 @@ public final class Logging {
 
     /**
      * Gets the log_dir configuration setting.
-     * @return log_dir, as a string.
+     * @return log_dir, as a string, with a trailing slash.
      */
     @NotNull
     private static String getLogDirSetting() {
