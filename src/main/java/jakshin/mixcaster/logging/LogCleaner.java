@@ -33,37 +33,19 @@ import static jakshin.mixcaster.logging.Logging.*;
 /**
  * Cleans old log files out of our logging directory.
  */
-@SuppressWarnings("ClassCanBeRecord")
 public class LogCleaner implements Runnable {
-    /**
-     * Creates a new instance.
-     * @param delayMillis How long to delay before starting to look for and delete log files.
-     */
-    public LogCleaner(long delayMillis) {
-        this.delayMillis = delayMillis;
-    }
-
     /**
      * Cleans out the log directory.
      */
     @Override
     public void run() {
-        try {
-            if (delayMillis > 0) {
-                Thread.sleep(delayMillis);
-            }
+        logger.log(DEBUG, "Checking for log files to clean up...");
+        File logDir = openLogDir();
+        List<FileAndTimestamp> logs = listLogFiles(logDir);
 
-            File logDir = openLogDir();
-            List<FileAndTimestamp> logs = listLogFiles(logDir);
-
-            if (logs != null) {
-                List<String> locks = listLockFiles(logDir);
-                trashLogFiles(logs, locks);
-            }
-        }
-        catch (InterruptedException ex) {
-            Thread.currentThread().interrupt();
-            logger.log(DEBUG, "Log cleanup was interrupted", ex);
+        if (logs != null) {
+            List<String> locks = listLockFiles(logDir);
+            trashLogFiles(logs, locks);
         }
     }
 
@@ -208,7 +190,4 @@ public class LogCleaner implements Runnable {
 
     /** Holds a file and its last-modified date. */
     private static record FileAndTimestamp(File file, long timestamp) { }
-
-    /** How long to delay before starting to look for and delete log files. */
-    private final long delayMillis;
 }

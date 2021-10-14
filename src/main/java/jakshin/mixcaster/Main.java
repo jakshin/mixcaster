@@ -38,6 +38,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import static jakshin.mixcaster.logging.Logging.*;
 
@@ -86,10 +88,14 @@ public class Main {
      * @return A code indicating success (0) or failure (1 or 2).
      */
     private int download(@NotNull String[] args) {
+        Thread logCleanerThread = null;
+
         try {
             // initialize settings and logging
             this.init(String.format("Mixcaster %s", AppVersion.display), false);
-            startLogCleanup();
+
+            logCleanerThread = new Thread(new LogCleaner());
+            logCleanerThread.start();
 
             // parse our command-line arguments
             String musicType = null;
@@ -238,7 +244,7 @@ public class Main {
             if (downloadCount == 0) {
                 logger.log(INFO, podcast.episodes.isEmpty() ?
                         "Nothing to download" : "All music files have already been downloaded");
-                waitForLogCleanup();
+                waitForThreadToFinish(logCleanerThread);
                 System.exit(0);
             }
             else {
@@ -265,7 +271,8 @@ public class Main {
             return 2;
         }
         finally {
-            waitForLogCleanup();  // in case we caught an exception
+            // in case we caught an exception
+            waitForThreadToFinish(logCleanerThread);
         }
     }
 
@@ -278,8 +285,8 @@ public class Main {
                     ? AppVersion.display : String.format("(%s)", AppVersion.display);
             this.init(String.format("Mixcaster service starting up %s", serviceVersion), true);
 
-            startLogCleanup();  // we only exit by being interrupted, so there's no point
-                                // in waiting for this to complete before returning below
+            var executor = new ScheduledThreadPoolExecutor(1);
+            executor.scheduleWithFixedDelay(new LogCleaner(), 2, 3600, TimeUnit.SECONDS);
 
             HttpServer server = new HttpServer();
             server.run();
@@ -409,29 +416,17 @@ public class Main {
     }
 
     /**
-     * Starts cleaning up logs, in its own thread.
+     * Waits for the thread to finish, if it exists.
+     * @param thread The thread to wait for.
      */
-    private void startLogCleanup() {
-        if (logCleanerThread == null) {
-            logCleanerThread = new Thread(new LogCleaner(1000));
-            logCleanerThread.start();
-        }
-    }
-
-    /**
-     * Waits up to 5 seconds for the log cleanup thread to finish.
-     */
-    private void waitForLogCleanup() {
+    private void waitForThreadToFinish(Thread thread) {
         try {
-            if (logCleanerThread != null) {
-                logCleanerThread.join(5000);
+            if (thread != null) {
+                thread.join();
             }
         }
         catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
         }
     }
-
-    /** The thread in which log cleanup is done. */
-    private Thread logCleanerThread;
 }
