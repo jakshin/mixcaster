@@ -17,8 +17,8 @@
 
 package jakshin.mixcaster;
 
-import jakshin.mixcaster.download.Download;
-import jakshin.mixcaster.download.DownloadQueue;
+import jakshin.mixcaster.dlqueue.Download;
+import jakshin.mixcaster.dlqueue.DownloadQueue;
 import jakshin.mixcaster.http.HttpServer;
 import jakshin.mixcaster.http.ServableFile;
 import jakshin.mixcaster.install.Installer;

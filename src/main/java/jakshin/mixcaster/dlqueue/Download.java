@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package jakshin.mixcaster.download;
+package jakshin.mixcaster.dlqueue;
 
 import org.jetbrains.annotations.NotNull;
 

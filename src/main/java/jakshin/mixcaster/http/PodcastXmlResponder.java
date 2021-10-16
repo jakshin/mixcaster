@@ -17,8 +17,8 @@
 
 package jakshin.mixcaster.http;
 
-import jakshin.mixcaster.download.Download;
-import jakshin.mixcaster.download.DownloadQueue;
+import jakshin.mixcaster.dlqueue.Download;
+import jakshin.mixcaster.dlqueue.DownloadQueue;
 import jakshin.mixcaster.mixcloud.*;
 import jakshin.mixcaster.podcast.Podcast;
 import jakshin.mixcaster.podcast.PodcastEpisode;
