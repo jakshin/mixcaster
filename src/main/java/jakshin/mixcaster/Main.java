@@ -33,8 +33,10 @@ import jakshin.mixcaster.podcast.PodcastEpisode;
 import jakshin.mixcaster.utils.AppSettings;
 import jakshin.mixcaster.utils.AppVersion;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.io.Serial;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.Arrays;
@@ -306,7 +308,7 @@ public class Main {
      * @param bannerText Text to display as a startup banner in the first log line.
      * @param forService Whether to initialize logging for the service (if false, initialize for manual downloading).
      */
-    private void init(String bannerText, boolean forService) throws AppException {
+    private void init(String bannerText, boolean forService) throws InitException {
         // this code looks weird; it's like this because we need to initialize settings before logging,
         // but if we fail to initialize settings, we want to try to log that problem
         Exception settingsException = null, loggingException = null;
@@ -330,13 +332,34 @@ public class Main {
         logger.log(INFO, bannerText);
 
         if (settingsException != null)
-            throw new AppException("Couldn't initialize application settings", settingsException);
+            throw new InitException("Couldn't initialize application settings", settingsException);
         else if (loggingException != null)
-            throw new AppException("Couldn't initialize logging", loggingException);
+            throw new InitException("Couldn't initialize logging", loggingException);
 
         for (String failure : validationFailures) {
             logger.log(WARNING, failure);
         }
+    }
+
+    /**
+     * Yikes, we weren't able to fully initialize the application.
+     */
+    private static class InitException extends Exception {
+        /**
+         * Constructs a new exception with the specified detail message and cause.
+         *
+         * @param message The detail message (which is saved for later retrieval by the Throwable.getMessage() method).
+         * @param cause The cause (which is saved for later retrieval by the Throwable.getCause() method).
+         *              (A null value is permitted, and indicates that the cause is nonexistent or unknown.)
+         */
+        InitException(@NotNull String message, @Nullable Throwable cause) {
+            super(message, cause);
+        }
+
+        /** Serialization version number.
+            This should be updated whenever the class definition changes. */
+        @Serial
+        private static final long serialVersionUID = 1L;
     }
 
     /**
