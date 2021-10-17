@@ -51,7 +51,8 @@ public class HttpServer implements Runnable {
     @SuppressWarnings("InfiniteLoopStatement")
     @Override
     public void run() {
-        ServerSocket serverSocket;
+        ServerSocket serverSocket;  // NOPMD we only exit this method by being interrupted,
+                                    // so we can't (and don't need to) close this
 
         try {
             // bind to the configured TCP port
