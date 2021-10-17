@@ -186,7 +186,7 @@ public class MixcloudClient {
 
                 try {
                     podcast.episodes.add(
-                            createPodcastEpisode(
+                            getPodcastEpisode(
                                     item.name(),
                                     item.slug(),
                                     item.owner().username(),
@@ -280,7 +280,7 @@ public class MixcloudClient {
 
                 try {
                     podcast.episodes.add(
-                            createPodcastEpisode(
+                            getPodcastEpisode(
                                     item.name(),
                                     item.slug(),
                                     item.owner().username(),
@@ -373,7 +373,7 @@ public class MixcloudClient {
 
                 try {
                     podcast.episodes.add(
-                            createPodcastEpisode(
+                            getPodcastEpisode(
                                     item.name(),
                                     item.slug(),
                                     item.owner().username(),
@@ -466,7 +466,7 @@ public class MixcloudClient {
 
                 PodcastEpisode episode;
                 try {
-                    episode = createPodcastEpisode(
+                    episode = getPodcastEpisode(
                             item.name(),
                             item.slug(),
                             item.owner().username(),
@@ -586,7 +586,7 @@ public class MixcloudClient {
                         }
                     }
 
-                    podcast.description = buildPodcastDescription(owner.username(), owner.displayName(), selectPrice,
+                    podcast.description = getPodcastDescription(owner.username(), owner.displayName(), selectPrice,
                                                                     owner.city(), owner.country(), owner.biog());
                 }
 
@@ -630,7 +630,7 @@ public class MixcloudClient {
 
                 try {
                     podcast.episodes.add(
-                            createPodcastEpisode(
+                            getPodcastEpisode(
                                     item.name(),
                                     item.slug(),
                                     item.owner().username(),
@@ -703,7 +703,7 @@ public class MixcloudClient {
             }
         }
 
-        podcast.description = buildPodcastDescription(user.username(), user.displayName(), selectPrice,
+        podcast.description = getPodcastDescription(user.username(), user.displayName(), selectPrice,
                                         user.city(), user.country(), user.fragments().shareUserButton_user().biog());
 
         podcast.iTunesAuthorAndOwnerName = user.displayName();
@@ -723,7 +723,7 @@ public class MixcloudClient {
      * Returns an empty string if we can't find out anything about them.
      */
     @NotNull
-    private String buildPodcastDescription(
+    private String getPodcastDescription(
             @NotNull String username,
             @NotNull String displayName,
             @Nullable String selectPrice,
@@ -758,7 +758,7 @@ public class MixcloudClient {
      * Creates a populated podcast episode, given the information needed to do so.
      */
     @NotNull
-    private PodcastEpisode createPodcastEpisode(
+    private PodcastEpisode getPodcastEpisode(
             @NotNull String name,
             @NotNull String slug,
             @NotNull String author,
