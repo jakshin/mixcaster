@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package jakshin.mixcaster;
+package jakshin.mixcaster.download;
 
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -35,11 +35,11 @@ import java.util.List;
  * @param rssPath The -rss option, containing a path/filename. Null means don't write RSS,
  *                blank means write it to the default filename.
  */
-record DownloadOptions(@Nullable String limit, @Nullable String outDirPath, @Nullable String rssPath) {
+public record DownloadOptions(@Nullable String limit, @Nullable String outDirPath, @Nullable String rssPath) {
     /**
      * Creates a new instance.
      */
-    DownloadOptions {
+    public DownloadOptions {
         if (limit != null) {
             checkLimitOption(limit);
         }
@@ -54,7 +54,7 @@ record DownloadOptions(@Nullable String limit, @Nullable String outDirPath, @Nul
      */
     @Contract("_ -> new")
     @NotNull
-    static DownloadOptions of(@NotNull List<String> optionArgs) throws InvalidOptionException {
+    public static DownloadOptions of(@NotNull List<String> optionArgs) throws InvalidOptionException {
         String limit = null, out = null, rss = null;
 
         for (String opt : optionArgs) {
@@ -80,7 +80,7 @@ record DownloadOptions(@Nullable String limit, @Nullable String outDirPath, @Nul
      * @return A string noting a problem with the options, or null if they're A-OK.
      */
     @Nullable
-    static String validate(@NotNull DownloadOptions opts) {
+    public static String validate(@NotNull DownloadOptions opts) {
         if (opts.outDirPath != null) {
             if (opts.rssPath != null) {
                 // if we're downloading to an arbitrary directory, outside our server's content root,

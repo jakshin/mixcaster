@@ -114,6 +114,16 @@ public final class DownloadQueue {
     }
 
     /**
+     * Gets a count of downloads that are active now.
+     * They may or may not actually be downloading.
+     *
+     * @return The number of downloads that are currently active.
+     */
+    public synchronized int activeDownloadCount() {
+        return this.activeDownloads.size();
+    }
+
+    /**
      * Removes an active download from the collection which tracks such things.
      * This is called by the DownloadRunnable inner class upon download completion.
      *

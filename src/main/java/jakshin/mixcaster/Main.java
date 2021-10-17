@@ -17,19 +17,14 @@
 
 package jakshin.mixcaster;
 
-import jakshin.mixcaster.dlqueue.Download;
 import jakshin.mixcaster.dlqueue.DownloadQueue;
+import jakshin.mixcaster.download.DownloadOptions;
+import jakshin.mixcaster.download.Downloader;
 import jakshin.mixcaster.http.HttpServer;
-import jakshin.mixcaster.http.ServableFile;
 import jakshin.mixcaster.install.Installer;
 import jakshin.mixcaster.logging.LogCleaner;
 import jakshin.mixcaster.logging.Logging;
-import jakshin.mixcaster.mixcloud.MixcloudClient;
-import jakshin.mixcaster.mixcloud.MixcloudPlaylistException;
-import jakshin.mixcaster.mixcloud.MixcloudUserException;
 import jakshin.mixcaster.mixcloud.MusicSet;
-import jakshin.mixcaster.podcast.Podcast;
-import jakshin.mixcaster.podcast.PodcastEpisode;
 import jakshin.mixcaster.utils.AppSettings;
 import jakshin.mixcaster.utils.AppVersion;
 import org.jetbrains.annotations.NotNull;
@@ -37,9 +32,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.Serial;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -66,7 +59,7 @@ public class Main {
         String cmd = (args.length > 0) ? args[0].trim() : "";
 
         switch (cmd) {
-            case "-download" -> exitCode = main.download(args);
+            case "-download" -> exitCode = main.download(args);  // can call System.exit() itself
             case "-service" -> exitCode = main.runService();
             case "-install" -> exitCode = main.installService();
             case "-uninstall" -> exitCode = main.uninstallService();
@@ -101,95 +94,23 @@ public class Main {
             logCleanerThread = new Thread(new LogCleaner());
             logCleanerThread.start();
 
-            // parse our command-line arguments
-            MusicSet musicSet = MusicSet.of(Arrays.stream(args).filter(s -> !s.startsWith("-")).toList());
-
-            DownloadOptions opts = DownloadOptions.of(Arrays.stream(args)
-                    .filter(s -> s.startsWith("-") && !s.equals("-download")).toList());
-
-            String problem = DownloadOptions.validate(opts);
-            if (problem != null) {
-                logger.log(ERROR, problem);
-                return 1;
-            }
-
-            if (opts.limit() != null) {
-                System.setProperty("episode_max_count", opts.limit());
-            }
-
-            // query and download
-            String localHostAndPort = System.getProperty("http_hostname") + ":" + System.getProperty("http_port");
-            MixcloudClient client = new MixcloudClient(localHostAndPort);
-
-            if (musicSet.musicType() == null) {
-                String defaultMusicType = client.queryDefaultView(musicSet.username());
-                musicSet = new MusicSet(musicSet.username(), defaultMusicType, null);
-            }
-
-            Podcast podcast = client.query(musicSet);
-
-            if (opts.rssPath() != null) {
-                String rssPath = opts.rssPath();
-
-                if (rssPath.isBlank()) {
-                    String playlist = (musicSet.playlist() == null) ? "" : "." + musicSet.playlist();
-                    rssPath = musicSet.username() + "." + musicSet.musicType() + playlist + ".rss.xml";
-                }
-
-                logger.log(INFO, "Writing podcast RSS to {0}", rssPath);
-                Files.writeString(Paths.get(rssPath), podcast.createXml(), StandardCharsets.UTF_8);
-            }
-
+            // download
+            int result = new Downloader().download(args);
             DownloadQueue queue = DownloadQueue.getInstance();
-            for (PodcastEpisode episode : podcast.episodes) {
-                String localPath = ServableFile.getLocalPath(episode.enclosureUrl.toString());
 
-                if (opts.outDirPath() != null) {
-                    // use the normal filename, but in the requested output directory,
-                    // and without putting the file into a subdirectory based on username
-                    int pos = episode.enclosureUrl.getPath().lastIndexOf('/');
-                    String name = episode.enclosureUrl.getPath().substring(pos + 1);
-                    localPath = Path.of(opts.outDirPath(), name).toString();
-                }
-
-                Download download = new Download(episode.enclosureMixcloudUrl.toString(),
-                        episode.enclosureLengthBytes, episode.enclosureLastModified, localPath);
-                queue.enqueue(download);
-            }
-
-            // ApolloClient and/or its OkHttp instance can still have running non-daemon threads,
-            // which will keep the app from exiting naturally now or when all downloads are complete,
-            // so we either call System.exit() manually, or ask DownloadQueue to do so when it's done
-
-            int downloadCount = queue.queueSize();
-            if (downloadCount == 0) {
-                logger.log(INFO, podcast.episodes.isEmpty() ?
-                        "Nothing to download" : "All music files have already been downloaded");
+            if (queue.activeDownloadCount() == 0) {
+                // ApolloClient's OkHttp instance's non-daemon threads will prevent a natural exit,
+                // and DownloadQueue isn't going force the app to exit, so we need to do so here
                 waitForThreadToFinish(logCleanerThread);
-                System.exit(0);
-            }
-            else {
-                String filesStr = (downloadCount == 1) ? "music file" : "music files";
-                logger.log(INFO, "Downloading {0} {1} ...", new Object[] { downloadCount, filesStr });
-                queue.processQueue(true);
+                System.exit(result);
             }
 
-            return 0;
+            return result;
         }
         catch (MusicSet.InvalidInputException | DownloadOptions.InvalidOptionException ex) {
             logger.log(DEBUG, "Invalid command line", ex);
             printUsage();
             return 1;
-        }
-        catch (MixcloudUserException ex) {
-            logger.log(ERROR, "There''s no Mixcloud user with username {0}", ex.username);
-            logger.log(DEBUG, "", ex);
-            return 2;
-        }
-        catch (MixcloudPlaylistException ex) {
-            logger.log(ERROR, "{0} doesn''t have a \"{1}\" playlist", new String[] {ex.username, ex.playlist});
-            logger.log(DEBUG, "", ex);
-            return 2;
         }
         catch (Throwable ex) {
             // if we haven't initialized logging, logs just go to stdout
