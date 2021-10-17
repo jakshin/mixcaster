@@ -25,7 +25,12 @@
 	</rule>
 	<rule ref="category/java/design.xml">
 		<exclude name="AvoidCatchingGenericException"/>
+		<exclude name="CognitiveComplexity"/>
+		<exclude name="CyclomaticComplexity"/>
+		<exclude name="ExcessiveMethodLength"/>
+		<exclude name="GodClass"/>
 		<exclude name="LawOfDemeter"/> <!-- Way too noisy to be useful -->
+		<exclude name="NPathComplexity"/>
 		<exclude name="UseObjectForClearerAPI"/>
 	</rule>
 	<rule ref="category/java/documentation.xml">

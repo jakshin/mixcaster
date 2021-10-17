@@ -5,6 +5,7 @@
     <option name="customRuleSets">
       <list>
         <option value="$PROJECT_DIR$/definitions/pmd-rules.xml" />
+        <option value="$PROJECT_DIR$/definitions/pmd-complexity-rules.xml" />
       </list>
     </option>
     <option name="options">
