@@ -27,6 +27,7 @@ import jakshin.mixcaster.logging.Logging;
 import jakshin.mixcaster.mixcloud.MixcloudClient;
 import jakshin.mixcaster.mixcloud.MixcloudPlaylistException;
 import jakshin.mixcaster.mixcloud.MixcloudUserException;
+import jakshin.mixcaster.mixcloud.MusicSet;
 import jakshin.mixcaster.podcast.Podcast;
 import jakshin.mixcaster.podcast.PodcastEpisode;
 import jakshin.mixcaster.utils.AppSettings;
@@ -36,6 +37,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -98,137 +100,54 @@ public class Main {
             logCleanerThread.start();
 
             // parse our command-line arguments
-            String musicType = null;
-            String username = null;
-            String playlist = null;
-            String maxEpisodes = null;
-            String outPath = null;
-            String rssPath = null;
-            boolean badArgUsage = false;
+            MusicSet musicSet = MusicSet.of(Arrays.stream(args).filter(s -> !s.startsWith("-")).toList());
 
-            for (String arg : args) {
-                if (arg.equals("-download"))
-                    //noinspection UnnecessaryContinue
-                    continue;
-                else if (arg.startsWith("-max-episodes="))
-                    maxEpisodes = arg.substring("-max-episodes=".length());
-                else if (arg.startsWith("-out="))
-                    outPath = arg.substring("-out=".length());
-                else if (arg.startsWith("-rss="))
-                    rssPath = arg.substring("-rss=".length());
-                else if (arg.equalsIgnoreCase("-rss"))
-                    rssPath = "";  // empty string -> use default
-                else if (arg.equalsIgnoreCase("stream")
-                        || arg.equalsIgnoreCase("shows")
-                        || arg.equalsIgnoreCase("history")
-                        || arg.equalsIgnoreCase("favorites")
-                        || arg.equalsIgnoreCase("playlist"))
-                    musicType = arg.toLowerCase(Locale.ROOT);
-                else if (arg.equals("uploads"))
-                    musicType = "shows";
-                else if (arg.equals("listens"))
-                    musicType = "history";
-                else if (arg.equals("playlists"))
-                    musicType = "playlist";
-                else if (username == null || username.isBlank())
-                    username = arg;
-                else if ("playlist".equals(musicType) && (playlist == null || playlist.isBlank()))
-                    playlist = arg;
-                else {
-                    badArgUsage = true;
-                    break;
-                }
-            }
+            DownloadOptions opts = DownloadOptions.of(Arrays.stream(args)
+                    .filter(s -> s.startsWith("-") && !s.equals("-download")).toList());
 
-            // validate command-line arguments
-            try {
-                if (maxEpisodes != null && !maxEpisodes.isBlank()) {
-                    int max = Integer.parseInt(maxEpisodes);
-                    if (max > 0) System.setProperty("episode_max_count", maxEpisodes);
-                }
-            }
-            catch (NumberFormatException e) {
-                badArgUsage = true;
-            }
-
-            if (username == null || username.isBlank()
-                    || ("playlist".equals(musicType) && (playlist == null || playlist.isBlank())) ) {
-                badArgUsage = true;
-            }
-
-            if (badArgUsage) {
-                printUsage();
+            String problem = DownloadOptions.validate(opts);
+            if (problem != null) {
+                logger.log(ERROR, problem);
                 return 1;
             }
 
-            // more checks and fix-ups for command-line arguments
-            String localHostAndPort = System.getProperty("http_hostname") + ":" + System.getProperty("http_port");
-            MixcloudClient client = null;
-
-            if (musicType == null || musicType.isBlank()) {
-                // use the user's default view
-                client = new MixcloudClient(localHostAndPort);
-                musicType = client.queryDefaultView(username);
-            }
-
-            if ("".equals(outPath)) {
-                outPath = null;
-            }
-
-            if (outPath != null) {
-                if (rssPath != null) {
-                    // if we're downloading to an arbitrary directory, outside our server's content root,
-                    // i.e. the music_dir, there aren't valid URLs for the files, that we can put in the RSS
-                    System.out.println("Sorry, the -out and -rss options can't be used together");
-                    return 1;
-                }
-
-                if (! outPath.endsWith("/")) outPath += "/";
-                if (outPath.startsWith("~/")) {
-                    // expand tilde so -out=~/foo will work (the shell won't expand that tilde itself)
-                    outPath = System.getProperty("user.home") + outPath.substring(1);
-                }
-
-                if (! Files.exists(Paths.get(outPath))) {
-                    System.out.println("Output directory doesn't exist: " + outPath);
-                    return 1;
-                }
-            }
-
-            if ("".equals(rssPath)) {
-                // Use a default filename, in the working directory; username might still be possessive here
-                rssPath = (musicType.equals("playlist"))
-                        ? username + "." + musicType + "." + playlist + ".rss.xml"
-                        : username + "." + musicType + ".rss.xml";
-            }
-            else if (rssPath != null && rssPath.startsWith("~/")) {
-                rssPath = System.getProperty("user.home") + rssPath.substring(1);
-            }
-
-            if (username.endsWith("'s") || username.endsWith("’s") || username.endsWith("‘s")) {
-                // un-possessive the username
-                username = username.substring(0, username.length() - 2);
+            if (opts.limit() != null) {
+                System.setProperty("episode_max_count", opts.limit());
             }
 
             // query and download
-            if (client == null) client = new MixcloudClient(localHostAndPort);
-            Podcast podcast = client.query(username, musicType, playlist);
+            String localHostAndPort = System.getProperty("http_hostname") + ":" + System.getProperty("http_port");
+            MixcloudClient client = new MixcloudClient(localHostAndPort);
 
-            if (rssPath != null) {
+            if (musicSet.musicType() == null) {
+                String defaultMusicType = client.queryDefaultView(musicSet.username());
+                musicSet = new MusicSet(musicSet.username(), defaultMusicType, null);
+            }
+
+            Podcast podcast = client.query(musicSet);
+
+            if (opts.rssPath() != null) {
+                String rssPath = opts.rssPath();
+
+                if (rssPath.isBlank()) {
+                    String playlist = (musicSet.playlist() == null) ? "" : "." + musicSet.playlist();
+                    rssPath = musicSet.username() + "." + musicSet.musicType() + playlist + ".rss.xml";
+                }
+
                 logger.log(INFO, "Writing podcast RSS to {0}", rssPath);
                 Files.writeString(Paths.get(rssPath), podcast.createXml(), StandardCharsets.UTF_8);
             }
 
-            var queue = DownloadQueue.getInstance();
+            DownloadQueue queue = DownloadQueue.getInstance();
             for (PodcastEpisode episode : podcast.episodes) {
                 String localPath = ServableFile.getLocalPath(episode.enclosureUrl.toString());
 
-                if (outPath != null) {
+                if (opts.outDirPath() != null) {
                     // use the normal filename, but in the requested output directory,
                     // and without putting the file into a subdirectory based on username
                     int pos = episode.enclosureUrl.getPath().lastIndexOf('/');
                     String name = episode.enclosureUrl.getPath().substring(pos + 1);
-                    localPath = outPath + name;
+                    localPath = Path.of(opts.outDirPath(), name).toString();
                 }
 
                 Download download = new Download(episode.enclosureMixcloudUrl.toString(),
@@ -254,6 +173,11 @@ public class Main {
             }
 
             return 0;
+        }
+        catch (MusicSet.InvalidInputException | DownloadOptions.InvalidOptionException ex) {
+            logger.log(DEBUG, "Invalid command line", ex);
+            printUsage();
+            return 1;
         }
         catch (MixcloudUserException ex) {
             logger.log(ERROR, "There''s no Mixcloud user with username {0}", ex.username);
@@ -363,16 +287,16 @@ public class Main {
         System.out.println("  " + self + " -download <username> playlist <playlist> [options]\n");
 
         System.out.println("You may make the username a possessive, so the command line reads more naturally.");
-        System.out.println("For example: " + self + " -download NTSRadio’s shows -max-episodes=3\n");
+        System.out.println("For example: " + self + " -download NTSRadio’s shows -limit=3\n");
 
         System.out.println("When specifying a playlist, use the last path segment of its Mixcloud URL,");
         System.out.println("e.g. if its URL is www.mixcloud.com/some-user/playlists/some-super-great-music,");
         System.out.println("specify it on the command line as \"some-super-great-music\".\n");
 
         System.out.println("Options with -download:");
-        System.out.println("  -max-episodes=NUM  Allow NUM episodes, overriding the episode_max_count setting");
-        System.out.println("  -out=DIRECTORY     Save music files to DIRECTORY, overriding the music_dir setting");
-        System.out.println("  -rss=FILE          Write podcast RSS to the given path/file (overwrite existing)");
+        System.out.println("  -limit=NUM      Download NUM files max (default is episode_max_count setting)");
+        System.out.println("  -out=DIRECTORY  Save music files to DIRECTORY (default is music_dir setting)");
+        System.out.println("  -rss=PATH/FILE  Write podcast RSS to FILE (overwriting any pre-existing file)");
     }
 
     /**

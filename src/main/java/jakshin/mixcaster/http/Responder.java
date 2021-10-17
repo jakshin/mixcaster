@@ -18,6 +18,7 @@
 package jakshin.mixcaster.http;
 
 import jakshin.mixcaster.mixcloud.MixcloudException;
+import jakshin.mixcaster.mixcloud.MusicSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -47,16 +48,15 @@ class Responder {
     boolean delegateToPodcastXmlResponder(@NotNull HttpRequest request, @NotNull Writer writer, @NotNull OutputStream out)
             throws HttpException, InterruptedException, IOException, MixcloudException, TimeoutException, URISyntaxException {
 
-        String path = request.path.substring(1);  // strip the leading slash, to avoid empty string in components[0]
-        String[] components = path.split("/");  // trailing empty string not included
-        String last = components[components.length - 1];
-        String penultimate = (components.length >= 2) ? components[components.length - 2] : "";
+        String path = request.path.substring(1);  // strip the leading slash, to avoid empty string in pathParts[0]
+        String[] pathParts = path.split("/");  // trailing empty string not included
 
-        if (
-                (components.length == 1 && components[0].indexOf('.') == -1) ||
-                (components.length == 2 && nonPlaylistMusicTypes.contains(last)) ||
-                (components.length == 3 && ("playlist".equals(penultimate) || "playlists".equals(penultimate)))
-        ) {
+        try {
+            MusicSet musicSet = MusicSet.of(List.of(pathParts));
+            if (musicSet.username().contains(".") && musicSet.musicType() == null) {
+                return false;
+            }
+
             logger.log(INFO, "Request path looks Mixcloud-like, delegating: {0}", request.path);
 
             String xmlUrl = request.path;
@@ -67,17 +67,13 @@ class Responder {
             new PodcastXmlResponder().respond(xmlRequest, writer, out);
             return true;
         }
-
-        return false;
+        catch (MusicSet.InvalidInputException ex) {
+            return false;
+        }
     }
 
     /** Protected constructor to prevent instantiation except by subclasses. */
     protected Responder() {
         // nothing here
     }
-
-    /** Music types and their synonyms, excluding playlist/playlists. */
-    private static final List<String> nonPlaylistMusicTypes = List.of(
-            "stream", "shows", "favorites", "history", "uploads", "listens"
-    );
 }

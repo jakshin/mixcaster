@@ -98,33 +98,35 @@ public class MixcloudClient {
     /**
      * Queries the given user's stream, shows, history, favorites, or playlist.
      *
-     * @param username The Mixcloud user whose music is desired.
-     * @param musicType The type of music desired, i.e. which list to look in.
-     * @param playlist The desired playlist's slug; ignored unless musicType is "playlist".
+     * @param musicSet The set of music desired (Mixcloud user, music type, playlist slug if applicable).
      * @return A Podcast object containing info about the user and their music.
      */
     @NotNull
-    public Podcast query(@NotNull String username, @NotNull String musicType, @Nullable String playlist)
+    public Podcast query(@NotNull MusicSet musicSet)
             throws InterruptedException, MixcloudException, TimeoutException, URISyntaxException {
 
         long started = System.nanoTime();
 
+        String musicType = musicSet.musicType();
+        if (musicType == null) musicType = "";  // nulls aren't allowed in switches
+
         Podcast podcast = switch (musicType) {
-            case "stream" -> this.queryStream(username);
-            case "shows" -> this.queryShows(username);
-            case "history" -> this.queryHistory(username);
-            case "favorites" -> this.queryFavorites(username);
+            case "stream" -> this.queryStream(musicSet.username());
+            case "shows" -> this.queryShows(musicSet.username());
+            case "history" -> this.queryHistory(musicSet.username());
+            case "favorites" -> this.queryFavorites(musicSet.username());
             case "playlist" -> {
-                if (playlist == null || playlist.isBlank())
+                if (musicSet.playlist() == null || musicSet.playlist().isBlank())
                     throw new IllegalArgumentException("Playlist requested but playlist name is empty");
-                yield this.queryPlaylist(username, playlist);
+                yield this.queryPlaylist(musicSet.username(), musicSet.playlist());
             }
-            default -> throw new IllegalArgumentException("Unexpected music type: " + musicType);
+            default -> throw new IllegalArgumentException("Unexpected music type: " + musicSet.musicType());
         };
 
         long elapsedSeconds = (System.nanoTime() - started) / 1_000_000_000;
         String timeSpan = TimeSpanFormatter.formatTimeSpan((int) elapsedSeconds);
-        logger.log(INFO, "Finished querying {0}''s {1} in {2}", new String[] {username, musicType, timeSpan});
+        logger.log(INFO, "Finished querying {0}''s {1} in {2}",
+                new String[] { musicSet.username(), musicSet.musicType(), timeSpan });
 
         return podcast;
     }
@@ -579,7 +581,7 @@ public class MixcloudClient {
                     Boolean isSelect = owner.isSelect();
                     if (isSelect != null && isSelect) {
                         var selectUpsell = owner.selectUpsell();
-                        if (selectUpsell != null) {
+                        if (selectUpsell != null) { //NOPMD - suppressed AvoidDeeplyNestedIfStmts
                             selectPrice = selectUpsell.planInfo().displayAmount();
                         }
                     }

@@ -31,6 +31,7 @@ import java.io.Writer;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.List;
 import java.util.concurrent.TimeoutException;
 
 import static jakshin.mixcaster.logging.Logging.*;
@@ -53,87 +54,42 @@ class PodcastXmlResponder extends Responder {
 
         logger.log(INFO, "Responding to request for podcast: {0}", request.path);
 
-        String path = request.path.substring(1);  // strip the leading slash, to avoid empty string in components[0]
-        String[] components = path.split("/");  // trailing empty string not included
+        String path = request.path.substring(1);  // strip the leading slash, to avoid empty string in pathParts[0]
+        String[] pathParts = path.split("/");  // trailing empty string not included
 
-        // strip ".xml" from the end of the last path component
-        String last = components[components.length - 1];
-        components[components.length - 1] = last.substring(0, last.length() - 4);
-
-        String username, musicType;
-
-        if (components.length == 1) {
-            username = components[0];
-            musicType = defaultViewCache.get(username);
-
-            if (musicType == null) {
-                var client = new MixcloudClient(request.host());
-                musicType = client.queryDefaultView(username);
-                defaultViewCache.put(username, musicType);
-            }
-        }
-        else {
-            musicType = components[components.length - 1];
-
-            username = components[components.length - 2];
-            if (username == null || username.isEmpty()) {
-                throw new HttpException(403, "Forbidden");
-            }
+        if (pathParts[pathParts.length - 1].endsWith(".xml")) {
+            // strip ".xml" from the end of the last path component
+            String last = pathParts[pathParts.length - 1];
+            pathParts[pathParts.length - 1] = last.substring(0, last.length() - 4);
         }
 
-        String thing = String.format("%s's %s", username, musicType);
-        String playlist = "";
-
-        if (username.equals("playlist") || username.equals("playlists")) {
-            if (components.length < 3) {
-                throw new HttpException(403, "Forbidden");
-            }
-
-            playlist = musicType;
-            musicType = "playlist";
-            username = components[components.length - 3];
-
-            if (username == null || username.isEmpty()) {
-                throw new HttpException(403, "Forbidden");
-            }
-
-            thing = String.format("%s's %s playlist", username, playlist);
+        MusicSet musicSet;
+        try {
+            musicSet = MusicSet.of(List.of(pathParts));
+        }
+        catch (MusicSet.InvalidInputException ex) {
+            throw new HttpException(403, "Forbidden", ex);
         }
 
-        musicType = switch (musicType) {  //NOPMD - suppressed UseStringBufferForStringAppends (WTF PMD?)
-          case "stream", "shows", "favorites", "history", "playlist" -> musicType;
-          case "uploads" -> "shows";
-          case "listens" -> "history";
-          case "playlists" -> "playlist";
-          default -> throw new HttpException(403, "Forbidden");
-        };
+        var client = new MixcloudClient(request.host());
 
-        if (musicType.equals("playlist") && playlist.isBlank()) {
-            throw new HttpException(403, "Forbidden");
+        if (musicSet.musicType() == null) {
+            String defaultMusicType = defaultViewCache.get(musicSet.username());
+
+            if (defaultMusicType == null) {
+                defaultMusicType = client.queryDefaultView(musicSet.username());
+                defaultViewCache.put(musicSet.username(), defaultMusicType);
+            }
+
+            musicSet = new MusicSet(musicSet.username(), defaultMusicType, null);
         }
 
-        logger.log(INFO, "The podcast will contain {0}", thing);
-        Podcast podcast = podcastCache.get(thing);
+        String description = (musicSet.playlist() == null)
+                ? String.format("%s's %s", musicSet.username(), musicSet.musicType())
+                : String.format("%s's %s playlist", musicSet.username(), musicSet.playlist());
 
-        if (podcast == null) {
-            try {
-                var client = new MixcloudClient(request.host());
-                podcast = client.query(username, musicType, playlist);
-                podcastCache.put(thing, podcast);
-                podcastCache.scrub();
-            }
-            catch (MixcloudUserException ex) {
-                logger.log(ERROR, "There''s no Mixcloud user with username {0}", ex.username);
-                throw new HttpException(404, "Not Found", ex);
-            }
-            catch (MixcloudPlaylistException ex) {
-                logger.log(ERROR, "{0} doesn''t have a \"{1}\" playlist", new String[] {ex.username, ex.playlist});
-                throw new HttpException(404, "Not Found", ex);
-            }
-        }
-        else {
-            logger.log(INFO, "Podcast retrieved from cache: {0}", thing);
-        }
+        logger.log(INFO, "The podcast will contain {0}", description);
+        Podcast podcast = getOrMakePodcast(description, client, musicSet);
 
         // handle If-Modified-Since
         HttpHeaderWriter headerWriter = new HttpHeaderWriter();
@@ -145,35 +101,7 @@ class PodcastXmlResponder extends Responder {
         }
 
         // kick off any downloads from Mixcloud which are now needed
-        if (podcast.episodes.isEmpty()) {
-            if (! playlist.isBlank())
-                logger.log(INFO, "{0} is empty", thing);
-            else
-                logger.log(INFO, "{0} has no {1}", new String[] { username, musicType });
-        }
-        else {
-            DownloadQueue queue = DownloadQueue.getInstance();
-            int queued = 0;
-
-            for (PodcastEpisode episode : podcast.episodes) {
-                String localPath = ServableFile.getLocalPath(episode.enclosureUrl.toString());
-                Download download = new Download(episode.enclosureMixcloudUrl.toString(),
-                        episode.enclosureLengthBytes, episode.enclosureLastModified, localPath);
-
-                if (queue.enqueue(download)) {
-                    queued++;
-                }
-            }
-
-            if (queued == 0) {
-                logger.log(INFO, "We''ve already queued or downloaded {0}", thing);
-            }
-            else {
-                String filesStr = (queued == 1) ? "music file" : "music files";
-                logger.log(INFO, "Downloading {0} new {1} ...", new Object[] { queued, filesStr });
-                queue.processQueue(false);
-            }
-        }
+        startDownloads(description, podcast, musicSet);
 
         // respond; note that if we send the XML body, we always send the whole thing,
         // as we don't expect to receive a Range header for this type of request
@@ -189,6 +117,79 @@ class PodcastXmlResponder extends Responder {
         out.write(rssXmlBytes);
         out.flush();
         logger.log(INFO, "Done responding to GET request for podcast: {0}", request.path);
+    }
+
+    /**
+     * Gets the described podcast from our cache,
+     * creating and adding it to the cache if needed.
+     */
+    @NotNull
+    private Podcast getOrMakePodcast(@NotNull String description,
+                                     @NotNull MixcloudClient client,
+                                     @NotNull MusicSet musicSet)
+            throws HttpException, InterruptedException, MixcloudException, TimeoutException, URISyntaxException {
+
+        Podcast podcast = podcastCache.get(description);
+
+        if (podcast == null) {
+            try {
+                podcast = client.query(musicSet);
+                podcastCache.put(description, podcast);
+                podcastCache.scrub();
+            }
+            catch (MixcloudUserException ex) {
+                logger.log(ERROR, "There''s no Mixcloud user with username {0}", ex.username);
+                throw new HttpException(404, "Not Found", ex);
+            }
+            catch (MixcloudPlaylistException ex) {
+                logger.log(ERROR, "{0} doesn''t have a \"{1}\" playlist", new String[] {ex.username, ex.playlist});
+                throw new HttpException(404, "Not Found", ex);
+            }
+        }
+        else {
+            logger.log(INFO, "Podcast retrieved from cache: {0}", description);
+        }
+
+        return podcast;
+    }
+
+    /**
+     * Queues and starts downloading any of the given podcast's music files
+     * that don't yet exist locally.
+     */
+    private void startDownloads(@NotNull String description,
+                                @NotNull Podcast podcast,
+                                @NotNull MusicSet musicSet) {
+
+        if (podcast.episodes.isEmpty()) {
+            if (musicSet.playlist() != null)
+                logger.log(INFO, "{0} is empty", description);
+            else
+                logger.log(INFO, "{0} has no {1}", new String[] { musicSet.username(), musicSet.musicType() });
+            return;
+        }
+
+        DownloadQueue queue = DownloadQueue.getInstance();
+        int queued = 0;
+
+        for (PodcastEpisode episode : podcast.episodes) {
+            String localPath = ServableFile.getLocalPath(episode.enclosureUrl.toString());
+            Download download = new Download(episode.enclosureMixcloudUrl.toString(),
+                    episode.enclosureLengthBytes, episode.enclosureLastModified, localPath);
+
+            if (queue.enqueue(download)) {
+                queued++;
+            }
+        }
+
+        if (queued == 0) {
+            logger.log(INFO, "We''ve already queued or downloaded {0}", description);
+        }
+        else {
+            String filesStr = (queued == 1) ? "music file" : "music files";
+            logger.log(INFO, "Downloading {0} new {1} ...", new Object[] { queued, filesStr });
+            queue.processQueue(false);
+        }
     }
 
     /** A cache of Podcast objects we've already built. */
