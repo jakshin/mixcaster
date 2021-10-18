@@ -633,6 +633,12 @@ public class MixcloudClient {
             return false;
         }
 
+        if (Boolean.FALSE.equals(cloudcast.isPlayable())) {
+            logger.log(INFO, () -> "Skipping unplayable cloudcast: " + cloudcast.name()
+                    + " (restricted because: " + cloudcast.restrictedReason() + ")");
+            return false;
+        }
+
         Cloudcast.StreamInfo streamInfo = cloudcast.streamInfo();
         if (streamInfo == null) {
             String msg = String.format("%s didn't receive streamInfo for: %s", queryDescription, cloudcast.name());
