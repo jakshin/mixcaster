@@ -79,7 +79,7 @@ public final class Podcast {
         String p = podcastXmlTemplate.toString();
         p = this.replaceTemplateTag(p, "{{podcast.title}}", this.title);
         p = this.replaceTemplateTag(p, "{{podcast.link}}", this.link.toASCIIString());
-        p = this.replaceTemplateTag(p, "{{podcast.description}}", this.description);
+        p = this.replaceTemplateTag(p, "{{podcast.description}}", this.description.replace("\r\n", "\n"));
 
         p = this.replaceTemplateTag(p, "{{podcast.iTunesAuthorAndOwnerName}}", this.iTunesAuthorAndOwnerName);
         p = this.replaceTemplateTag(p, "{{podcast.iTunesImageUrl}}", this.iTunesImageUrl.toASCIIString());
