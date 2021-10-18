@@ -1,0 +1,41 @@
+# This fragment is used in all of our queries for music
+fragment Cloudcast on Cloudcast {
+    id
+    slug
+    name
+    description
+
+    isAwaitingAudio
+    isDraft
+    isExclusive
+    isExclusivePreviewOnly
+    isLiveRecording
+    isPlayable
+    isPublic
+    isReposted
+    isScheduled
+    isUnlisted
+
+    publishDate
+    restrictedReason
+
+    audioLength
+    picture {
+        urlRoot
+    }
+
+    owner {
+        id
+        displayName
+        username
+    }
+
+    streamInfo {
+        hlsUrl
+        dashUrl
+        url
+        uuid
+    }
+
+    __typename
+}

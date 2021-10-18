@@ -4,61 +4,20 @@ query UserStreamPageQuery(
     $userID: ID!
 ) {
     user(id: $userID) {
-        ...UserStreamPage_user_1G22uz
         id
-    }
-}
-
-fragment UserStreamPage_user_1G22uz on User {
-    id
-    displayName
-    username
-    stream(first: $count, after: $cursor) {
-        edges {
-            cursor
-            node {
-                id
-                slug
-                name
-                description
-
-                isAwaitingAudio
-                isDraft
-                isExclusive
-                isExclusivePreviewOnly
-                isLiveRecording
-                isPlayable
-                isPublic
-                isScheduled
-                isUnlisted
-
-                publishDate
-                restrictedReason
-
-                audioLength
-                picture {
-                    urlRoot
+        displayName
+        username
+        stream(first: $count, after: $cursor) {
+            edges {
+                cursor
+                node {
+                    ...Cloudcast
                 }
-
-                owner {
-                    id
-                    displayName
-                    username
-                }
-
-                streamInfo {
-                    hlsUrl
-                    dashUrl
-                    url
-                    uuid
-                }
-
-                __typename
             }
-        }
-        pageInfo {
-            endCursor
-            hasNextPage
+            pageInfo {
+                endCursor
+                hasNextPage
+            }
         }
     }
 }

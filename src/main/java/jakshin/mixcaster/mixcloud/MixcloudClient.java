@@ -24,6 +24,7 @@ import com.apollographql.apollo.api.Query;
 import com.apollographql.apollo.api.Response;
 import com.apollographql.apollo.exception.ApolloException;
 import jakshin.mixcaster.*;
+import jakshin.mixcaster.fragment.Cloudcast;
 import jakshin.mixcaster.http.ServableFile;
 import jakshin.mixcaster.podcast.Podcast;
 import jakshin.mixcaster.podcast.PodcastEpisode;
@@ -160,55 +161,18 @@ public class MixcloudClient {
                 throw new MixcloudUserException(msg, username);
             }
 
-            var stream = user.fragments().userStreamPage_user_1G22uz().stream();
+            var stream = user.stream();
             for (var edge : stream.edges()) {
-                var item = edge.node();
+                Cloudcast cloudcast = edge.node().fragments().cloudcast();
 
-                if (Boolean.TRUE.equals(item.isExclusive())) {
-                    logger.log(INFO, () -> "Skipping subscriber exclusive: " + item.name());
-                    continue;
-                }
+                if (addEpisodeToPodcast(cloudcast, podcast, queryDescription)) {
+                    episodeCount++;
 
-                var streamInfo = item.streamInfo();
-                if (streamInfo == null) {
-                    String msg = String.format("%s didn't receive streamInfo for: %s", queryDescription, item.name());
-                    throw new MixcloudException(msg);
-                }
-
-                String encodedUrl = streamInfo.url();
-                if (encodedUrl == null) {
-                    String msg = String.format("%s received null streamInfo.url for: %s", queryDescription, item.name());
-                    throw new MixcloudException(msg);
-                }
-
-                var pic = item.picture();
-                String pictureUrl = (pic == null || pic.urlRoot() == null) ? null : MIXCLOUD_IMAGES + pic.urlRoot();
-
-                try {
-                    podcast.episodes.add(
-                            getPodcastEpisode(
-                                    item.name(),
-                                    item.slug(),
-                                    item.owner().username(),
-                                    item.description(),
-                                    item.publishDate(),
-                                    item.audioLength(),
-                                    encodedUrl,
-                                    pictureUrl
-                            )
-                    );
-                }
-                catch (Exception ex) {
-                    logger.log(WARNING, "Skipping item: {0}{1}\t Because: {2}",
-                            new String[] { item.name(), System.lineSeparator(), ex.toString() });
-                    continue;
-                }
-
-                episodeCount++;
-                if (episodeCount >= maxEpisodeCount) {
-                    logger.log(DEBUG, "{0} reached max episode count: {1}",
-                            new String[] { queryDescription, String.valueOf(maxEpisodeCount) });
-                    break;
+                    if (episodeCount >= maxEpisodeCount) {
+                        logger.log(DEBUG, "{0} reached max episode count: {1}",
+                                new String[]{queryDescription, String.valueOf(maxEpisodeCount)});
+                        break;
+                    }
                 }
             }
 
@@ -254,55 +218,18 @@ public class MixcloudClient {
                 throw new MixcloudUserException(msg, username);
             }
 
-            var uploads = user.fragments().userUploadsPage_user_32czeo().uploads();
+            var uploads = user.uploads();
             for (var edge : uploads.edges()) {
-                var item = edge.node();
+                Cloudcast cloudcast = edge.node().fragments().cloudcast();
 
-                if (Boolean.TRUE.equals(item.isExclusive())) {
-                    logger.log(INFO, () -> "Skipping subscriber exclusive: " + item.name());
-                    continue;
-                }
+                if (addEpisodeToPodcast(cloudcast, podcast, queryDescription)) {
+                    episodeCount++;
 
-                var streamInfo = item.streamInfo();
-                if (streamInfo == null) {
-                    String msg = String.format("%s didn't receive streamInfo for: %s", queryDescription, item.name());
-                    throw new MixcloudException(msg);
-                }
-
-                String encodedUrl = streamInfo.url();
-                if (encodedUrl == null) {
-                    String msg = String.format("%s received null streamInfo.url for: %s", queryDescription, item.name());
-                    throw new MixcloudException(msg);
-                }
-
-                var pic = item.picture();
-                String pictureUrl = (pic == null || pic.urlRoot() == null) ? null : MIXCLOUD_IMAGES + pic.urlRoot();
-
-                try {
-                    podcast.episodes.add(
-                            getPodcastEpisode(
-                                    item.name(),
-                                    item.slug(),
-                                    item.owner().username(),
-                                    item.description(),
-                                    item.publishDate(),
-                                    item.audioLength(),
-                                    encodedUrl,
-                                    pictureUrl
-                            )
-                    );
-                }
-                catch (Exception ex) {
-                    logger.log(WARNING, "Skipping item: {0}{1}\t Because: {2}",
-                            new String[] { item.name(), System.lineSeparator(), ex.toString() });
-                    continue;
-                }
-
-                episodeCount++;
-                if (episodeCount >= maxEpisodeCount) {
-                    logger.log(DEBUG, "{0} reached max episode count: {1}",
-                            new String[] { queryDescription, String.valueOf(maxEpisodeCount) });
-                    break;
+                    if (episodeCount >= maxEpisodeCount) {
+                        logger.log(DEBUG, "{0} reached max episode count: {1}",
+                                new String[]{queryDescription, String.valueOf(maxEpisodeCount)});
+                        break;
+                    }
                 }
             }
 
@@ -347,55 +274,18 @@ public class MixcloudClient {
                 throw new MixcloudUserException(msg, username);
             }
 
-            var favorites = user.fragments().userFavoritesPage_user_1G22uz().favorites();
+            var favorites = user.favorites();
             for (var edge : favorites.edges()) {
-                var item = edge.node();
+                Cloudcast cloudcast = edge.node().fragments().cloudcast();
 
-                if (Boolean.TRUE.equals(item.isExclusive())) {
-                    logger.log(INFO, () -> "Skipping subscriber exclusive: " + item.name());
-                    continue;
-                }
+                if (addEpisodeToPodcast(cloudcast, podcast, queryDescription)) {
+                    episodeCount++;
 
-                var streamInfo = item.streamInfo();
-                if (streamInfo == null) {
-                    String msg = String.format("%s didn't receive streamInfo for: %s", queryDescription, item.name());
-                    throw new MixcloudException(msg);
-                }
-
-                String encodedUrl = streamInfo.url();
-                if (encodedUrl == null) {
-                    String msg = String.format("%s received null streamInfo.url for: %s", queryDescription, item.name());
-                    throw new MixcloudException(msg);
-                }
-
-                var pic = item.picture();
-                String pictureUrl = (pic == null || pic.urlRoot() == null) ? null : MIXCLOUD_IMAGES + pic.urlRoot();
-
-                try {
-                    podcast.episodes.add(
-                            getPodcastEpisode(
-                                    item.name(),
-                                    item.slug(),
-                                    item.owner().username(),
-                                    item.description(),
-                                    item.publishDate(),
-                                    item.audioLength(),
-                                    encodedUrl,
-                                    pictureUrl
-                            )
-                    );
-                }
-                catch (Exception ex) {
-                    logger.log(WARNING, "Skipping item: {0}{1}\t Because: {2}",
-                            new String[] { item.name(), System.lineSeparator(), ex.toString() });
-                    continue;
-                }
-
-                episodeCount++;
-                if (episodeCount >= maxEpisodeCount) {
-                    logger.log(DEBUG, "{0} reached max episode count: {1}",
-                            new String[] { queryDescription, String.valueOf(maxEpisodeCount) });
-                    break;
+                    if (episodeCount >= maxEpisodeCount) {
+                        logger.log(DEBUG, "{0} reached max episode count: {1}",
+                                new String[]{queryDescription, String.valueOf(maxEpisodeCount)});
+                        break;
+                    }
                 }
             }
 
@@ -440,67 +330,18 @@ public class MixcloudClient {
                 throw new MixcloudUserException(msg, username);
             }
 
-            var history = user.fragments().userListensPage_user_1G22uz().listeningHistory();
+            var history = user.listeningHistory();
             for (var edge : history.edges()) {
-                var item = edge.node().cloudcast();
+                Cloudcast cloudcast = edge.node().cloudcast().fragments().cloudcast();
 
-                if (Boolean.TRUE.equals(item.isExclusive())) {
-                    logger.log(INFO, () -> "Skipping subscriber exclusive: " + item.name());
-                    continue;
-                }
+                if (addEpisodeToPodcast(cloudcast, podcast, queryDescription)) {
+                    episodeCount++;
 
-                var streamInfo = item.streamInfo();
-                if (streamInfo == null) {
-                    String msg = String.format("%s didn't receive streamInfo for: %s", queryDescription, item.name());
-                    throw new MixcloudException(msg);
-                }
-
-                String encodedUrl = streamInfo.url();
-                if (encodedUrl == null) {
-                    String msg = String.format("%s received null streamInfo.url for: %s", queryDescription, item.name());
-                    throw new MixcloudException(msg);
-                }
-
-                var pic = item.picture();
-                String pictureUrl = (pic == null || pic.urlRoot() == null) ? null : MIXCLOUD_IMAGES + pic.urlRoot();
-
-                PodcastEpisode episode;
-                try {
-                    episode = getPodcastEpisode(
-                            item.name(),
-                            item.slug(),
-                            item.owner().username(),
-                            item.description(),
-                            item.publishDate(),
-                            item.audioLength(),
-                            encodedUrl,
-                            pictureUrl
-                    );
-                }
-                catch (Exception ex) {
-                    logger.log(WARNING, "Skipping item: {0}{1}\t Because: {2}",
-                            new String[] { item.name(), System.lineSeparator(), ex.toString() });
-                    continue;
-                }
-
-                // history can contain duplicates, which we eliminate
-                boolean dupe = false;
-                for (PodcastEpisode ep : podcast.episodes) {
-                    if (ep.enclosureUrl.equals(episode.enclosureUrl)) {
-                        logger.log(DEBUG, () -> "Skipping duplicate history item: " + item.name());
-                        dupe = true;
+                    if (episodeCount >= maxEpisodeCount) {
+                        logger.log(DEBUG, "{0} reached max episode count: {1}",
+                                new String[]{queryDescription, String.valueOf(maxEpisodeCount)});
                         break;
                     }
-                }
-
-                if (dupe) continue;
-                podcast.episodes.add(episode);
-
-                episodeCount++;
-                if (episodeCount >= maxEpisodeCount) {
-                    logger.log(DEBUG, "{0} reached max episode count: {1}",
-                            new String[] { queryDescription, String.valueOf(maxEpisodeCount) });
-                    break;
                 }
             }
 
@@ -530,7 +371,7 @@ public class MixcloudClient {
 
         logger.log(INFO, "Querying {0}''s playlist: {1}", new String[] { username, slug });
 
-        var podcast = new Podcast();
+        Podcast podcast = null;
         int episodeCount = 0, maxEpisodeCount = getEpisodeMaxCountSetting();
         String cursor = null;
 
@@ -541,9 +382,9 @@ public class MixcloudClient {
             var data = (UserPlaylistPageQuery.Data) runQuery(query, queryDescription);
 
             // handle the case where the user and/or playlist doesn't exist
-            var fragmentHolder = data.playlist();
-            if (fragmentHolder == null) {
-                boolean userExists = false;
+            var playlist = data.playlist();
+            if (playlist == null) {
+                boolean userExists = true;
 
                 try {
                     var userQuery = new UserDefaultQuery(UserLookup.builder().username(username).build());
@@ -564,95 +405,22 @@ public class MixcloudClient {
                 }
             }
 
-            // the actual playlist object we want is in a fragment
-            var playlist = fragmentHolder.fragments().userPlaylistPage_playlist_1G22uz();
-
-            if (podcast.userID == null) {
-                // populate the podcast's properties on our first time through the loop
-                podcast.userID = playlist.owner().id();
-                podcast.title = playlist.name();  // "%s's playlist: %s" might also be nice
-                podcast.link = new URI(MIXCLOUD_WEB + username + "/playlists/" + slug + "/");
-
-                podcast.description = playlist.description();
-                if (podcast.description == null || podcast.description.isBlank()) {
-                    var owner = playlist.owner();
-
-                    String selectPrice = null;
-                    Boolean isSelect = owner.isSelect();
-                    if (isSelect != null && isSelect) {
-                        var selectUpsell = owner.selectUpsell();
-                        if (selectUpsell != null) { //NOPMD - suppressed AvoidDeeplyNestedIfStmts
-                            selectPrice = selectUpsell.planInfo().displayAmount();
-                        }
-                    }
-
-                    podcast.description = getPodcastDescription(owner.username(), owner.displayName(), selectPrice,
-                                                                    owner.city(), owner.country(), owner.biog());
-                }
-
-                podcast.iTunesAuthorAndOwnerName = playlist.owner().displayName();
-
-                String picUrlRoot = null;
-                var playlistPic = playlist.picture();
-                if (playlistPic != null) picUrlRoot = playlistPic.urlRoot();
-
-                if (picUrlRoot == null || picUrlRoot.isBlank()) {
-                    // the playlist doesn't have a picture, fall back to the owner's
-                    var ownerPic = playlist.owner().picture();
-                    if (ownerPic != null) picUrlRoot = ownerPic.urlRoot();
-                }
-
-                podcast.iTunesImageUrl = new URI(MIXCLOUD_IMAGES + picUrlRoot);
+            if (podcast == null) {
+                // populate the podcast's properties from our first page of results
+                podcast = getPodcastForPlaylist(playlist, username, slug);
             }
 
             for (var edge : playlist.items().edges()) {
-                var item = edge.node().cloudcast();
+                Cloudcast cloudcast = edge.node().cloudcast().fragments().cloudcast();
 
-                if (Boolean.TRUE.equals(item.isExclusive())) {
-                    logger.log(INFO, () -> "Skipping subscriber exclusive: " + item.name());
-                    continue;
-                }
+                if (addEpisodeToPodcast(cloudcast, podcast, queryDescription)) {
+                    episodeCount++;
 
-                var streamInfo = item.streamInfo();
-                if (streamInfo == null) {
-                    String msg = String.format("%s didn't receive streamInfo for: %s", queryDescription, item.name());
-                    throw new MixcloudException(msg);
-                }
-
-                String encodedUrl = streamInfo.url();
-                if (encodedUrl == null) {
-                    String msg = String.format("%s received null streamInfo.url for: %s", queryDescription, item.name());
-                    throw new MixcloudException(msg);
-                }
-
-                var pic = item.picture();
-                String pictureUrl = (pic == null || pic.urlRoot() == null) ? null : MIXCLOUD_IMAGES + pic.urlRoot();
-
-                try {
-                    podcast.episodes.add(
-                            getPodcastEpisode(
-                                    item.name(),
-                                    item.slug(),
-                                    item.owner().username(),
-                                    item.description(),
-                                    item.publishDate(),
-                                    item.audioLength(),
-                                    encodedUrl,
-                                    pictureUrl
-                            )
-                    );
-                }
-                catch (Exception ex) {
-                    logger.log(WARNING, "Skipping item: {0}{1}\t Because: {2}",
-                            new String[] { item.name(), System.lineSeparator(), ex.toString() });
-                    continue;
-                }
-
-                episodeCount++;
-                if (episodeCount >= maxEpisodeCount) {
-                    logger.log(DEBUG, "{0} reached max episode count: {1}",
-                            new String[] { queryDescription, String.valueOf(maxEpisodeCount) });
-                    break;
+                    if (episodeCount >= maxEpisodeCount) {
+                        logger.log(DEBUG, "{0} reached max episode count: {1}",
+                                new String[]{queryDescription, String.valueOf(maxEpisodeCount)});
+                        break;
+                    }
                 }
             }
 
@@ -714,6 +482,54 @@ public class MixcloudClient {
             if (urlRoot != null && !urlRoot.isBlank())
                 podcast.iTunesImageUrl = new URI(MIXCLOUD_IMAGES + urlRoot);
         }
+
+        return podcast;
+    }
+
+    /**
+     * Creates a podcast object populated with the given playlist's properties.
+     * No episodes are included.
+     */
+    @NotNull
+    private Podcast getPodcastForPlaylist(@NotNull UserPlaylistPageQuery.Playlist playlist,
+                                          @NotNull String username,
+                                          @NotNull String slug) throws URISyntaxException {
+
+        var podcast = new Podcast();
+        podcast.userID = playlist.owner().id();
+        podcast.title = playlist.name();  // "%s's playlist: %s" might also be nice
+        podcast.link = new URI(MIXCLOUD_WEB + username + "/playlists/" + slug + "/");
+
+        podcast.description = playlist.description();
+        if (podcast.description == null || podcast.description.isBlank()) {
+            var owner = playlist.owner();
+
+            String selectPrice = null;
+            Boolean isSelect = owner.isSelect();
+            if (isSelect != null && isSelect) {
+                var selectUpsell = owner.selectUpsell();
+                if (selectUpsell != null) { //NOPMD - suppressed AvoidDeeplyNestedIfStmts
+                    selectPrice = selectUpsell.planInfo().displayAmount();
+                }
+            }
+
+            podcast.description = getPodcastDescription(owner.username(), owner.displayName(), selectPrice,
+                    owner.city(), owner.country(), owner.biog());
+        }
+
+        podcast.iTunesAuthorAndOwnerName = playlist.owner().displayName();
+
+        String picUrlRoot = null;
+        var playlistPic = playlist.picture();
+        if (playlistPic != null) picUrlRoot = playlistPic.urlRoot();
+
+        if (picUrlRoot == null || picUrlRoot.isBlank()) {
+            // the playlist doesn't have a picture, fall back to the owner's
+            var ownerPic = playlist.owner().picture();
+            if (ownerPic != null) picUrlRoot = ownerPic.urlRoot();
+        }
+
+        podcast.iTunesImageUrl = new URI(MIXCLOUD_IMAGES + picUrlRoot);
 
         return podcast;
     }
@@ -801,6 +617,66 @@ public class MixcloudClient {
             episode.iTunesImageUrl = new URI(pictureUrl);
 
         return episode;
+    }
+
+    /**
+     * Adds an episode for the given cloudcast to the given podcast.
+     * Returns a boolean indicating whether an episode was added
+     * (some cloudcasts can't be added, e.g. because they're not playable),
+     */
+    private boolean addEpisodeToPodcast(@NotNull Cloudcast cloudcast,
+                                        @NotNull Podcast podcast,
+                                        @NotNull String queryDescription) throws MixcloudException {
+
+        if (Boolean.TRUE.equals(cloudcast.isExclusive())) {
+            logger.log(INFO, () -> "Skipping subscriber exclusive: " + cloudcast.name());
+            return false;
+        }
+
+        Cloudcast.StreamInfo streamInfo = cloudcast.streamInfo();
+        if (streamInfo == null) {
+            String msg = String.format("%s didn't receive streamInfo for: %s", queryDescription, cloudcast.name());
+            throw new MixcloudException(msg);
+        }
+
+        String encodedUrl = streamInfo.url();
+        if (encodedUrl == null) {
+            String msg = String.format("%s received null streamInfo.url for: %s", queryDescription, cloudcast.name());
+            throw new MixcloudException(msg);
+        }
+
+        Cloudcast.Picture pic = cloudcast.picture();
+        String pictureUrl = (pic == null || pic.urlRoot() == null) ? null : MIXCLOUD_IMAGES + pic.urlRoot();
+
+        PodcastEpisode episode;
+        try {
+            episode = getPodcastEpisode(
+                    cloudcast.name(),
+                    cloudcast.slug(),
+                    cloudcast.owner().username(),
+                    cloudcast.description(),
+                    cloudcast.publishDate(),
+                    cloudcast.audioLength(),
+                    encodedUrl,
+                    pictureUrl
+            );
+        }
+        catch (Exception ex) {
+            logger.log(WARNING, "Skipping item: {0}{1}\t Because: {2}",
+                    new String[] { cloudcast.name(), System.lineSeparator(), ex.toString() });
+            return false;
+        }
+
+        // eliminate duplicates (which can happen in listening history, not sure about elsewhere)
+        for (PodcastEpisode already : podcast.episodes) {
+            if (already.enclosureUrl.equals(episode.enclosureUrl)) {
+                logger.log(DEBUG, () -> "Skipping duplicate history item: " + cloudcast.name());
+                return false;
+            }
+        }
+
+        podcast.episodes.add(episode);
+        return true;
     }
 
     /**

@@ -4,91 +4,51 @@ query UserPlaylistPageQuery(
     $lookup: PlaylistLookup!
 ) {
     playlist: playlistLookup(lookup: $lookup) {
-        ...UserPlaylistPage_playlist_1G22uz
         id
-    }
-}
-
-fragment UserPlaylistPage_playlist_1G22uz on Playlist {
-    id
-    name
-    slug
-    description
-    picture {
-        urlRoot
-    }
-
-    owner {
-        id
-        displayName
-        username
+        name
+        slug
+        description
         picture {
             urlRoot
         }
-        isSelect
-        selectUpsell {
-            planInfo {
-                displayAmount
+
+        owner {
+            id
+            displayName
+            username
+            picture {
+                urlRoot
             }
+
+            isSelect
+            selectUpsell {
+                planInfo {
+                    displayAmount
+                }
+            }
+
+            city
+            country
+            biog
         }
-        city
-        country
-        biog
-    }
 
-    items(first: $count, after: $cursor) {
-        totalCount
-        edges {
-            cursor
-            node {
-                cloudcast {
+        items(first: $count, after: $cursor) {
+            totalCount
+            edges {
+                cursor
+                node {
+                    cloudcast {
+                        ...Cloudcast
+                    }
+
                     id
-                    slug
-                    name
-                    description
-
-                    isAwaitingAudio
-                    isDraft
-                    isExclusive
-                    isExclusivePreviewOnly
-                    isLiveRecording
-                    isPlayable
-                    isPublic
-                    isReposted
-                    isScheduled
-                    isUnlisted
-
-                    publishDate
-                    restrictedReason
-
-                    audioLength
-                    picture {
-                        urlRoot
-                    }
-
-                    owner {
-                        id
-                        displayName
-                        username
-                    }
-
-                    streamInfo {
-                        hlsUrl
-                        dashUrl
-                        url
-                        uuid
-                    }
-
                     __typename
                 }
-
-                id
-                __typename
             }
-        }
-        pageInfo {
-            endCursor
-            hasNextPage
+            pageInfo {
+                endCursor
+                hasNextPage
+            }
         }
     }
 }

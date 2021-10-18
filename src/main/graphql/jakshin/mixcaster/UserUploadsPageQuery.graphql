@@ -5,61 +5,20 @@ query UserUploadsPageQuery(
     $userID: ID!
 ) {
     user(id: $userID) {
-        ...UserUploadsPage_user_32czeo
         id
-    }
-}
-
-fragment UserUploadsPage_user_32czeo on User {
-    id
-    displayName
-    username
-    uploads(first: $count, after: $cursor, orderBy: $orderBy) {
-        edges {
-            cursor
-            node {
-                id
-                slug
-                name
-                description
-
-                isAwaitingAudio
-                isDraft
-                isExclusive
-                isExclusivePreviewOnly
-                isLiveRecording
-                isPlayable
-                isPublic
-                isScheduled
-                isUnlisted
-
-                publishDate
-                restrictedReason
-
-                audioLength
-                picture {
-                    urlRoot
+        displayName
+        username
+        uploads(first: $count, after: $cursor, orderBy: $orderBy) {
+            edges {
+                cursor
+                node {
+                    ...Cloudcast
                 }
-
-                owner {
-                    id
-                    displayName
-                    username
-                }
-
-                streamInfo {
-                    hlsUrl
-                    dashUrl
-                    url
-                    uuid
-                }
-
-                __typename
             }
-        }
-        pageInfo {
-            endCursor
-            hasNextPage
+            pageInfo {
+                endCursor
+                hasNextPage
+            }
         }
     }
 }

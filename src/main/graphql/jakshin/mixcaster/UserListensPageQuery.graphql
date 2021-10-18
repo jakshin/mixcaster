@@ -4,66 +4,25 @@ query UserListensPageQuery(
     $userID: ID!
 ) {
     user(id: $userID) {
-        ...UserListensPage_user_1G22uz
         id
-    }
-}
-
-fragment UserListensPage_user_1G22uz on User {
-    id
-    isViewer
-    displayName
-    username
-    listeningHistory(first: $count, after: $cursor) {
-        totalCount
-        edges {
-            cursor
-            node {
-                cloudcast {
-                    id
-                    slug
-                    name
-                    description
-
-                    isAwaitingAudio
-                    isDraft
-                    isExclusive
-                    isExclusivePreviewOnly
-                    isLiveRecording
-                    isPlayable
-                    isPublic
-                    isScheduled
-                    isUnlisted
-
-                    publishDate
-                    restrictedReason
-
-                    audioLength
-                    picture {
-                        urlRoot
+        isViewer
+        displayName
+        username
+        listeningHistory(first: $count, after: $cursor) {
+            totalCount
+            edges {
+                cursor
+                node {
+                    cloudcast {
+                        ...Cloudcast
                     }
-
-                    owner {
-                        id
-                        displayName
-                        username
-                    }
-
-                    streamInfo {
-                        hlsUrl
-                        dashUrl
-                        url
-                        uuid
-                    }
-
                     __typename
                 }
-                __typename
             }
-        }
-        pageInfo {
-            endCursor
-            hasNextPage
+            pageInfo {
+                endCursor
+                hasNextPage
+            }
         }
     }
 }
