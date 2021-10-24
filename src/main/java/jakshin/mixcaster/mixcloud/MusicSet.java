@@ -80,6 +80,14 @@ public record MusicSet(@NotNull String username, @Nullable String musicType, @Nu
             throw new InvalidInputException("Wrong number of arguments: " + input.size());
         }
 
+        final String mixcloudSite = "https://www.mixcloud.com/";  // with trailing slash, so we strip it below
+        if (input.size() == 1 && input.get(0).startsWith(mixcloudSite)) {
+            // split the URL into its parts, and recurse
+            String path = input.get(0).substring(mixcloudSite.length());
+            String[] pathParts = path.split("/");  // trailing empty string not included
+            return of(List.of(pathParts));
+        }
+
         String username = input.get(0);
         String musicType = (input.size() > 1) ? input.get(1).toLowerCase(Locale.ROOT) : null;
         String playlist = (input.size() > 2) ? input.get(2) : null;

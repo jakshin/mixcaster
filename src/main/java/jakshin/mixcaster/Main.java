@@ -206,6 +206,7 @@ public class Main {
         System.out.println("and additional options are available.\n");
 
         System.out.println("Usage with -download:");
+        System.out.println("  " + self + " -download <mixcloud-url> [options]");
         System.out.println("  " + self + " -download <username> [stream|shows|favorites|history] [options]");
         System.out.println("  " + self + " -download <username> playlist <playlist> [options]\n");
 
