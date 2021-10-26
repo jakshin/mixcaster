@@ -23,27 +23,13 @@ After downloading a release, unzip it to wherever you'd like to keep it, and tak
 
 Then open your podcast app and add a URL. For example, in macOS's Podcasts app, use File > Add a Show by URL; in iOS's, use Library > (...) button in the upper right-hand corner > Add a Show by URL.
 
-The Mixcaster URL's hostname is `localhost` if your podcast app is running on same machine as Mixcaster, or something like MachineName.local if you're on a different device connected to the same network, like say a mobile device. Mixcaster runs on port 6499 by default (configurable in `mixcaster-settings.properties`), so add that after the hostname.
+The Mixcaster podcast URL is just like the original Mixcloud URL, but replacing `https://www.mixcloud.com` with your Mixcaster server's hostname and port, which is `http://localhost:6499` by default (you can configure the port in `mixcaster-settings.properties`).
 
-The URL's path starts with the Mixcloud user's username, which you can see in their URL. Then add which music collection you want to subscribe to: `stream`, `shows`, `favorites`, `history`, or `playlist`. You can use `uploads` as a synonym for `shows`, and `listens` as a synonym for `history`. If it's a playlist you're interested in, you'll need to also add the last path component from its Mixcloud URL. And lastly, you can add `.xml` at the end if it makes your podcast client happier.
+So for example, let's say you want to subscribe to Armada Music's shows. Their Mixcloud URL is https://www.mixcloud.com/ArmadaMusicOfficial/, so you can use http://localhost:6499/ArmadaMusicOfficial/ to subscribe to their shows in Mixcaster.
 
-So for example, let's say you want to subscribe to Armada Music's shows. Their Mixcloud URL is https://www.mixcloud.com/ArmadaMusicOfficial/, so their username is `ArmadaMusicOfficial`. You can use any of these URLs to subscribe to their shows in Mixcaster:
-* http://localhost:6499/ArmadaMusicOfficial/shows/
-* http://localhost:6499/ArmadaMusicOfficial/shows.xml
-* http://localhost:6499/ArmadaMusicOfficial/uploads/
-* http://localhost:6499/ArmadaMusicOfficial/uploads.xml
+Or maybe you want to subscribe to their [Armada Trance Mixes](https://www.mixcloud.com/ArmadaMusicOfficial/playlists/armada-trance-mixes/) playlist? The Mixcaster URL for that is http://localhost:6499/ArmadaMusicOfficial/playlists/armada-trance-mixes/.
 
-Want to subscribe to their [Armada Trance Mixes](https://www.mixcloud.com/ArmadaMusicOfficial/playlists/armada-trance-mixes/) playlist? Its URL ends with "armada-trance-mixes", so you can use Mixcaster URLs like these (`playlist` and `playlists` are interchangeable here):
-* http://localhost:6499/ArmadaMusicOfficial/playlists/armada-trance-mixes/
-* http://localhost:6499/ArmadaMusicOfficial/playlist/armada-trance-mixes.xml
-
-[Armin van Buuren](https://www.mixcloud.com/ArminvanBuuren/) and [Jose Solis](https://www.mixcloud.com/DJoseSolis/) are both on Mixcloud Select, so you can subscribe to access their shows offline. But what if you wanted to subscribe to their favorites or listening history?
-* http://localhost:6499/ArminvanBuuren/favorites/
-* http://localhost:6499/DJoseSolis/listens/
-* http://localhost:6499/DJoseSolis/history.xml
-
-You can also use a Mixcaster URL containing only a username, and Mixcaster will figure out their default view (e.g. `stream` or `shows`), and return a podcast containing it. So for example: 
-* http://localhost:6499/Trance19800524/
+You can use a bookmarklet on any Mixcloud page that lists music, to load RSS for a podcast containing that music. Browse to your Mixcaster server's root (probably http://localhost:6499) for easy access to the bookmarklet.
 
 When you first subscribe to a user's music, Mixcaster won't have had a chance to download their music files from Mixcloud yet. Mixcaster tries to make this clear by appending `[DOWNLOADING, CAN'T PLAY YET]` to the title of any episode whose music file isn't fully downloaded yet, because trying to play those podcast episodes won't work. Just wait a few minutes, and when your podcast app next refreshes the podcast (or when you refresh it manually, if you're the impatient type), some or all of the episodes' files will have finished downloading, and you'll be able to play them.
 
@@ -53,14 +39,10 @@ One way to minimize both of those minor hassles is to first download the music y
 
 ### Downloading music from a command line
 
-Building a command line to download music works much like building a URL to subscribe to a podcast. Start with `mixcaster -download`, then add a Mixcloud username, then optionally the music collection of interest (`shows`, `favorites`, etc.), or leave that part off to get music from the user's default view, which is likely `stream` or `shows`. If you're downloading a `playlist`, you'll need to also give the last path component of its URL.
+You can pass a Mixcloud URL that lists music to Mixcaster, and it'll download music files listed on that page.
+For example: `mixcaster -download https://www.mixcloud.com/ArmadaMusicOfficial/uploads/`
 
-For example:
-* `mixcaster -download Trance19800524`
-* `mixcaster -download ArminvanBuuren favorites`
-* `mixcaster -download ArmadaMusicOfficial playlist armada-trance-mixes`
-
-Run `mixcaster -help` for full usage details, including options which control how many music files to download, and where to put them.
+Run `mixcaster -help` for full usage details, including options which limit how many music files will be downloaded, and control where to put them.
 
 ### A note about episode sorting
 

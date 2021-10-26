@@ -9,16 +9,19 @@
 
 	body {
 		font-family: sans-serif;
-		font-size: 14pt;
+		font-size: 10pt;
 		text-align: center;
 	}
 	.title {
+		font-size: 14pt;
 		font-weight: bold;
 	}
 	.subtitle {
 		color: #999;
-		font-size: 10pt;
 		margin-top: 4pt;
+	}
+	.bookmarklet {
+		margin-top: 20pt;
 	}
 
 	</style>
@@ -650,6 +653,21 @@ agAAAAAElFTkSuQmCC">
 
 <div class="title">Mixcaster {{version}}</div>
 <div class="subtitle">Subscribe to Mixcloud users as RSS podcasts</div>
+
+<div class="bookmarklet">Use this bookmarklet on a Mixcloud page that lists music,<br>
+	to load RSS for a podcast containing that music:
+	<a href="javascript:(function(){
+		if (location.host != 'www.mixcloud.com' ||
+			document.querySelector('section.profile-header') == null)
+		{
+			alert('This isn\'t a Mixcloud page that lists music.');
+			return;
+		}
+
+		var podcastUrl = 'http://localhost:{{port}}' + location.pathname;
+		location.href = podcastUrl;
+	})();">Mixcaster</a>
+</div>
 
 </body>
 </html>

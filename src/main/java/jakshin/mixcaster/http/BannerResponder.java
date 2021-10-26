@@ -59,7 +59,9 @@ class BannerResponder extends Responder {
             if (BannerResponder.resourceBuffer == null) {
                 logger.log(DEBUG, "Loading banner.html resource");
                 StringBuilder sb = ResourceLoader.loadResourceAsText("http/banner.html", 41_000);
-                BannerResponder.resourceBuffer = sb.toString().replace("{{version}}", AppVersion.display);
+                BannerResponder.resourceBuffer = sb.toString()
+                        .replace("{{version}}", AppVersion.display)
+                        .replace("{{port}}", System.getProperty("http_port"));
             }
             else {
                 logger.log(DEBUG, "Retrieved banner.html from cache");
