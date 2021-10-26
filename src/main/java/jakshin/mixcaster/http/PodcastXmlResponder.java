@@ -152,6 +152,19 @@ class PodcastXmlResponder extends Responder {
             logger.log(INFO, "Podcast retrieved from cache: {0}", description);
         }
 
+        // Apple Podcasts chokes on empty podcasts, so return a 404 in that case,
+        // to hopefully make the problem easier to see and understand
+        if (podcast.episodes.isEmpty()) {
+            String msg = String.format("%s has no %s", musicSet.username(), musicSet.musicType());
+            if ("playlist".equals(musicSet.musicType()))
+                msg = String.format("%s's \"%s\" playlist is empty", musicSet.username(), musicSet.playlist());
+            else if ("stream".equals(musicSet.musicType()))
+                msg = String.format("%s's stream is empty", musicSet.username());
+
+            logger.log(ERROR, msg);
+            throw new PodcastHttpException(msg);
+        }
+
         return podcast;
     }
 
