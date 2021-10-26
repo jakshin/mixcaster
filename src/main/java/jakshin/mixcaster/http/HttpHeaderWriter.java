@@ -19,6 +19,8 @@ package jakshin.mixcaster.http;
 
 import jakshin.mixcaster.utils.AppVersion;
 import jakshin.mixcaster.utils.DateFormatter;
+import jakshin.mixcaster.utils.ResourceLoader;
+import jakshin.mixcaster.utils.XmlEntities;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -239,24 +241,99 @@ class HttpHeaderWriter {
         this.addHeader(out, log, "HTTP/1.1 %d %s", responseCode, reasonPhrase);
         this.addCommonHeaders(out, log);
 
-        this.addHeader(out, log, "Content-Type: text/plain");
+        String messageBody = getHtmlErrorBody(responseCode, reasonPhrase, err);
+        String contentType = "text/html";
 
-        String messageBody = null;
-        if (!isHeadRequest) {
-            messageBody = err.getClass().getCanonicalName() + ": " + err.getMessage() + "\r\n";
-            this.addHeader(out, log, "Content-Length: %d", messageBody.length());
+        if (messageBody == null) {
+            // fall back to plain text, so we can display error messages even if we can't load error.html
+            messageBody = getTextErrorBody(responseCode, reasonPhrase, err);
+            contentType = "text/plain";
         }
+
+        this.addHeader(out, log, "Content-Length: %d", messageBody.length());
+        this.addHeader(out, log, "Content-Type: %s", contentType);
 
         logger.log(DEBUG, "Sending HTTP error response headers{0}", log);
 
         writer.write(out.toString());
         writer.write("\r\n");
 
-        if (messageBody != null) {
+        if (! isHeadRequest) {
             writer.write(messageBody);
         }
 
         writer.flush();
+    }
+
+    /** The HTML template for error pages. */
+    private static StringBuilder errorPageTemplate;
+
+    /**
+     * Gets an HTML error page's body, using the error.html resource as a template,
+     * and returning null if there's a problem doing so.
+     */
+    @Nullable
+    private String getHtmlErrorBody(int responseCode, @NotNull String reasonPhrase, @NotNull Throwable err) {
+        synchronized (HttpHeaderWriter.class) {
+            if (errorPageTemplate != null) {
+                logger.log(DEBUG, "Using cached error.html resource");
+            }
+            else try {
+                logger.log(DEBUG, "Loading error.html resource");
+                errorPageTemplate = ResourceLoader.loadResourceAsText("http/error.html", 41_000);
+            }
+            catch (IOException ex) {
+                logger.log(DEBUG, "Failed to load error.html resource", ex);
+                return null;
+            }
+        }
+
+        var xmlEntities = new XmlEntities();
+        String page = errorPageTemplate.toString();
+
+        page = page.replace("{{responseCode}}", xmlEntities.escape(String.valueOf(responseCode)))
+                .replace("{{reasonPhrase}}", xmlEntities.escape(reasonPhrase));
+
+        if (err instanceof PodcastHttpException) {
+            String explanation = ((PodcastHttpException) err).getExplanation();
+            page = page.replace("{{detail}}", xmlEntities.escape(explanation));
+        }
+        else {
+            String detail = reasonPhrase.equals(err.getMessage()) ? "" : err.getMessage();
+            page = page.replace("{{detail}}", xmlEntities.escape(detail));
+        }
+
+        String exceptionType = (err instanceof HttpException) ?
+                "" : "(" + err.getClass().getCanonicalName() + ")";
+        page = page.replace("{{exceptionType}}", xmlEntities.escape(exceptionType));
+
+        return page;
+    }
+
+    /**
+     * Gets a plain text error page's body.
+     */
+    @NotNull
+    private String getTextErrorBody(int responseCode, @NotNull String reasonPhrase, @NotNull Throwable err) {
+        String EOL = System.lineSeparator();
+        StringBuilder messageBody = new StringBuilder(500);
+        messageBody.append(responseCode).append(' ').append(reasonPhrase).append(EOL);
+
+        if (err instanceof PodcastHttpException) {
+            String explanation = ((PodcastHttpException) err).getExplanation();
+            messageBody.append(explanation).append(EOL);
+        }
+        else if (! reasonPhrase.equals(err.getMessage())) {
+            messageBody.append(err.getMessage()).append(EOL);
+        }
+
+        if (! (err instanceof HttpException)) {
+            // something low-level went wrong, and we're responding with a 500 error;
+            // show the exception's type to give a little more indication of the problem
+            messageBody.append('(').append(err.getClass().getCanonicalName()).append(')').append(EOL);
+        }
+
+        return messageBody.toString();
     }
 
     /**

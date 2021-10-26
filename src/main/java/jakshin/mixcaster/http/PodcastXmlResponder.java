@@ -68,7 +68,7 @@ class PodcastXmlResponder extends Responder {
             musicSet = MusicSet.of(List.of(pathParts));
         }
         catch (MusicSet.InvalidInputException ex) {
-            throw new HttpException(403, "Forbidden", ex);
+            throw new PodcastHttpException("Invalid podcast URL", ex);
         }
 
         var client = new MixcloudClient(request.host());
@@ -138,12 +138,14 @@ class PodcastXmlResponder extends Responder {
                 podcastCache.scrub();
             }
             catch (MixcloudUserException ex) {
-                logger.log(ERROR, "There''s no Mixcloud user with username {0}", ex.username);
-                throw new HttpException(404, "Not Found", ex);
+                String msg = String.format("There's no Mixcloud user with username %s", ex.username);
+                logger.log(ERROR, msg);
+                throw new PodcastHttpException(msg, ex);
             }
             catch (MixcloudPlaylistException ex) {
-                logger.log(ERROR, "{0} doesn''t have a \"{1}\" playlist", new String[] {ex.username, ex.playlist});
-                throw new HttpException(404, "Not Found", ex);
+                String msg = String.format("%s doesn't have a \"%s\" playlist", ex.username, ex.playlist);
+                logger.log(ERROR, msg);
+                throw new PodcastHttpException(msg, ex);
             }
         }
         else {
