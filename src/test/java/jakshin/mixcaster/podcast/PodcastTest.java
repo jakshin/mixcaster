@@ -36,6 +36,7 @@ public class PodcastTest {
 
     @BeforeClass
     public static void setUpClass() {
+        System.setProperty("music_dir", "~/Music/Mixcloud");
     }
 
     @AfterClass
