@@ -127,7 +127,7 @@ class PodcastXmlResponder extends Responder {
     private Podcast getOrMakePodcast(@NotNull String description,
                                      @NotNull MixcloudClient client,
                                      @NotNull MusicSet musicSet)
-            throws HttpException, InterruptedException, MixcloudException, TimeoutException, URISyntaxException {
+            throws HttpException, InterruptedException, IOException, MixcloudException, TimeoutException, URISyntaxException {
 
         Podcast podcast = podcastCache.get(description);
 

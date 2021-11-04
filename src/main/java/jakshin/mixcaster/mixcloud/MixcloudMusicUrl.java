@@ -54,9 +54,11 @@ record MixcloudMusicUrl(@NotNull String urlStr) {
 
     /**
      * Gets some HTTP response headers from the music URL, using a HEAD request.
+     * @param timeoutMillis Timeout for connects and reads; 0 means no timeout.
      */
+    @SuppressWarnings("SameParameterValue")
     @NotNull
-    ResponseHeaders getHeaders() throws IOException, MixcloudException {
+    ResponseHeaders getHeaders(int timeoutMillis) throws IOException, MixcloudException {
         HttpURLConnection conn = null;
 
         try {
@@ -67,6 +69,8 @@ record MixcloudMusicUrl(@NotNull String urlStr) {
             conn.setRequestMethod("HEAD");
             conn.setRequestProperty("User-Agent", System.getProperty("user_agent"));
             conn.setRequestProperty("Referer", urlStr);
+            conn.setConnectTimeout(timeoutMillis);
+            conn.setReadTimeout(timeoutMillis);
             conn.connect();
 
             String contentType = conn.getContentType();

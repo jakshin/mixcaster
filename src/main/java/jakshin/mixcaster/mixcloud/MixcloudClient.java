@@ -43,9 +43,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 
 import static jakshin.mixcaster.logging.Logging.*;
 
@@ -104,7 +102,7 @@ public class MixcloudClient {
      */
     @NotNull
     public Podcast query(@NotNull MusicSet musicSet)
-            throws InterruptedException, MixcloudException, TimeoutException, URISyntaxException {
+            throws InterruptedException, IOException, MixcloudException, TimeoutException, URISyntaxException {
 
         long started = System.nanoTime();
 
@@ -140,24 +138,25 @@ public class MixcloudClient {
      */
     @NotNull
     private Podcast queryStream(@NotNull String username)
-            throws InterruptedException, MixcloudException, TimeoutException, URISyntaxException {
+            throws InterruptedException, IOException, MixcloudException, TimeoutException, URISyntaxException {
 
-        Podcast podcast = queryUserInfo(username);
+        Podcast podcast = getPodcastForUser(username);
         podcast.title = String.format("%s's stream", podcast.iTunesAuthorAndOwnerName);
         podcast.link = new URI(MIXCLOUD_WEB + username + "/stream/");
 
         logger.log(INFO, "Querying {0}''s stream", username);
         int episodeCount = 0, maxEpisodeCount = getEpisodeMaxCountSetting();
+        var context = new QueryContext();
         String cursor = null;
 
         while (true) {
-            var queryDescription = String.format("UserStreamPageQuery for %s (cursor: %s)", username, cursor);
+            context.description = String.format("UserStreamPageQuery for %s (cursor: %s)", username, cursor);
             var query = new UserStreamPageQuery(20, new Input<>(cursor, true), podcast.userID);
 
-            var data = (UserStreamPageQuery.Data) runQuery(query, queryDescription);
+            var data = (UserStreamPageQuery.Data) runQuery(query, context.description);
             UserStreamPageQuery.User user = data.user();
             if (user == null) {
-                String msg = String.format("%s received null user", queryDescription);
+                String msg = String.format("%s received null user", context.description);
                 throw new MixcloudUserException(msg, username);
             }
 
@@ -165,12 +164,12 @@ public class MixcloudClient {
             for (var edge : stream.edges()) {
                 Cloudcast cloudcast = edge.node().fragments().cloudcast();
 
-                if (addEpisodeToPodcast(cloudcast, podcast, queryDescription)) {
+                if (addEpisodeToPodcast(cloudcast, podcast, context)) {
                     episodeCount++;
 
                     if (episodeCount >= maxEpisodeCount) {
                         logger.log(DEBUG, "{0} reached max episode count: {1}",
-                                new String[]{queryDescription, String.valueOf(maxEpisodeCount)});
+                                new String[]{ context.description, String.valueOf(maxEpisodeCount) });
                         break;
                     }
                 }
@@ -178,14 +177,15 @@ public class MixcloudClient {
 
             if (episodeCount >= maxEpisodeCount) break;
             if (! stream.pageInfo().hasNextPage()) {
-                logger.log(DEBUG, "{0} has no more pages", queryDescription);
+                logger.log(DEBUG, "{0} has no more pages", context.description);
                 break;
             }
 
             cursor = stream.pageInfo().endCursor();
         }
 
-        return podcast;
+        context.shutdown();
+        return removeInvalidEpisodes(podcast);
     }
 
     /**
@@ -196,25 +196,26 @@ public class MixcloudClient {
      */
     @NotNull
     private Podcast queryShows(@NotNull String username)
-            throws InterruptedException, MixcloudException, TimeoutException, URISyntaxException {
+            throws InterruptedException, IOException, MixcloudException, TimeoutException, URISyntaxException {
 
-        Podcast podcast = queryUserInfo(username);
+        Podcast podcast = getPodcastForUser(username);
         podcast.title = String.format("%s's shows", podcast.iTunesAuthorAndOwnerName);
         podcast.link = new URI(MIXCLOUD_WEB + username + "/uploads/");
 
         logger.log(INFO, "Querying {0}''s shows", username);
         int episodeCount = 0, maxEpisodeCount = getEpisodeMaxCountSetting();
+        var context = new QueryContext();
         String cursor = null;
 
         while (true) {
-            var queryDescription = String.format("UserUploadsPageQuery for %s (cursor: %s)", username, cursor);
+            context.description = String.format("UserUploadsPageQuery for %s (cursor: %s)", username, cursor);
             var query = new UserUploadsPageQuery(20, new Input<>(cursor, true),
                     new Input<>(CloudcastOrderByEnum.LATEST, true), podcast.userID);
 
-            var data = (UserUploadsPageQuery.Data) runQuery(query, queryDescription);
+            var data = (UserUploadsPageQuery.Data) runQuery(query, context.description);
             UserUploadsPageQuery.User user = data.user();
             if (user == null) {
-                String msg = String.format("%s received null user", queryDescription);
+                String msg = String.format("%s received null user", context.description);
                 throw new MixcloudUserException(msg, username);
             }
 
@@ -222,12 +223,12 @@ public class MixcloudClient {
             for (var edge : uploads.edges()) {
                 Cloudcast cloudcast = edge.node().fragments().cloudcast();
 
-                if (addEpisodeToPodcast(cloudcast, podcast, queryDescription)) {
+                if (addEpisodeToPodcast(cloudcast, podcast, context)) {
                     episodeCount++;
 
                     if (episodeCount >= maxEpisodeCount) {
                         logger.log(DEBUG, "{0} reached max episode count: {1}",
-                                new String[]{queryDescription, String.valueOf(maxEpisodeCount)});
+                                new String[]{ context.description, String.valueOf(maxEpisodeCount) });
                         break;
                     }
                 }
@@ -235,14 +236,15 @@ public class MixcloudClient {
 
             if (episodeCount >= maxEpisodeCount) break;
             if (! uploads.pageInfo().hasNextPage()) {
-                logger.log(DEBUG, "{0} has no more pages", queryDescription);
+                logger.log(DEBUG, "{0} has no more pages", context.description);
                 break;
             }
 
             cursor = uploads.pageInfo().endCursor();
         }
 
-        return podcast;
+        context.shutdown();
+        return removeInvalidEpisodes(podcast);
     }
 
     /**
@@ -253,24 +255,25 @@ public class MixcloudClient {
      */
     @NotNull
     private Podcast queryFavorites(@NotNull String username)
-            throws InterruptedException, MixcloudException, TimeoutException, URISyntaxException {
+            throws InterruptedException, IOException, MixcloudException, TimeoutException, URISyntaxException {
 
-        Podcast podcast = queryUserInfo(username);
+        Podcast podcast = getPodcastForUser(username);
         podcast.title = String.format("%s's favorites", podcast.iTunesAuthorAndOwnerName);
         podcast.link = new URI(MIXCLOUD_WEB + username + "/favorites/");
 
         logger.log(INFO, "Querying {0}''s favorites", username);
         int episodeCount = 0, maxEpisodeCount = getEpisodeMaxCountSetting();
+        var context = new QueryContext();
         String cursor = null;
 
         while (true) {
-            var queryDescription = String.format("UserFavoritesPageQuery for %s (cursor: %s)", username, cursor);
+            context.description = String.format("UserFavoritesPageQuery for %s (cursor: %s)", username, cursor);
             var query = new UserFavoritesPageQuery(20, new Input<>(cursor, true), podcast.userID);
 
-            var data = (UserFavoritesPageQuery.Data) runQuery(query, queryDescription);
+            var data = (UserFavoritesPageQuery.Data) runQuery(query, context.description);
             UserFavoritesPageQuery.User user = data.user();
             if (user == null) {
-                String msg = String.format("%s received null user", queryDescription);
+                String msg = String.format("%s received null user", context.description);
                 throw new MixcloudUserException(msg, username);
             }
 
@@ -278,12 +281,12 @@ public class MixcloudClient {
             for (var edge : favorites.edges()) {
                 Cloudcast cloudcast = edge.node().fragments().cloudcast();
 
-                if (addEpisodeToPodcast(cloudcast, podcast, queryDescription)) {
+                if (addEpisodeToPodcast(cloudcast, podcast, context)) {
                     episodeCount++;
 
                     if (episodeCount >= maxEpisodeCount) {
                         logger.log(DEBUG, "{0} reached max episode count: {1}",
-                                new String[]{queryDescription, String.valueOf(maxEpisodeCount)});
+                                new String[]{ context.description, String.valueOf(maxEpisodeCount) });
                         break;
                     }
                 }
@@ -291,14 +294,15 @@ public class MixcloudClient {
 
             if (episodeCount >= maxEpisodeCount) break;
             if (! favorites.pageInfo().hasNextPage()) {
-                logger.log(DEBUG, "{0} has no more pages", queryDescription);
+                logger.log(DEBUG, "{0} has no more pages", context.description);
                 break;
             }
 
             cursor = favorites.pageInfo().endCursor();
         }
 
-        return podcast;
+        context.shutdown();
+        return removeInvalidEpisodes(podcast);
     }
 
     /**
@@ -309,24 +313,25 @@ public class MixcloudClient {
      */
     @NotNull
     private Podcast queryHistory(@NotNull String username)
-            throws InterruptedException, MixcloudException, TimeoutException, URISyntaxException {
+            throws InterruptedException, IOException, MixcloudException, TimeoutException, URISyntaxException {
 
-        Podcast podcast = queryUserInfo(username);
+        Podcast podcast = getPodcastForUser(username);
         podcast.title = String.format("%s's history", podcast.iTunesAuthorAndOwnerName);
         podcast.link = new URI(MIXCLOUD_WEB + username + "/listens/");
 
         logger.log(INFO, "Querying {0}''s history", username);
         int episodeCount = 0, maxEpisodeCount = getEpisodeMaxCountSetting();
+        var context = new QueryContext();
         String cursor = null;
 
         while (true) {
-            var queryDescription = String.format("UserListensPageQuery for %s (cursor: %s)", username, cursor);
+            context.description = String.format("UserListensPageQuery for %s (cursor: %s)", username, cursor);
             var query = new UserListensPageQuery(20, new Input<>(cursor, true), podcast.userID);
 
-            var data = (UserListensPageQuery.Data) runQuery(query, queryDescription);
+            var data = (UserListensPageQuery.Data) runQuery(query, context.description);
             UserListensPageQuery.User user = data.user();
             if (user == null) {
-                String msg = String.format("%s received null user", queryDescription);
+                String msg = String.format("%s received null user", context.description);
                 throw new MixcloudUserException(msg, username);
             }
 
@@ -334,12 +339,12 @@ public class MixcloudClient {
             for (var edge : history.edges()) {
                 Cloudcast cloudcast = edge.node().cloudcast().fragments().cloudcast();
 
-                if (addEpisodeToPodcast(cloudcast, podcast, queryDescription)) {
+                if (addEpisodeToPodcast(cloudcast, podcast, context)) {
                     episodeCount++;
 
                     if (episodeCount >= maxEpisodeCount) {
                         logger.log(DEBUG, "{0} reached max episode count: {1}",
-                                new String[]{queryDescription, String.valueOf(maxEpisodeCount)});
+                                new String[]{ context.description, String.valueOf(maxEpisodeCount) });
                         break;
                     }
                 }
@@ -347,14 +352,15 @@ public class MixcloudClient {
 
             if (episodeCount >= maxEpisodeCount) break;
             if (! history.pageInfo().hasNextPage()) {
-                logger.log(DEBUG, "{0} has no more pages", queryDescription);
+                logger.log(DEBUG, "{0} has no more pages", context.description);
                 break;
             }
 
             cursor = history.pageInfo().endCursor();
         }
 
-        return podcast;
+        context.shutdown();
+        return removeInvalidEpisodes(podcast);
     }
 
     /**
@@ -367,19 +373,20 @@ public class MixcloudClient {
      */
     @NotNull
     private Podcast queryPlaylist(@NotNull String username, @NotNull String slug)
-            throws InterruptedException, MixcloudException, TimeoutException, URISyntaxException {
+            throws InterruptedException, IOException, MixcloudException, TimeoutException, URISyntaxException {
 
         logger.log(INFO, "Querying {0}''s playlist: {1}", new String[] { username, slug });
 
         Podcast podcast = null;
         int episodeCount = 0, maxEpisodeCount = getEpisodeMaxCountSetting();
+        var context = new QueryContext();
         String cursor = null;
 
         while (true) {
+            context.description = String.format("UserPlaylistPageQuery for %s's %s", username, slug);
             var query = new UserPlaylistPageQuery(20, new Input<>(cursor, true),
                     PlaylistLookup.builder().username(username).slug(slug).build());
-            var queryDescription = String.format("UserPlaylistPageQuery for %s's %s", username, slug);
-            var data = (UserPlaylistPageQuery.Data) runQuery(query, queryDescription);
+            var data = (UserPlaylistPageQuery.Data) runQuery(query, context.description);
 
             // handle the case where the user and/or playlist doesn't exist
             var playlist = data.playlist();
@@ -413,12 +420,12 @@ public class MixcloudClient {
             for (var edge : playlist.items().edges()) {
                 Cloudcast cloudcast = edge.node().cloudcast().fragments().cloudcast();
 
-                if (addEpisodeToPodcast(cloudcast, podcast, queryDescription)) {
+                if (addEpisodeToPodcast(cloudcast, podcast, context)) {
                     episodeCount++;
 
                     if (episodeCount >= maxEpisodeCount) {
                         logger.log(DEBUG, "{0} reached max episode count: {1}",
-                                new String[]{queryDescription, String.valueOf(maxEpisodeCount)});
+                                new String[]{ context.description, String.valueOf(maxEpisodeCount) });
                         break;
                     }
                 }
@@ -426,24 +433,23 @@ public class MixcloudClient {
 
             if (episodeCount >= maxEpisodeCount) break;
             if (! playlist.items().pageInfo().hasNextPage()) {
-                logger.log(DEBUG, "{0} has no more pages", queryDescription);
+                logger.log(DEBUG, "{0} has no more pages", context.description);
                 break;
             }
 
             cursor = playlist.items().pageInfo().endCursor();
         }
 
-        return podcast;
+        context.shutdown();
+        return removeInvalidEpisodes(podcast);
     }
 
     /**
-     * Queries the given Mixcloud user.
-     *
-     * @param username The Mixcloud user whose info is desired, e.g. "NTSRadio".
-     * @return A Podcast object containing the user's info, but no episodes.
+     * Creates a podcast object populated with the given user's properties.
+     * No episodes are included.
      */
     @NotNull
-    private Podcast queryUserInfo(@NotNull String username)
+    private Podcast getPodcastForUser(@NotNull String username)
             throws InterruptedException, MixcloudException, TimeoutException, URISyntaxException {
 
         logger.log(INFO, "Querying {0}''s info", username);
@@ -582,12 +588,14 @@ public class MixcloudClient {
             @Nullable Object publishDate,
             @Nullable Integer audioLength,
             @NotNull String encodedMusicUrl,
-            @Nullable String pictureUrl) throws IOException, MixcloudException, URISyntaxException {
+            @Nullable String pictureUrl,
+            @NotNull QueryContext context) throws URISyntaxException {
 
         PodcastEpisode episode = new PodcastEpisode();
         episode.description = Objects.requireNonNullElse(description, "");
 
         String decodedUrl = new MixcloudDecoder().decodeUrl(encodedMusicUrl);
+        new URI(decodedUrl);  // ensure it's a valid URI
         var mixcloudMusicUrl = new MixcloudMusicUrl(decodedUrl);
         String localUrl = mixcloudMusicUrl.localUrl(localHostAndPort, author, slug);
 
@@ -598,10 +606,21 @@ public class MixcloudClient {
             episode.enclosureMimeType = new MimeHelper().guessContentTypeFromName(file.getName());
         }
         else {
-            MixcloudMusicUrl.ResponseHeaders headers = mixcloudMusicUrl.getHeaders();
-            episode.enclosureLastModified = new Date(headers.lastModified.getTime());
-            episode.enclosureLengthBytes = headers.contentLength;
-            episode.enclosureMimeType = headers.contentType;
+            // any query function that calls addEpisodeToPodcast() -> getPodcastEpisode()
+            // should call the context's shutdown() to shut down the thread pool
+            context.getThreadPool().submit(() -> {
+                try {
+                    MixcloudMusicUrl.ResponseHeaders headers = mixcloudMusicUrl.getHeaders(HTTP_TIMEOUT_MILLIS);
+                    episode.enclosureLastModified = new Date(headers.lastModified.getTime());
+                    episode.enclosureLengthBytes = headers.contentLength;
+                    episode.enclosureMimeType = headers.contentType;
+                }
+                catch (Exception ex) {
+                    // we'll eventually ignore the busted episode via removeInvalidEpisodes()
+                    logger.log(WARNING, "Skipping item: {0}{1}\t Because: {2}",
+                            new String[] { name, System.lineSeparator(), ex.toString() });
+                }
+            });
         }
 
         episode.enclosureMixcloudUrl = new URI(mixcloudMusicUrl.urlStr());
@@ -626,7 +645,7 @@ public class MixcloudClient {
      */
     private boolean addEpisodeToPodcast(@NotNull Cloudcast cloudcast,
                                         @NotNull Podcast podcast,
-                                        @NotNull String queryDescription) throws MixcloudException {
+                                        @NotNull QueryContext context) throws MixcloudException {
 
         if (Boolean.TRUE.equals(cloudcast.isExclusive())) {
             logger.log(INFO, () -> "Skipping subscriber exclusive: " + cloudcast.name());
@@ -641,13 +660,13 @@ public class MixcloudClient {
 
         Cloudcast.StreamInfo streamInfo = cloudcast.streamInfo();
         if (streamInfo == null) {
-            String msg = String.format("%s didn't receive streamInfo for: %s", queryDescription, cloudcast.name());
+            String msg = String.format("%s didn't receive streamInfo for: %s", context.description, cloudcast.name());
             throw new MixcloudException(msg);
         }
 
         String encodedUrl = streamInfo.url();
         if (encodedUrl == null) {
-            String msg = String.format("%s received null streamInfo.url for: %s", queryDescription, cloudcast.name());
+            String msg = String.format("%s received null streamInfo.url for: %s", context.description, cloudcast.name());
             throw new MixcloudException(msg);
         }
 
@@ -664,10 +683,13 @@ public class MixcloudClient {
                     cloudcast.publishDate(),
                     cloudcast.audioLength(),
                     encodedUrl,
-                    pictureUrl
+                    pictureUrl,
+                    context
             );
         }
         catch (Exception ex) {
+            // we don't always know here when we can't add an episode, because it's partly async,
+            // but in this case whatever went wrong happened synchronously, so we can cleanly skip
             logger.log(WARNING, "Skipping item: {0}{1}\t Because: {2}",
                     new String[] { cloudcast.name(), System.lineSeparator(), ex.toString() });
             return false;
@@ -686,6 +708,46 @@ public class MixcloudClient {
     }
 
     /**
+     * Removes any invalid episodes from the given podcast, and returns it for convenience.
+     * This is useful to bypass errors populating episodes that occur asynchronously,
+     * by skipping the affected episodes, sort of (we'll end up with fewer than
+     * episode_max_count episodes attached to the podcast, unlike with sync errors).
+     */
+    @NotNull
+    private Podcast removeInvalidEpisodes(@NotNull Podcast podcast) {
+        // if an episode's last-modified date isn't populated, we must've hit an error
+        // while making an HTTP request to Mixcloud's media servers for that info
+        podcast.episodes.removeIf(ep -> ep.enclosureLastModified == null);
+        return podcast;
+    }
+
+    /**
+     * Some contextual information about a query, including a user-friendly description,
+     * and maybe a thread pool if we needed to make HTTP requests related to the query.
+     */
+    @SuppressWarnings("PMD.CommentRequired")
+    private static class QueryContext {
+        String description;
+        ExecutorService threadPool;
+
+        @NotNull
+        synchronized ExecutorService getThreadPool() {
+            if (threadPool == null)
+                threadPool = Executors.newCachedThreadPool();
+            return threadPool;
+        }
+
+        synchronized void shutdown() throws InterruptedException, IOException {
+            if (threadPool != null) {
+                threadPool.shutdown();
+                if (! threadPool.awaitTermination(HTTP_TIMEOUT_MILLIS * 2, TimeUnit.MILLISECONDS)) {
+                    throw new IOException("Thread pool seems hung, what's up with that?");
+                }
+            }
+        }
+    }
+
+    /**
      * Runs the given GraphQL query and returns its data.
      * Throws on any problem, including if the response has errors or its data is null.
      *
@@ -696,7 +758,7 @@ public class MixcloudClient {
     @NotNull
     @SuppressWarnings({"rawtypes", "unchecked"})
     private <QT extends Query>
-    QT.Data runQuery(QT query, String queryDescription)
+    QT.Data runQuery(@NotNull QT query, @NotNull String queryDescription)
             throws InterruptedException, MixcloudException, TimeoutException {
 
         // a synchronous API would be better for our purposes, but Apollo doesn't offer one,
@@ -781,6 +843,12 @@ public class MixcloudClient {
     /** Reusing a single ApolloClient instance allows us to reuse the underlying OkHttp instance
         and the associated thread pools and connections. */
     private final ApolloClient apolloClient = ApolloClient.builder().serverUrl("https://www.mixcloud.com/graphql").build();
+
+    /**
+     * Timeout for HTTP connects and reads.
+     * Not explicitly applied to our Apollo client or its OkHttp instance, but it matches OkHttp's defaults.
+     */
+    private static final int HTTP_TIMEOUT_MILLIS = 10_000;
 
     /** Mixcloud's website URL. */
     private static final String MIXCLOUD_WEB = "https://www.mixcloud.com/";
