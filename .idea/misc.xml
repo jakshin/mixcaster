@@ -11,7 +11,7 @@
     <option name="options">
       <map>
         <entry key="Statistics URL" value="" />
-        <entry key="Target JDK" value="16" />
+        <entry key="Target JDK" value="17" />
       </map>
     </option>
     <option name="skipTestSources" value="false" />
@@ -20,7 +20,7 @@
     <option name="enabled" value="true" />
     <option name="wasEnabledAtLeastOnce" value="true" />
   </component>
-  <component name="ProjectRootManager" version="2" languageLevel="JDK_16" default="true" project-jdk-name="16" project-jdk-type="JavaSDK">
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_17" default="true" project-jdk-name="17" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/out" />
   </component>
 </project>
