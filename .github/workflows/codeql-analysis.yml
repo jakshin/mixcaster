@@ -70,11 +70,15 @@ jobs:
         sudo apt-get install -y openjdk-17-jdk-headless
         sudo update-java-alternatives --set \
           "$(update-java-alternatives -l | grep 17 | cut --delimiter=" " --fields=1)"
-        echo $JAVA_HOME
+        export JAVA_HOME="$(update-java-alternatives -l | grep 17 | grep -oE "/.*")"
         java -version
+        javac -version
 
     - name: Build project with gradle
-      run: ./gradlew --no-daemon --stacktrace build
+      run: |
+        java -version
+        javac -version
+        ./gradlew --no-daemon --stacktrace build
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v1
