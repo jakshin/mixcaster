@@ -68,6 +68,9 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y openjdk-17-jdk-headless
+        sudo update-java-alternatives --set \
+          "$(update-java-alternatives -l | grep 17 | cut --delimiter=" " --fields=1)"
+        echo $JAVA_HOME
         java -version
 
     - name: Build project with gradle
