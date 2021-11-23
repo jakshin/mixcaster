@@ -27,6 +27,7 @@ import jakshin.mixcaster.logging.Logging;
 import jakshin.mixcaster.mixcloud.MusicSet;
 import jakshin.mixcaster.utils.AppSettings;
 import jakshin.mixcaster.utils.AppVersion;
+import jakshin.mixcaster.watch.Watcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -95,7 +96,7 @@ public class Main {
             logCleanerThread.start();
 
             // download
-            int result = new Downloader().download(args);
+            int result = new Downloader(true).download(args);
             DownloadQueue queue = DownloadQueue.getInstance();
 
             if (queue.activeDownloadCount() == 0) {
@@ -134,6 +135,8 @@ public class Main {
 
             var executor = new ScheduledThreadPoolExecutor(1);
             executor.scheduleWithFixedDelay(new LogCleaner(), 2, 3600, TimeUnit.SECONDS);
+
+            Watcher.start(10);
 
             HttpServer server = new HttpServer();
             server.run();

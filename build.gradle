@@ -48,18 +48,28 @@ distributions {
 }
 
 installDist {
-    // Install for real, on the machine the build is running on
+    // Install on the dev machine the build is running on (macOS is assumed)
     destinationDir = new File("${System.getenv("HOME")}/Applications/Mixcaster")
 
+    def settingsFile = new File(destinationDir.getPath() + '/mixcaster-settings.properties')
+    def existingSettings = settingsFile.exists() ? settingsFile.text : null
+
+    def watchFile = new File(destinationDir.getPath() + '/mixcaster-watches.conf')
+    def existingWatches = watchFile.exists() ? watchFile.text : null
+
     doLast {
-        def settingsFile = new File(destinationDir.getPath() + '/mixcaster-settings.properties')
-        def newSettings = "http_port = 6498\n" +
-                        "log_dir = ~/Library/Logs/Mixcaster-dist\n"
-        settingsFile.text = newSettings
+        // Restore existing configuration (the config files were just overwritten)
+        if (existingSettings != null ) {
+            settingsFile.text = existingSettings
+        }
+
+        if (existingWatches != null) {
+            watchFile.text = existingWatches
+        }
 
         exec {
             // If our launchd agent already exists, it's removed before installing the new one
-            commandLine "${System.getenv("HOME")}/Applications/Mixcaster/mixcaster", "-install"
+            commandLine "${destinationDir}/mixcaster", "-install"
         }
     }
 }

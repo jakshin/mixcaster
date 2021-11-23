@@ -102,6 +102,7 @@ public final class AppSettings {
         defaults.setProperty("subscribed_to", "");                // whitespace-delimited list of usernames, empty is OK
         defaults.setProperty("user_agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)" +
                 " AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.63 Safari/537.36");
+        defaults.setProperty("watch_interval_minutes", "20");     // minutes, must be an int > 0
     }
 
     /**
@@ -122,6 +123,7 @@ public final class AppSettings {
         validatePath(properties, "music_dir");
         // subscribed_to can contain any string or be empty
         validateString(properties, "user_agent");
+        validateInteger(properties, "watch_interval_minutes", 1, Integer.MAX_VALUE);
 
         // keep log_max_count from being too high (FileHandler allocates an array of this size)
         if (properties.containsKey("log_max_count") &&

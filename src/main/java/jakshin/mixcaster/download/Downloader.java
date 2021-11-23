@@ -37,9 +37,18 @@ import java.util.concurrent.TimeoutException;
 import static jakshin.mixcaster.logging.Logging.*;
 
 /**
- * Downloads music files from Mixcloud at a command line.
+ * Downloads music files from Mixcloud, either at a command line,
+ * or on a background thread for a "watched" Mixcloud user or playlist.
  */
 public class Downloader {
+    /**
+     * Creates a new instance.
+     * @param exitWhenDownloadQueueIsEmpty Whether to exit when the download queue is empty.
+     */
+    public Downloader(boolean exitWhenDownloadQueueIsEmpty) {
+        this.exitWhenDownloadQueueIsEmpty = exitWhenDownloadQueueIsEmpty;
+    }
+
     /**
      * Downloads the files requested by the given command-line arguments.
      *
@@ -139,13 +148,25 @@ public class Downloader {
 
         int downloadCount = queue.queueSize();
         if (downloadCount == 0) {
-            logger.log(INFO, podcast.episodes.isEmpty() ?
-                    "Nothing to download" : "All music files have already been downloaded");
+            if (podcast.episodes.isEmpty()) {
+                logger.log(INFO, "No music files to download (empty podcast)");
+            }
+            else {
+                String logStr = "All music files have already been downloaded";
+                if (queue.activeDownloadCount() > 0) logStr += " (or are being downloaded now)";
+                logger.log(INFO, logStr);
+            }
         }
         else {
             String filesStr = (downloadCount == 1) ? "music file" : "music files";
             logger.log(INFO, "Downloading {0} {1} ...", new Object[] { downloadCount, filesStr });
-            queue.processQueue(true);
+            queue.processQueue(exitWhenDownloadQueueIsEmpty);
         }
     }
+
+    /**
+     * Whether to exit when the download queue is empty, iff we add any downloads to it.
+     * This is set to true for command-line downloads, and false for downloads from watches.
+     */
+    private final boolean exitWhenDownloadQueueIsEmpty;
 }
