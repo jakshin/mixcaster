@@ -22,6 +22,7 @@ import jakshin.mixcaster.dlqueue.DownloadQueue;
 import jakshin.mixcaster.mixcloud.*;
 import jakshin.mixcaster.podcast.Podcast;
 import jakshin.mixcaster.podcast.PodcastEpisode;
+import jakshin.mixcaster.stale.Freshener;
 import jakshin.mixcaster.utils.MemoryCache;
 import org.jetbrains.annotations.NotNull;
 
@@ -90,6 +91,9 @@ class PodcastXmlResponder extends Responder {
 
         logger.log(INFO, "The podcast will contain {0}", description);
         Podcast podcast = getOrMakePodcast(description, client, musicSet);
+
+        // note that RSS was requested just now (used while managing stale music files)
+        Freshener.updateRssLastRequestedAttr();
 
         // handle If-Modified-Since
         HttpHeaderWriter headerWriter = new HttpHeaderWriter();

@@ -24,6 +24,7 @@ import jakshin.mixcaster.mixcloud.*;
 import jakshin.mixcaster.podcast.Podcast;
 import jakshin.mixcaster.podcast.PodcastEpisode;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -53,15 +54,17 @@ public class Downloader {
      * Downloads the files requested by the given command-line arguments.
      *
      * @param args Command-line arguments used to make a MusicSet to download.
+     * @param watched Whether the MusicSet is being downloaded because it's being watched.
      * @return A code indicating success (0) or failure (1 or 2).
      */
-    public int download(@NotNull String[] args)
+    public int download(@NotNull String[] args, boolean watched)
             throws InterruptedException, IOException, MixcloudException, TimeoutException, URISyntaxException,
                    MusicSet.InvalidInputException, DownloadOptions.InvalidOptionException {
 
         try {
             // parse our command-line arguments
             MusicSet musicSet = MusicSet.of(Arrays.stream(args).filter(s -> !s.startsWith("-")).toList());
+            MusicSet watchedSet = watched ? musicSet : null;  // before we maybe replace musicSet to set musicType
 
             DownloadOptions opts = DownloadOptions.of(Arrays.stream(args)
                     .filter(s -> s.startsWith("-") && !s.equals("-download")).toList());
@@ -92,7 +95,7 @@ public class Downloader {
                 writePodcastRSS(podcast, opts.rssPath(), musicSet);
             }
 
-            startDownloads(podcast, opts);
+            startDownloads(podcast, opts, watchedSet);
             return 0;
         }
         catch (MixcloudUserException ex) {
@@ -126,8 +129,14 @@ public class Downloader {
 
     /**
      * Downloads the music files referred to by the given podcast, with the given options.
+     *
+     * For CLI downloads, opts is potentially not empty, and inWatchedSet is always null.
+     * For downloads initiated by Watcher, opts is always empty, and inWatchedSet isn't null.
      */
-    private void startDownloads(@NotNull Podcast podcast, @NotNull DownloadOptions opts) {
+    private void startDownloads(@NotNull Podcast podcast,
+                                @NotNull DownloadOptions opts,
+                                @Nullable MusicSet inWatchedSet) {
+
         DownloadQueue queue = DownloadQueue.getInstance();
 
         for (PodcastEpisode episode : podcast.episodes) {
@@ -142,7 +151,7 @@ public class Downloader {
             }
 
             Download download = new Download(episode.enclosureMixcloudUrl.toString(),
-                    episode.enclosureLengthBytes, episode.enclosureLastModified, localPath);
+                    episode.enclosureLengthBytes, episode.enclosureLastModified, localPath, inWatchedSet);
             queue.enqueue(download);
         }
 

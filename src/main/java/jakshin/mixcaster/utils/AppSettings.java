@@ -99,6 +99,7 @@ public final class AppSettings {
         defaults.setProperty("log_level", "ALL");
         defaults.setProperty("log_max_count", "10");              // must be an int > 0, values above 1000 are lowered
         defaults.setProperty("music_dir", "~/Music/Mixcloud");
+        defaults.setProperty("remove_stale_music_files_after_days", "0");  // int >= 0, 0 means disabled
         defaults.setProperty("subscribed_to", "");                // whitespace-delimited list of usernames, empty is OK
         defaults.setProperty("user_agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)" +
                 " AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.63 Safari/537.36");
@@ -122,6 +123,7 @@ public final class AppSettings {
         validateInteger(properties, "log_max_count", 1, Integer.MAX_VALUE);
         validatePath(properties, "music_dir");
         // subscribed_to can contain any string or be empty
+        validateInteger(properties,"remove_stale_music_files_after_days", 0, Integer.MAX_VALUE);
         validateString(properties, "user_agent");
         validateInteger(properties, "watch_interval_minutes", 1, Integer.MAX_VALUE);
 

@@ -96,6 +96,22 @@ public record MusicSet(@NotNull String username, @Nullable String musicType, @Nu
     }
 
     /**
+     * Returns a string representation of the music set.
+     * If you split the returned string on whitespace,
+     * you can pass the pieces to of() to create an equivalent music set.
+     */
+    @NotNull
+    @Override
+    public String toString() {
+        if (musicType == null)
+            return username;  // a user's default view
+        else if (playlist == null)
+            return String.format("%s's %s", username, musicType);
+        else
+            return String.format("%s's playlist %s", username, playlist);
+    }
+
+    /**
      * Oh noes, we ran into a problem constructing a music set.
      */
     public static class InvalidInputException extends RuntimeException {

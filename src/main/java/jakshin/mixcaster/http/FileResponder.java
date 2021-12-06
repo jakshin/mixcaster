@@ -18,6 +18,7 @@
 package jakshin.mixcaster.http;
 
 import jakshin.mixcaster.mixcloud.MixcloudException;
+import jakshin.mixcaster.stale.Freshener;
 import jakshin.mixcaster.utils.MimeHelper;
 import org.jetbrains.annotations.NotNull;
 
@@ -71,6 +72,10 @@ class FileResponder extends Responder {
                 headerWriter.sendRedirectHeadersAndBody(writer, folderPathStr, request.isHead());
                 return;
             }
+
+            // update the file's lastUsed attribute, iff it already exists
+            // (the intent is to only track lastUsed on files downloaded by Mixcaster)
+            Freshener.updateLastUsedAttr(file.toPath(), true);
 
             // handle If-Modified-Since
             // this date is only valid if the file exists, so don't use it otherwise
@@ -169,4 +174,5 @@ class FileResponder extends Responder {
         }
 
         return musicDir;
-    }}
+    }
+}

@@ -25,6 +25,7 @@ import jakshin.mixcaster.install.Installer;
 import jakshin.mixcaster.logging.LogCleaner;
 import jakshin.mixcaster.logging.Logging;
 import jakshin.mixcaster.mixcloud.MusicSet;
+import jakshin.mixcaster.stale.StaleFileRemover;
 import jakshin.mixcaster.utils.AppSettings;
 import jakshin.mixcaster.utils.AppVersion;
 import jakshin.mixcaster.watch.Watcher;
@@ -96,7 +97,7 @@ public class Main {
             logCleanerThread.start();
 
             // download
-            int result = new Downloader(true).download(args);
+            int result = new Downloader(true).download(args, false);
             DownloadQueue queue = DownloadQueue.getInstance();
 
             if (queue.activeDownloadCount() == 0) {
@@ -137,6 +138,7 @@ public class Main {
             executor.scheduleWithFixedDelay(new LogCleaner(), 2, 3600, TimeUnit.SECONDS);
 
             Watcher.start(10);
+            StaleFileRemover.start(600);
 
             HttpServer server = new HttpServer();
             server.run();

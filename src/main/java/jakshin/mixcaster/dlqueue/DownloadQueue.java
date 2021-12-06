@@ -17,8 +17,11 @@
 
 package jakshin.mixcaster.dlqueue;
 
+import jakshin.mixcaster.mixcloud.MusicSet;
+import jakshin.mixcaster.stale.Freshener;
 import jakshin.mixcaster.utils.TimeSpanFormatter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.net.*;
@@ -61,6 +64,7 @@ public final class DownloadQueue {
 
         if (localFile.exists()) {
             logger.log(DEBUG, "File already exists: {0}", localFile);
+            freshenAttributes(localFile.toPath(), download.inWatchedSet);  // touch the existing file
             return false;  // already downloaded
         }
 
@@ -149,6 +153,20 @@ public final class DownloadQueue {
     }
 
     /**
+     * Freshens the given file's "lastUsed" and maybe "watches" user-defined attributes.
+     *
+     * @param path The file whose attributes should be freshened.
+     * @param watchedSet The watched music set that required this file to be downloaded (optional).
+     */
+    private void freshenAttributes(@NotNull Path path, @Nullable MusicSet watchedSet) {
+        Freshener.updateLastUsedAttr(path);
+
+        if (watchedSet != null) {
+            Freshener.updateWatchesAttr(path, watchedSet);
+        }
+    }
+
+    /**
      * A thing which can perform a download in a separate thread.
      */
     private class DownloadRunnable implements Runnable {
@@ -194,6 +212,8 @@ public final class DownloadQueue {
                 try (BufferedInputStream in = new BufferedInputStream(conn.getInputStream());
                      OutputStream out = Files.newOutputStream(localPartFile.toPath(),
                              CREATE, SYNC, TRUNCATE_EXISTING, WRITE, NOFOLLOW_LINKS)) {
+
+                    freshenAttributes(localPartFile.toPath(), this.download.inWatchedSet);  // ASAP after file creation
 
                     long totalBytesWritten = 0;
                     final byte[] buf = new byte[65536];  // 64 KiB

@@ -20,6 +20,7 @@ package jakshin.mixcaster.watch;
 import jakshin.mixcaster.download.Downloader;
 import jakshin.mixcaster.mixcloud.MixcloudException;
 import jakshin.mixcaster.mixcloud.MusicSet;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -49,6 +50,31 @@ public class Watcher implements Runnable {
     }
 
     /**
+     * Are we watching any music sets?
+     */
+    public static boolean isWatchingAnything() {
+        synchronized (Watcher.class) {
+            return !watchedMusicSets.isEmpty();
+        }
+    }
+
+    /**
+     * Are we watching any of the given music sets?
+     * @param musicSets A list of music sets we might be watching.
+     */
+    public static boolean isWatchingAnyOf(@NotNull final List<MusicSet> musicSets) {
+        synchronized (Watcher.class) {
+            for (MusicSet musicSet : musicSets) {
+                if (watchedMusicSets.contains(musicSet)) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+    }
+
+    /**
      * Starts checking watches in mixcaster-watches.conf every watch_interval_minutes,
      * after first waiting for an initial delay (measured in seconds).
      */
@@ -70,13 +96,13 @@ public class Watcher implements Runnable {
     public void run() {
         try {
             synchronized (Watcher.class) {
-                List<MusicSet> musicSets = settings.loadIfChanged();
-                if (musicSets.isEmpty()) {
+                watchedMusicSets = settings.loadIfChanged();
+                if (watchedMusicSets.isEmpty()) {
                     return;  // we already logged in loadIfChanged(), so just quietly bail here
                 }
 
                 var downloader = new Downloader(false);
-                for (var musicSet : musicSets) {
+                for (var musicSet : watchedMusicSets) {
                     String[] parts;
 
                     if (musicSet.playlist() != null) {
@@ -98,7 +124,7 @@ public class Watcher implements Runnable {
                     try {
                         // some exceptions thrown by download() are potentially watch-specific;
                         // we catch those below, so we can carry on checking any other watches
-                        downloader.download(parts);
+                        downloader.download(parts, true);
                     }
                     catch (IOException | MixcloudException | TimeoutException | URISyntaxException ex) {
                         logger.log(ERROR, "Failed to check watched user/playlist for new music: {0}",
@@ -131,6 +157,12 @@ public class Watcher implements Runnable {
      * Null until start() has been called.
      */
     private static ScheduledFuture<?> future;
+
+    /**
+     * Music sets we're watching, loaded from our settings file via the WatchSettings in our "settings" property.
+     * This is refreshed from disk, if needed, every watch_interval_minutes.
+     */
+    private static List<MusicSet> watchedMusicSets;
 
     /** Settings loaded from mixcaster-watches.conf. */
     private final WatchSettings settings;

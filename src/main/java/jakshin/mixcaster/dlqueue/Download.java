@@ -17,7 +17,9 @@
 
 package jakshin.mixcaster.dlqueue;
 
+import jakshin.mixcaster.mixcloud.MusicSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Date;
 import java.util.Objects;
@@ -26,7 +28,6 @@ import java.util.Objects;
  * A single download, either in progress or waiting to start.
  * (Not a record because we exclude remoteUrl when comparing and hashing.)
  */
-@SuppressWarnings("ClassCanBeRecord")
 public class Download {
     /**
      * Creates a new instance of the class.
@@ -41,10 +42,29 @@ public class Download {
                     @NotNull Date remoteLastModified,
                     @NotNull String localFilePath) {
 
+        this(remoteUrl, remoteLengthBytes, remoteLastModified, localFilePath, null);
+    }
+
+    /**
+     * Creates a new instance of the class.
+     *
+     * @param remoteUrl The remote URL to download from.
+     * @param remoteLengthBytes The length of the file to be downloaded from the remote URL.
+     * @param remoteLastModified When the remote data was last modified, according to the remote server.
+     * @param localFilePath The full path of the local file to download to.
+     * @param inWatchedSet The watched music set that required this file to be downloaded (optional).
+     */
+    public Download(@NotNull String remoteUrl,
+                    long remoteLengthBytes,
+                    @NotNull Date remoteLastModified,
+                    @NotNull String localFilePath,
+                    @Nullable MusicSet inWatchedSet) {
+
         this.remoteUrl = remoteUrl;
         this.remoteLengthBytes = remoteLengthBytes;
         this.remoteLastModified = new Date(remoteLastModified.getTime());
         this.localFilePath = localFilePath;
+        this.inWatchedSet = inWatchedSet;
     }
 
     /** The remote URL to download from. */
@@ -62,6 +82,10 @@ public class Download {
     @NotNull
     public final String localFilePath;
 
+    /** The watched music set that required this file to be downloaded (if applicable). */
+    @Nullable
+    public final MusicSet inWatchedSet;
+
     /**
      * Indicates whether some other object is "equal to" this one.
      */
@@ -70,7 +94,8 @@ public class Download {
         if (obj == null) return false;
         if (getClass() != obj.getClass()) return false;
 
-        // we don't compare remoteUrl, because Mixcloud stores the same file on many servers;
+        // we don't compare remoteUrl, because Mixcloud stores the same file on many servers,
+        // or inWatchedSet, because that's not part of a download's "identity";
         // if new properties are added to the class, they should be compared here
         final Download other = (Download) obj;
         return Objects.equals(this.remoteLengthBytes, other.remoteLengthBytes)
@@ -83,7 +108,8 @@ public class Download {
      */
     @Override
     public int hashCode() {
-        // we don't use remoteUrl, because Mixcloud stores the same file on many servers;
+        // we don't use remoteUrl, because Mixcloud stores the same file on many servers,
+        // or inWatchedSet, because that's not part of a download's "identity";
         // if new properties are added to the class, they should be used here
         int hash = 7;
         hash = 59 * hash + Objects.hashCode(this.remoteLengthBytes);
