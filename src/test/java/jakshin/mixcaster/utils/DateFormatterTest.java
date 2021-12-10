@@ -17,43 +17,35 @@
 
 package jakshin.mixcaster.utils;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import java.text.ParseException;
 import java.util.Date;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import static org.junit.Assert.*;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Unit tests for the DateFormatter class.
  */
-public class DateFormatterTest {
-    @BeforeClass
-    public static void setUpClass() {
+class DateFormatterTest {
+    @BeforeEach
+    void setUp() {
     }
 
-    @AfterClass
-    public static void tearDownClass() {
-    }
-
-    @Before
-    public void setUp() {
-    }
-
-    @After
-    public void tearDown() {
+    @AfterEach
+    void tearDown() {
     }
 
     @Test
-    public void formatShouldReturnEmptyStringForNullDate() {
+    void formatReturnsEmptyStringForNullDate() {
         String result = DateFormatter.format(null);
         assertEquals("", result);
     }
 
     @Test
-    public void formatShouldWork() {
+    void formatWorks() {
         Date date = new Date(1461292769391L);
         String expResult = "Fri, 22 Apr 2016 02:39:29 GMT";
         String result = DateFormatter.format(date);
@@ -61,7 +53,7 @@ public class DateFormatterTest {
     }
 
     @Test
-    public void parseShouldWork() throws ParseException {
+    void parseWorks() throws ParseException {
         String dateStr = "Fri, 22 Apr 2016 02:39:29 GMT";
         long expResult = 1461292769000L;  // no milliseconds
         Date result = DateFormatter.parse(dateStr);

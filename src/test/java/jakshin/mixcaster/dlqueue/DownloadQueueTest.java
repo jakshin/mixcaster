@@ -17,47 +17,45 @@
 
 package jakshin.mixcaster.dlqueue;
 
+import jakshin.mixcaster.utils.AppSettings;
+import org.junit.jupiter.api.*;
+
 import java.io.IOException;
 import java.util.Date;
 
-import jakshin.mixcaster.utils.AppSettings;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
 
 /**
  * Unit tests for the DownloadQueue class.
  */
-public class DownloadQueueTest {
-    @BeforeClass
-    public static void setUpClass() throws IOException {
+class DownloadQueueTest {
+    @BeforeAll
+    static void beforeAll() throws IOException {
         AppSettings.initSettings();
     }
 
-    @AfterClass
-    public static void tearDownClass() {
+    @AfterAll
+    static void afterAll() {
     }
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
     }
 
-    @After
-    public void tearDown() {
+    @AfterEach
+    void tearDown() {
     }
 
     @Test
-    public void getInstanceShouldAlwaysReturnTheSameInstance() {
+    void getInstanceAlwaysReturnsTheSameInstance() {
         DownloadQueue q1 = DownloadQueue.getInstance();
         DownloadQueue q2 = DownloadQueue.getInstance();
         assertSame(q1, q2);
     }
 
     @Test
-    public void enqueueShouldWork() {
+    void enqueueWorks() {
         DownloadQueue q = DownloadQueue.getInstance();
         int size = q.queueSize();
 

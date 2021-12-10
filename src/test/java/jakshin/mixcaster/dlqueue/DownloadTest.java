@@ -17,36 +17,30 @@
 
 package jakshin.mixcaster.dlqueue;
 
+import jakshin.mixcaster.mixcloud.MusicSet;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import java.util.Date;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import static org.junit.Assert.*;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 /**
  * Unit tests for the Download class.
  */
-public class DownloadTest {
-    @BeforeClass
-    public static void setUpClass() {
+class DownloadTest {
+    @BeforeEach
+    void setUp() {
     }
 
-    @AfterClass
-    public static void tearDownClass() {
-    }
-
-    @Before
-    public void setUp() {
-    }
-
-    @After
-    public void tearDown() {
+    @AfterEach
+    void tearDown() {
     }
 
     @Test
-    public void equalsShouldWork() {
+    void equalsWorks() {
         Date date = new Date();
         Download baseline = new Download("remoteUrl", 42, date, "localFile");
         Download same = new Download("remoteUrl", 42, date, "localFile");
@@ -56,20 +50,27 @@ public class DownloadTest {
         Download diff2 = new Download("remoteUrl", 43, date, "localFile");
         Download diff3 = new Download("remoteUrl", 42, new Date(date.getTime() + 1), "localFile");
         Download diff4 = new Download("remoteUrl", 42, date, "~~localFile~~");
+        Download diff5 = new Download("remoteUrl", 42, date, "localFile",
+                new MusicSet("user", "shows", null));
         assertEquals(baseline, diff1);  // remoteUrl isn't compared
         assertNotEquals(baseline, diff2);
         assertNotEquals(baseline, diff3);
         assertNotEquals(baseline, diff4);
+        assertEquals(baseline, diff5);  // inWatchedSet isn't compared
 
         assertNotEquals(null, baseline);
         assertNotEquals(baseline, new Object());
     }
 
     @Test
-    public void hashCodeShouldReturnTheSameValueForLikeInstances() {
+    void hashCodeReturnsTheSameValueForLikeInstances() {
         Date date = new Date();
         Download baseline = new Download("remoteUrl", 42, date, "localFile");
         Download same = new Download("remoteUrl", 42, date, "localFile");
         assertEquals(baseline.hashCode(), same.hashCode());
+
+        Download equivalent = new Download("~~remoteUrl~~", 42, date, "localFile",
+                new MusicSet("user", "shows", null));
+        assertEquals(baseline.hashCode(), equivalent.hashCode());
     }
 }

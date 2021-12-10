@@ -17,42 +17,29 @@
 
 package jakshin.mixcaster.mixcloud;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import static org.junit.Assert.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Unit tests for the MixcloudDecoder class.
  */
-public class MixcloudDecoderTest {
+class MixcloudDecoderTest {
     private MixcloudDecoder instance;
 
-    public MixcloudDecoderTest() {
-        this.instance = null;
-    }
-
-    @BeforeClass
-    public static void setUpClass() {
-    }
-
-    @AfterClass
-    public static void tearDownClass() {
-    }
-
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         this.instance = new MixcloudDecoder();
     }
 
-    @After
-    public void tearDown() {
+    @AfterEach
+    void tearDown() {
     }
 
     @Test
-    public void decodeUrlShouldWork() {
+    void decodeUrlWorks() {
         String url = "ITItPyZtbmEnIDogID9sZz49KzcjKDAwfiImKWs8KywhNip4LWMidSVpZHtiKWZrbHpgNGt8I2l8eG" +
                      "J2emd5fHZwYXlwNTZmeXp+cWQ0JHlxdC14fHopezZxPyYmeRIoAwQEFjItfwANCHAKHgoyBTI3AAU=";
         String expResult = "https://stream8.mixcloud.com/secure/c/m4a/64/d/3/6/a/" +

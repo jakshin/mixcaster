@@ -17,38 +17,29 @@
 
 package jakshin.mixcaster.utils;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import static org.junit.Assert.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Unit tests for the XmlEntities class.
  */
-public class XmlEntitiesTest {
+class XmlEntitiesTest {
     private XmlEntities instance;
 
-    @BeforeClass
-    public static void setUpClass() {
-    }
-
-    @AfterClass
-    public static void tearDownClass() {
-    }
-
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         this.instance = new XmlEntities();
     }
 
-    @After
-    public void tearDown() {
+    @AfterEach
+    void tearDown() {
     }
 
     @Test
-    public void escapeShouldEscapeAllEntities() {
+    void escapeEscapesAllEntities() {
         String test = "& <> \"' jason";
         String expResult = "&amp; &lt;&gt; &quot;&apos; jason";
         String result = instance.escape(test);

@@ -17,11 +17,9 @@ repositories {
 }
 
 dependencies {
-    // testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.2'
-    // testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.2'
-    testImplementation 'junit:junit:4.13.2'
-
     implementation 'com.apollographql.apollo:apollo-runtime:2.5.11'
+
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.8.2'
 }
 
 def appVersion = 'dev'  // Must be either "dev" or major.minor.patch
@@ -96,7 +94,7 @@ snyk {
 }
 
 test {
-    useJUnit()
+    useJUnitPlatform()
 }
 
 // Use "shadowJar" in place of "jar"

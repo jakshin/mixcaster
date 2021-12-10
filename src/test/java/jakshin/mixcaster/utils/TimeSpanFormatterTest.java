@@ -17,96 +17,74 @@
 
 package jakshin.mixcaster.utils;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import static org.junit.Assert.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Unit tests for the TimeSpanFormatter class.
  */
-public class TimeSpanFormatterTest {
-    /** Scaffolding. */
-    @BeforeClass
-    public static void setUpClass() {
+class TimeSpanFormatterTest {
+    @BeforeEach
+    void setUp() {
     }
 
-    /** Scaffolding. */
-    @AfterClass
-    public static void tearDownClass() {
+    @AfterEach
+    void tearDown() {
     }
 
-    /** Scaffolding. */
-    @Before
-    public void setUp() {
-    }
-
-    /** Scaffolding. */
-    @After
-    public void tearDown() {
-    }
-
-    /** Test. */
     @Test
-    public void formatShouldWorkWithHoursMinutesSeconds() {
+    void formatWorksWithHoursMinutesSeconds() {
         String result = TimeSpanFormatter.formatTimeSpan(90_610);
         assertEquals("25:10:10", result);
     }
 
-    /** Test. */
     @Test
-    public void formatShouldWorkWithHoursMinuteSecond() {
+    void formatWorksWithHoursMinuteSecond() {
         String result = TimeSpanFormatter.formatTimeSpan(7261);
         assertEquals("2:01:01", result);
     }
 
-    /** Test. */
     @Test
-    public void formatShouldWorkWithHour() {
+    void formatWorksWithHour() {
         String result = TimeSpanFormatter.formatTimeSpan(3600);
         assertEquals("1:00:00", result);
     }
 
-    /** Test. */
     @Test
-    public void formatShouldWorkWithMinutesSeconds() {
+    void formatWorksWithMinutesSeconds() {
         String result = TimeSpanFormatter.formatTimeSpan(754);
         assertEquals("12:34", result);
     }
 
-    /** Test. */
     @Test
-    public void formatShouldWorkWithMinuteSeconds() {
+    void formatWorksWithMinuteSeconds() {
         String result = TimeSpanFormatter.formatTimeSpan(62);
         assertEquals("1:02", result);
     }
 
-    /** Test. */
     @Test
-    public void formatShouldWorkWithSeconds() {
+    void formatWorksWithSeconds() {
         String result = TimeSpanFormatter.formatTimeSpan(10);
         assertEquals("0:10", result);
     }
 
-    /** Test. */
     @Test
-    public void formatShouldWorkWithSecond() {
+    void formatWorksWithSecond() {
         String result = TimeSpanFormatter.formatTimeSpan(1);
         assertEquals("0:01", result);
     }
 
-    /** Test. */
     @Test
-    public void formatShouldWorkWithNoTime() {
+    void formatWorksWithNoTime() {
         String result = TimeSpanFormatter.formatTimeSpan(0);
         assertEquals("0:00", result);
     }
 
-    /** Test. */
     @Test
-    public void formatShouldWorkWithNegatives() {
+    void formatWorksWithNegatives() {
         String result = TimeSpanFormatter.formatTimeSpan(-90_610);
         assertEquals("-25:10:10", result);
 

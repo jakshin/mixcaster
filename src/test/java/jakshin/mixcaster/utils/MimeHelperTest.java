@@ -17,66 +17,57 @@
 
 package jakshin.mixcaster.utils;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import static org.junit.Assert.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Unit tests for the MimeHelper class.
  */
-public class MimeHelperTest {
+class MimeHelperTest {
     private MimeHelper instance;
 
-    @BeforeClass
-    public static void setUpClass() {
-    }
-
-    @AfterClass
-    public static void tearDownClass() {
-    }
-
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         this.instance = new MimeHelper();
     }
 
-    @After
-    public void tearDown() {
+    @AfterEach
+    void tearDown() {
     }
 
     @Test
-    public void guessContentTypeShouldWorkForAudioFile() {
+    void guessContentTypeWorksForAudioFile() {
         String expResult = "audio/mp4";
         String result = instance.guessContentTypeFromName("foo.m4a");  // in our map of known MIME types
         assertEquals(expResult, result);
     }
 
     @Test
-    public void guessContentTypeShouldWorkForMiscFile() {
+    void guessContentTypeWorksForMiscFile() {
         String expResult = "image/jpeg";
         String result = instance.guessContentTypeFromName("foo.jpg");  // not in our map of known MIME types
         assertEquals(expResult, result);
     }
 
     @Test
-    public void guessContentTypeShouldReturnDefaultForUnknownExtension() {
+    void guessContentTypeReturnsDefaultForUnknownExtension() {
         String expResult = "application/octet-stream";
         String result = instance.guessContentTypeFromName("foo.unknown");
         assertEquals(expResult, result);
     }
 
     @Test
-    public void guessContentTypeShouldReturnDefaultForFileWithNoExtension() {
+    void guessContentTypeReturnsDefaultForFileWithNoExtension() {
         String expResult = "application/octet-stream";
         String result = instance.guessContentTypeFromName("foo");
         assertEquals(expResult, result);
     }
 
     @Test
-    public void guessContentTypeShouldReturnDefaultForDotFile() {
+    void guessContentTypeReturnsDefaultForDotFile() {
         String expResult = "application/octet-stream";
         String result = instance.guessContentTypeFromName(".foo");
         assertEquals(expResult, result);

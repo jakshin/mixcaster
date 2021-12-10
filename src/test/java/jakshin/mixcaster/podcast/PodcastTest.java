@@ -17,34 +17,30 @@
 
 package jakshin.mixcaster.podcast;
 
+import org.junit.jupiter.api.*;
+
 import java.io.*;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import static org.junit.Assert.*;
 
 /**
  * Unit tests for the Podcast class.
  */
-public class PodcastTest {
-    private Podcast instance = new Podcast();
+class PodcastTest {
+    private Podcast instance;
 
-    @BeforeClass
-    public static void setUpClass() {
+    @BeforeAll
+    static void beforeAll() {
         System.setProperty("music_dir", "~/Music/Mixcloud");
     }
 
-    @AfterClass
-    public static void tearDownClass() {
+    @AfterAll
+    static void afterAll() {
     }
 
-    @Before
-    public void setUp() throws URISyntaxException {
+    @BeforeEach
+    void setUp() throws URISyntaxException {
         this.instance = new Podcast();
         this.instance.userID = "foo";
         this.instance.link = new URI("http://example.com");
@@ -55,12 +51,12 @@ public class PodcastTest {
         this.instance.iTunesImageUrl = new URI("http://example.com/image.jpg");
     }
 
-    @After
-    public void tearDown() {
+    @AfterEach
+    void tearDown() {
     }
 
     @Test
-    public void createXmlShouldWorkWithEpisodes() throws IOException, URISyntaxException {
+    void createXmlWorksWithEpisodes() throws IOException, URISyntaxException {
         PodcastEpisode ep = new PodcastEpisode();
         ep.description = "Episode description";
         ep.enclosureLastModified = new Date();
@@ -79,20 +75,20 @@ public class PodcastTest {
         String result = instance.createXml();
 
         int itemIndex = result.indexOf("<item>");
-        assertTrue(itemIndex > 0);
+        Assertions.assertTrue(itemIndex > 0);
 
         // podcast tags should be present, before the first <item> tag
         String[] podcastTags = new String[] { "title", "link", "language", "description",
                 "itunes:author", "itunes:explicit", "itunes:owner", "itunes:name", "itunes:email" };
         for (String tag : podcastTags) {
             int index = result.indexOf("<" + tag + ">");
-            assertTrue(index != -1 && index < itemIndex);
+            Assertions.assertTrue(index != -1 && index < itemIndex);
         }
 
         String[] podcastTags2 = new String[] { "itunes:category", "itunes:image" };
         for (String tag : podcastTags2) {
             int index = result.indexOf("<" + tag + " ");
-            assertTrue(index != -1 && index < itemIndex);
+            Assertions.assertTrue(index != -1 && index < itemIndex);
         }
 
         // episode tags should be present, after the first <item> tag
@@ -100,40 +96,40 @@ public class PodcastTest {
                 "itunes:author", "itunes:duration" };
         for (String tag : episodeTags) {
             int index = result.indexOf("<" + tag + ">", itemIndex);
-            assertTrue(index != -1);
+            Assertions.assertTrue(index != -1);
         }
 
         String[] episodeTags2 = new String[] { "enclosure", "itunes:image" };
         for (String tag : episodeTags2) {
             int index = result.indexOf("<" + tag + " ", itemIndex);
-            assertTrue(index != -1);
+            Assertions.assertTrue(index != -1);
         }
 
         // the feed should validate (requires a network connection)
         if (!this.validateFeed(result)) {
-            fail("The generated RSS does not validate");
+            Assertions.fail("The generated RSS does not validate");
         }
     }
 
     @Test
-    public void createXmlShouldWorkWithoutEpisodes() throws IOException {
+    void createXmlWorksWithoutEpisodes() throws IOException {
         String result = instance.createXml();
 
         int itemIndex = result.indexOf("<item>");
-        assertEquals(-1, itemIndex);
+        Assertions.assertEquals(-1, itemIndex);
 
         // podcast tags should be present
         String[] podcastTags = new String[] { "title", "link", "language", "description",
                 "itunes:author", "itunes:explicit", "itunes:owner", "itunes:name", "itunes:email" };
         for (String tag : podcastTags) {
             int index = result.indexOf("<" + tag + ">");
-            assertTrue(index != -1);
+            Assertions.assertTrue(index != -1);
         }
 
         String[] podcastTags2 = new String[] { "itunes:category", "itunes:image" };
         for (String tag : podcastTags2) {
             int index = result.indexOf("<" + tag + " ");
-            assertTrue(index != -1);
+            Assertions.assertTrue(index != -1);
         }
 
         // episode tags shouldn't be present; we don't check for the non-existence of tags
@@ -141,15 +137,15 @@ public class PodcastTest {
         String[] episodeTags = new String[] { "guid", "pubDate", "itunes:duration" };
         for (String tag : episodeTags) {
             int index = result.indexOf("<" + tag + ">", itemIndex);
-            assertEquals(-1, index);
+            Assertions.assertEquals(-1, index);
         }
 
         int index = result.indexOf("<enclosure ", itemIndex);
-        assertEquals(-1, index);
+        Assertions.assertEquals(-1, index);
 
         // the feed should validate (requires a network connection)
         if (!this.validateFeed(result)) {
-            fail("The generated RSS does not validate");
+            Assertions.fail("The generated RSS does not validate");
         }
     }
 

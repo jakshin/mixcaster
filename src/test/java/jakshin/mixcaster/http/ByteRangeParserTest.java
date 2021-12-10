@@ -17,169 +17,183 @@
 
 package jakshin.mixcaster.http;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import static org.junit.Assert.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Unit tests for the ByteRangeParser class.
  */
-public class ByteRangeParserTest {
+class ByteRangeParserTest {
     private ByteRangeParser instance;
 
-    @BeforeClass
-    public static void setUpClass() {
-    }
-
-    @AfterClass
-    public static void tearDownClass() {
-    }
-
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         this.instance = new ByteRangeParser();
     }
 
-    @After
-    public void tearDown() {
+    @AfterEach
+    void tearDown() {
     }
 
     @Test
-    public void parseShouldReturnNullForEmptyRange() throws HttpException {
+    void parseReturnsNullForEmptyRange() throws HttpException {
         ByteRange result = instance.parse("");
         assertNull(result);
     }
 
     @Test
-    public void parseShouldHandleLeftRange() throws HttpException {
+    void parseHandlesLeftRange() throws HttpException {
         ByteRange result = instance.parse("bytes=123-");
+
+        assert result != null;
         assertEquals(123, result.start());
         assertEquals(-1, result.end());
     }
 
     @Test
-    public void parseShouldHandleRightRange() throws HttpException {
+    void parseHandlesRightRange() throws HttpException {
         ByteRange result = instance.parse("bytes=-456");
+
+        assert result != null;
         assertEquals(-1, result.start());
         assertEquals(456, result.end());
     }
 
     @Test
-    public void parseShouldHandleCompleteRange() throws HttpException {
+    void parseHandlesCompleteRange() throws HttpException {
         ByteRange result = instance.parse("bytes=123-456");
+
+        assert result != null;
         assertEquals(123, result.start());
         assertEquals(456, result.end());
     }
 
     @Test
-    public void parseShouldReturnNullForNonByteRange() throws HttpException {
+    void parseReturnsNullForNonByteRange() throws HttpException {
         ByteRange result = instance.parse("stuff=123-456");
         assertNull(result);
     }
 
-    @Test (expected=HttpException.class)
-    public void parseShouldThrowOnMultipleRange() throws HttpException {
-        ByteRange result = instance.parse("bytes=123-456,789-1000");
-        assertNull(result);  // shouldn't be reached
+    @Test
+    void parseThrowsOnMultipleRange() {
+        HttpException thrown = assertThrows(HttpException.class,
+                () -> instance.parse("bytes=123-456,789-1000"));
+
+        assertEquals(500, thrown.httpResponseCode);
+        assertTrue(thrown.getMessage().contains("Unsupported"));
     }
 
     @Test
-    public void parseShouldReturnNullForRangeWithoutDash() throws HttpException {
+    void parseReturnsNullForRangeWithoutDash() throws HttpException {
         ByteRange result = instance.parse("bytes=123");
         assertNull(result);
     }
 
     @Test
-    public void parseShouldReturnNullForRangeWithExtraDash() throws HttpException {
+    void parseReturnsNullForRangeWithExtraDash() throws HttpException {
         ByteRange result = instance.parse("bytes=123-456-");
         assertNull(result);
     }
 
     @Test
-    public void parseShouldReturnNullForRangeWithOnlyDash() throws HttpException {
+    void parseReturnsNullForRangeWithOnlyDash() throws HttpException {
         ByteRange result = instance.parse("bytes=-");
         assertNull(result);
     }
 
     @Test
-    public void parseShouldReturnNullForNonNumericRange() throws HttpException {
+    void parseReturnsNullForNonNumericRange() throws HttpException {
         ByteRange result = instance.parse("bytes=123-foo");
         assertNull(result);
     }
 
     @Test
-    public void parseShouldReturnNullForInvalidRange() throws HttpException {
+    void parseReturnsNullForInvalidRange() throws HttpException {
         ByteRange result = instance.parse("bytes=456-123");  // start is greater than end
         assertNull(result);
     }
 
     @Test
-    public void translateShouldReturnNullForNull() throws HttpException {
+    void translateReturnsNullForNull() throws HttpException {
         ByteRange result = instance.translate(null, 1234);
         assertNull(result);
     }
 
     @Test
-    public void translateShouldReturnNullForZeroLengthFile() throws HttpException {
+    void translateReturnsNullForZeroLengthFile() throws HttpException {
         ByteRange range = new ByteRange(123, 456);
         ByteRange result = instance.translate(range, 0);
         assertNull(result);
     }
 
     @Test
-    public void translateShouldHandleLeftRange() throws HttpException {
+    void translateHandlesLeftRange() throws HttpException {
         ByteRange range = new ByteRange(123, -1);
         ByteRange result = instance.translate(range, 1234);
+
+        assert result != null;
         assertEquals(123, result.start());
         assertEquals(1233, result.end());
     }
 
-    @Test (expected=HttpException.class)
-    public void translateShouldHandleLongLeftRange() throws HttpException {
-        ByteRange range = new ByteRange(12345, -1);
-        ByteRange result = instance.translate(range, 1234);
-        assertNull(result);  // shouldn't be reached
+    @Test
+    void translateHandlesLongLeftRange() {
+        HttpException thrown = assertThrows(HttpException.class, () -> {
+            ByteRange range = new ByteRange(12345, -1);
+            instance.translate(range, 1234);
+        });
+
+        assertEquals(416, thrown.httpResponseCode);
     }
 
     @Test
-    public void translateShouldHandleRightRange() throws HttpException {
+    void translateHandlesRightRange() throws HttpException {
         ByteRange range = new ByteRange(-1, 456);
         ByteRange result = instance.translate(range, 1234);
+
+        assert result != null;
         assertEquals(778, result.start());  // 1233 - 778 + 1 = 456
         assertEquals(1233, result.end());
     }
 
     @Test
-    public void translateShouldHandleLongRightRange() throws HttpException {
+    void translateHandlesLongRightRange() throws HttpException {
         ByteRange range = new ByteRange(-1, 12345);
         ByteRange result = instance.translate(range, 1234);
+
+        assert result != null;
         assertEquals(0, result.start());  // entire file
         assertEquals(1233, result.end());
     }
 
     @Test
-    public void translateShouldHandleCompleteRange() throws HttpException {
+    void translateHandlesCompleteRange() throws HttpException {
         ByteRange range = new ByteRange(123, 456);
         ByteRange result = instance.translate(range, 1234);
+
+        assert result != null;
         assertEquals(123, result.start());
         assertEquals(456, result.end());
     }
 
     @Test
-    public void translateShouldHandleLongCompleteRange() throws HttpException {
+    void translateHandlesLongCompleteRange() throws HttpException {
         ByteRange range = new ByteRange(123, 4567);
         ByteRange result = instance.translate(range, 1234);
+
+        assert result != null;
         assertEquals(123, result.start());
         assertEquals(1233, result.end());
     }
 
-    @Test (expected=HttpException.class)
-    public void translateShouldThrowOnInvalidRange() throws HttpException {
-        ByteRange range = new ByteRange(-1, -1);
-        ByteRange result = instance.translate(range, 1234);
-        assertNull(result);  // shouldn't be reached
+    @Test
+    void translateThrowsOnInvalidRange() {
+        assertThrows(HttpException.class, () -> {
+            ByteRange range = new ByteRange(-1, -1);
+            instance.translate(range, 1234);
+        });
     }
 }

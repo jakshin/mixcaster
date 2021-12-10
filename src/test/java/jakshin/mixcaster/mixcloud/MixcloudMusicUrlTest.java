@@ -17,28 +17,29 @@
 
 package jakshin.mixcaster.mixcloud;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class MixcloudMusicUrlTest {
-    @Before
-    public void setUp() {
+class MixcloudMusicUrlTest {
+    @BeforeEach
+    void setUp() {
     }
 
-    @After
-    public void tearDown() {
+    @AfterEach
+    void tearDown() {
     }
 
     @Test
-    public void localUrlWorks() {
+    void localUrlWorks() {
         String host = System.getProperty("http_hostname") + ":" + System.getProperty("http_port");
         String expResult = "http://" + host + "/Somebody/some-lovely-music.m4a";
 
         var mixcloudMusicUrl = new MixcloudMusicUrl("https://stream.mixcloud.com/a/b/c/d.m4a?sig=blah");
         String result = mixcloudMusicUrl.localUrl(host, "Somebody", "some-lovely-music");
+
         assertEquals(expResult, result);
     }
 }

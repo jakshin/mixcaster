@@ -17,26 +17,26 @@
 
 package jakshin.mixcaster.utils;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
-public class MemoryCacheTest {
+class MemoryCacheTest {
     MemoryCache<String, Integer> instance;
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         instance = new MemoryCache<>(1);
     }
 
-    @After
-    public void tearDown() {
+    @AfterEach
+    void tearDown() {
     }
 
     @Test
-    public void putOverwritesExistingItems() {
+    void putOverwritesExistingItems() {
         instance.put("answer", 42);
         instance.put("answer", 43);
 
@@ -45,25 +45,25 @@ public class MemoryCacheTest {
     }
 
     @Test
-    public void getReturnsCachedItems() {
+    void getReturnsCachedItems() {
         instance.put("Jordan", 23);
         assertEquals(Integer.valueOf(23), instance.get("Jordan"));
     }
 
     @Test
-    public void getDoesNotReturnExpiredItems() throws InterruptedException {
+    void getDoesNotReturnExpiredItems() throws InterruptedException {
         instance.put("Curry", 20);
         Thread.sleep(1000);
         assertNull(instance.get("Jordan"));
     }
 
     @Test
-    public void getDoesNotReturnNonExistentItems() {
+    void getDoesNotReturnNonExistentItems() {
         assertNull(instance.get("it's not in there"));
     }
 
     @Test
-    public void scrubRemovesExpiredItems() throws InterruptedException {
+    void scrubRemovesExpiredItems() throws InterruptedException {
         assertFalse(instance.scrub());
 
         instance.put("one", 1);

@@ -17,23 +17,23 @@
 
 package jakshin.mixcaster.http;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class ServableFileTest {
-    @Before
-    public void setUp() {
+class ServableFileTest {
+    @BeforeEach
+    void setUp() {
     }
 
-    @After
-    public void tearDown() {
+    @AfterEach
+    void tearDown() {
     }
 
     @Test
-    public void getLocalPathWorksWithFullUrl() {
+    void getLocalPathWorksWithFullUrl() {
         String expResult = System.getProperty("music_dir");
         expResult = expResult.replace("~", System.getProperty("user.home"));
         if (!expResult.endsWith("/")) expResult += "/";
@@ -44,7 +44,7 @@ public class ServableFileTest {
     }
 
     @Test
-    public void getLocalPathWorksWithAbsoluteUrl() {
+    void getLocalPathWorksWithAbsoluteUrl() {
         System.setProperty("music_dir", "/music/");
         String expResult = "/music/Foo/ep1.m4a";
 
@@ -53,7 +53,7 @@ public class ServableFileTest {
     }
 
     @Test
-    public void getLocalPathIsSecure() {
+    void getLocalPathIsSecure() {
         System.setProperty("music_dir", "/music");
         String[] urls = {"", ".", "..", "../..", "..//..", "//..//", "foo/..", "../foo/..", "..//foo//.." };
 

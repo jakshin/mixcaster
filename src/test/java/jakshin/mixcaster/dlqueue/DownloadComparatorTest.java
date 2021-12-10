@@ -17,62 +17,51 @@
 
 package jakshin.mixcaster.dlqueue;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import java.util.Date;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import static org.junit.Assert.*;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Unit tests for the DownloadComparator class.
  */
-public class DownloadComparatorTest {
-    /** Scaffolding. */
-    @BeforeClass
-    public static void setUpClass() {
+class DownloadComparatorTest {
+    private final String url = "https://example.com/foo.m4a";
+    private final String path = "/path/foo.m4a";
+
+    @BeforeEach
+    void setUp() {
     }
 
-    /** Scaffolding. */
-    @AfterClass
-    public static void tearDownClass() {
+    @AfterEach
+    void tearDown() {
     }
 
-    /** Scaffolding. */
-    @Before
-    public void setUp() {
-    }
-
-    /** Scaffolding. */
-    @After
-    public void tearDown() {
-    }
-
-    /** Test. */
     @Test
-    public void compareOldestFirstShouldWork() {
+    void compareOldestFirstWorks() {
         DownloadComparator instance = new DownloadComparator(true);
 
         Date now = new Date();
-        Download modifiedNow = new Download(null, 0, now, null);
-        Download modifiedNowAgain = new Download(null, 0, new Date(now.getTime()), null);
-        Download modifiedEarlier = new Download(null, 0, new Date(now.getTime() - 10_000), null);
+        Download modifiedNow = new Download(url, 0, now, path);
+        Download modifiedNowAgain = new Download(url, 0, new Date(now.getTime()), path);
+        Download modifiedEarlier = new Download(url, 0, new Date(now.getTime() - 10_000), path);
 
         assertEquals(0, instance.compare(modifiedNow, modifiedNowAgain));
         assertEquals(1, instance.compare(modifiedNow, modifiedEarlier));
         assertEquals(-1, instance.compare(modifiedEarlier, modifiedNow));
     }
 
-    /** Test. */
     @Test
-    public void compareNewestFirstShouldWork() {
+    void compareNewestFirstWorks() {
         DownloadComparator instance = new DownloadComparator(false);
 
         Date now = new Date();
-        Download modifiedNow = new Download(null, 0, now, null);
-        Download modifiedNowAgain = new Download(null, 0, new Date(now.getTime()), null);
-        Download modifiedEarlier = new Download(null, 0, new Date(now.getTime() - 10_000), null);
+        Download modifiedNow = new Download(url, 0, now, path);
+        Download modifiedNowAgain = new Download(url, 0, new Date(now.getTime()), path);
+        Download modifiedEarlier = new Download(url, 0, new Date(now.getTime() - 10_000), path);
 
         assertEquals(0, instance.compare(modifiedNow, modifiedNowAgain));
         assertEquals(-1, instance.compare(modifiedNow, modifiedEarlier));
