@@ -19,7 +19,7 @@ Downloads from Mixcloud take quite a while — the first ~5 MB is typically sent
 
 ### Installation and use as a service
 
-After downloading a release, unzip it to wherever you'd like to keep it, and take a glance through its settings in `mixcaster-settings.properties`, tweaking them as desired. Then open a terminal and run `mixcaster -service` to run the service, or `mixcaster -install` to set the service up as a launchd agent which will run whenever you're logged in.
+After downloading a release, unzip it to wherever you'd like to keep it, and take a glance through its settings in [mixcaster-settings.properties](config/mixcaster-settings.properties), tweaking them as desired. Then open a terminal and run `mixcaster -service` to run the service, or `mixcaster -install` to set the service up as a launchd agent which will run whenever you're logged in.
 
 Then open your podcast app and add a URL. For example, in macOS's Podcasts app, use File > Add a Show by URL; in iOS's, use Library > (...) button in the upper right-hand corner > Add a Show by URL.
 
@@ -35,14 +35,20 @@ When you first subscribe to a user's music, Mixcaster won't have had a chance to
 
 By the way, the first request to Mixcaster for a podcast's RSS XML, before its music files have been fully downloaded, also runs a bit slowly — taking 10 seconds or more to complete — because Mixcaster has to issue a HEAD request to Mixcloud's servers for each music file in order to populate the podcast's list of episodes.
 
-One way to minimize both of those minor hassles is to first download the music you're interested in at a command line, before subscribing in your podcast app. Which brings us to...
+One way to minimize both of those minor hassles is to have Mixcaster "watch" the music you're interested in. Which brings us to...
+
+### Watching Mixcloud users and playlists
+
+Mixcaster can watch specific Mixcloud users or playlists for you. It will periodically check Mixcloud for new music in the background, and immediately download any it finds. When the timing works out well, Mixcaster will notice new music and download it before your podcast app queries it, (mostly) avoiding the annoyance of opening your podcast client and seeing `[DOWNLOADING, CAN'T PLAY YET]`.
+
+You can list the users and playlists you'd like for Mixcaster to watch in [mixcaster-watches.conf](config/mixcaster-watches.conf), and configure how often it checks Mixcloud for new music in [mixcaster-settings.properties](config/mixcaster-settings.properties).
 
 ### Downloading music from a command line
 
 You can pass a Mixcloud URL that lists music to Mixcaster, and it'll download music files listed on that page.
 For example: `mixcaster -download https://www.mixcloud.com/ArmadaMusicOfficial/uploads/`
 
-Run `mixcaster -help` for full usage details, including options which limit how many music files will be downloaded, and control where to put them.
+Run `mixcaster -help` for full usage details, including options which limit how many music files will be downloaded, and tell Mixcaster where to put them.
 
 ### A note about episode sorting
 
@@ -60,7 +66,7 @@ If you move Mixcaster to a different folder:
 
 You can remove the launchd agent with `mixcaster -uninstall`.
 
-The program is written in Java, so it should in theory work on any modern OS, but I've only tested it on macOS, and wouldn't be surprised to learn that it breaks in various odd ways on another OS, especially Windows.
+The program is written in Java, so it should in theory work on any modern OS, with appropriate configuration... but I've only actually tested it on macOS, and wouldn't be surprised to learn that it breaks in various odd ways on another OS, especially Windows.
 
 ### Contributing
 
