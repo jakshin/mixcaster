@@ -18,8 +18,11 @@ repositories {
 
 dependencies {
     implementation 'com.apollographql.apollo:apollo-runtime:2.5.11'
+    compileOnly 'org.jetbrains:annotations:23.0.0'
 
+    testImplementation 'org.assertj:assertj-core:3.21.0'
     testImplementation 'org.junit.jupiter:junit-jupiter:5.8.2'
+    testImplementation 'org.mockito:mockito-junit-jupiter:4.2.0'
 }
 
 def appVersion = 'dev'  // Must be either "dev" or major.minor.patch
