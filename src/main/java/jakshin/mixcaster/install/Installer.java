@@ -19,9 +19,9 @@ package jakshin.mixcaster.install;
 
 import jakshin.mixcaster.utils.ResourceLoader;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
-import java.io.*;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -32,7 +32,7 @@ import java.util.Locale;
  * Installs and uninstalls the Mixcaster service as a launchd user agent.
  * The service is started immediately after installation, and stopped before uninstallation.
  */
-public final class Installer {
+public class Installer {
     /**
      * Installs the service, and starts it via launchd.
      * @return A code indicating success (0) or failure (1 or 2).
@@ -41,14 +41,9 @@ public final class Installer {
         this.log("Installing the Mixcaster service...");
 
         try {
-            String jarPath = this.getJarPath();
-
-            if (jarPath == null) {
-                this.log("Error: Installation must be performed using the jar file, not in an IDE");
-                return 1;
-            }
-
             if (this.checkLaunchdAgent()) {
+                this.getJarPath();  // avoid damaging an actual local installation when running/debugging in an IDE
+
                 this.log("%nThe service is already registered with launchd");
                 this.log("Removing the existing service registration so reinstallation can continue");
 
@@ -73,15 +68,15 @@ public final class Installer {
             String plistXml = ResourceLoader.loadResourceAsText(resourcePath, 600).toString();
 
             plistXml = plistXml.replace("{{serviceLabel}}", this.getServiceLabel());
-            plistXml = plistXml.replace("{{mixcaster.jar}}", jarPath);
+            plistXml = plistXml.replace("{{mixcaster.jar}}", this.getJarPath());
 
-            File plistFile = new File(this.getPlistPath());
-            Files.writeString(plistFile.toPath(), plistXml, StandardCharsets.UTF_8);
+            Path plistPath = this.getPlistPath();
+            Files.writeString(plistPath, plistXml, StandardCharsets.UTF_8);
 
-            this.log("Created %s", plistFile);
+            this.log("Created %s", plistPath);
             this.log("%nLoading the service via launchd...");
 
-            int result = this.loadLaunchdAgent(plistFile);
+            int result = this.loadLaunchdAgent(plistPath);
 
             if (result != 0) {
                 this.log("Error: Failed to load the service (%d)", result);
@@ -91,6 +86,10 @@ public final class Installer {
             this.log("Loaded the service");
             this.log("%nSuccess: The Mixcaster service was installed and started");
             return 0;
+        }
+        catch (IllegalStateException ex) {
+            this.log(ex.getMessage());
+            return 1;
         }
         catch (IOException | InterruptedException ex) {
             this.logFailure("Installation", ex);
@@ -104,7 +103,6 @@ public final class Installer {
      */
     public int uninstall() {
         this.log("Uninstalling the Mixcaster service...");
-        File plistFile = new File(this.getPlistPath());
 
         try {
             this.log("%nRemoving the service from launchd...");
@@ -124,16 +122,13 @@ public final class Installer {
                 }
             }
 
-            this.log("%nRemoving the service's launchd configuration file...");
-            boolean exists = plistFile.exists();
+            this.log("%nDeleting the service's launchd configuration file...");
 
-            if (exists && !plistFile.delete()) {
-                this.log("Error: Failed to remove %s", plistFile);
-                return 2;
-            }
+            Path plistPath = this.getPlistPath();
+            boolean existed = Files.deleteIfExists(plistPath);
 
-            String msg = (exists) ? "Removed %s" : "File %s doesn't exist";
-            this.log(msg, plistFile);
+            String msg = (existed) ? "Removed %s" : "File %s doesn't exist";
+            this.log(msg, plistPath);
 
             this.log("%nSuccess: The Mixcaster service was uninstalled");
             return 0;
@@ -148,8 +143,6 @@ public final class Installer {
      * Gets the service's launchd label.
      * This is the unique name for the service (which we make per-user),
      * and also by convention the name of the service's plist configuration file.
-     *
-     * @return The service's launchd label.
      */
     @NotNull
     private String getServiceLabel() {
@@ -158,47 +151,43 @@ public final class Installer {
     }
 
     /**
-     * Gets the path to the service's launchd configuration file, for this user.
-     * @return The path to the service's launchd configuration file, for this user.
+     * Gets the path to the currently running jar file.
+     * @throws IllegalStateException if the code isn't running in a jar file.
      */
     @NotNull
-    private String getPlistPath() {
-        String pathStr = String.format("Library/LaunchAgents/%s.plist", this.getServiceLabel());
-        Path path = Paths.get(System.getProperty("user.home"), pathStr);
-        return path.toString();
-    }
-
-    /**
-     * Gets the path to the currently running jar file.
-     * Note that this returns null if the code isn't running in a jar file.
-     *
-     * @return The path to the currently running jar file.
-     */
-    @Nullable
-    private String getJarPath() {
+    @VisibleForTesting
+    String getJarPath() {
         Path path = Paths.get(Installer.class.getProtectionDomain().getCodeSource().getLocation().getPath());
         String jarPath = path.toString();
 
-        if (jarPath.toLowerCase(Locale.ROOT).endsWith(".jar")) {
-            return jarPath;
+        if (! jarPath.toLowerCase(Locale.ROOT).endsWith(".jar")) {
+            String message = "Error: Installation must be performed using the jar file, not in an IDE";
+            throw new IllegalStateException(message);
         }
 
-        return null;
+        return jarPath;
+    }
+
+    /**
+     * Gets the path to the service's launchd configuration file, for this user.
+     */
+    @NotNull
+    @VisibleForTesting
+    Path getPlistPath() {
+        String pathStr = String.format("Library/LaunchAgents/%s.plist", this.getServiceLabel());
+        return Paths.get(System.getProperty("user.home"), pathStr);
     }
 
     /**
      * Loads the service's launchd configuration file into launchd.
      * The service will be started immediately, because of how we've set up the configuration plist.
      *
-     * @param plistFile The service's user-specific plist configuration file.
+     * @param plistPath The path to the user-specific service configuration file.
      * @return The launchctl program's exit code.
      */
-    private int loadLaunchdAgent(File plistFile) throws IOException, InterruptedException {
-        String cmd = String.format("/bin/launchctl load %s", plistFile);
-        this.log("Executing: %s", cmd);
-
-        Process proc = Runtime.getRuntime().exec(cmd);
-        return proc.waitFor();
+    private int loadLaunchdAgent(@NotNull Path plistPath) throws IOException, InterruptedException {
+        String cmd = String.format("/bin/launchctl load %s", plistPath);
+        return execute(cmd);
     }
 
     /**
@@ -209,22 +198,15 @@ public final class Installer {
      */
     private int removeLaunchdAgent() throws IOException, InterruptedException {
         String cmd = String.format("/bin/launchctl remove %s", this.getServiceLabel());
-        this.log("Executing: %s", cmd);
-
-        Process proc = Runtime.getRuntime().exec(cmd);
-        return proc.waitFor();
+        return execute(cmd);
     }
 
     /**
-     * Checks to see if the service is registered with launchd.
-     *
-     * @return Whether the service is registered with launchd.
+     * Checks whether the service is already registered with launchd.
      */
     private boolean checkLaunchdAgent() throws IOException, InterruptedException {
         String cmd = String.format("/bin/launchctl list %s", this.getServiceLabel());
-
-        Process proc = Runtime.getRuntime().exec(cmd);
-        int result = proc.waitFor();
+        int result = execute(cmd);
         return (result == 0);  // assume any failure means "service doesn't exist"
     }
 
@@ -237,7 +219,8 @@ public final class Installer {
      *
      * @return Whether removal of the service completed before our 10s timeout.
      */
-    private boolean waitForLaunchdAgentRemoval() throws IOException, InterruptedException {
+    @VisibleForTesting
+    boolean waitForLaunchdAgentRemoval() throws IOException, InterruptedException {
         int waitMillis = 50;
         long start = System.nanoTime();
 
@@ -258,13 +241,26 @@ public final class Installer {
     }
 
     /**
+     * Executes a command line in a separate process, and returns its exit code.
+     * @param cmd The command line to execute.
+     */
+    @VisibleForTesting
+    int execute(String cmd) throws IOException, InterruptedException {
+        this.log("Executing: %s", cmd);
+
+        Process proc = Runtime.getRuntime().exec(cmd);
+        return proc.waitFor();
+    }
+
+    /**
      * "Logs" a message by displaying it using System.out.
      * This class doesn't use the logging facilities used by the rest of the program.
      *
      * @param fmt The format string, or just the string to display; processed through String.format().
      * @param args Any arguments needed to format the format string.
      */
-    private void log(@NotNull String fmt, Object... args) {
+    @VisibleForTesting
+    void log(@NotNull String fmt, Object... args) {
         String msg = String.format(fmt, args);
         System.out.println(msg);
     }
