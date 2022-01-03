@@ -93,7 +93,7 @@ class PodcastXmlResponder extends Responder {
         Podcast podcast = getOrMakePodcast(description, client, musicSet);
 
         // note that RSS was requested just now (used while managing stale music files)
-        Freshener.updateRssLastRequestedAttr();
+        new Freshener().updateRssLastRequestedAttr();
 
         // handle If-Modified-Since
         HttpHeaderWriter headerWriter = new HttpHeaderWriter();

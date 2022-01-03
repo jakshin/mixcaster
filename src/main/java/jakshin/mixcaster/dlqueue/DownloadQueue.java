@@ -159,10 +159,11 @@ public final class DownloadQueue {
      * @param watchedSet The watched music set that required this file to be downloaded (optional).
      */
     private void freshenAttributes(@NotNull Path path, @Nullable MusicSet watchedSet) {
-        Freshener.updateLastUsedAttr(path);
+        var freshener = new Freshener();
+        freshener.updateLastUsedAttr(path);
 
         if (watchedSet != null) {
-            Freshener.updateWatchesAttr(path, watchedSet);
+            freshener.updateWatchesAttr(path, watchedSet);
         }
     }
 

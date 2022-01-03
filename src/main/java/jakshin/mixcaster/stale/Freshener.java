@@ -22,6 +22,7 @@ import jakshin.mixcaster.stale.attributes.LastUsedAttr;
 import jakshin.mixcaster.stale.attributes.RssLastRequestedAttr;
 import jakshin.mixcaster.stale.attributes.WatchesAttr;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
@@ -43,12 +44,12 @@ import static jakshin.mixcaster.logging.Logging.logger;
  * All of this class's methods silently do nothing if user-defined attributes
  * aren't supported on this platform.
  */
-public final class Freshener {
+public class Freshener {
     /**
      * Updates the given file's lastUsed attribute to the current UTC date/time.
      * @param path The file whose attribute should be updated.
      */
-    public static void updateLastUsedAttr(@NotNull Path path) {
+    public void updateLastUsedAttr(@NotNull Path path) {
         updateLastUsedAttr(path, false);
     }
 
@@ -60,9 +61,9 @@ public final class Freshener {
      * @param onlyIfAttributeAlreadyExists Whether to only update an existing attribute,
      *                                     i.e. never creating a new attribute.
      */
-    public static void updateLastUsedAttr(@NotNull Path path, boolean onlyIfAttributeAlreadyExists) {
+    public void updateLastUsedAttr(@NotNull Path path, boolean onlyIfAttributeAlreadyExists) {
         try {
-            LastUsedAttr attr = new LastUsedAttr(path);
+            LastUsedAttr attr = newLastUsedAttr(path);
 
             if (attr.isSupported() && (!onlyIfAttributeAlreadyExists || attr.exists())) {
                 OffsetDateTime nowUtc = OffsetDateTime.now(ZoneOffset.UTC);
@@ -77,10 +78,10 @@ public final class Freshener {
     /**
      * Updates the music directory's rssLastRequested attribute to the current UTC date/time.
      */
-    public static void updateRssLastRequestedAttr() {
+    public void updateRssLastRequestedAttr() {
         try {
             Path musicDir = getMusicDirSetting();
-            RssLastRequestedAttr attr = new RssLastRequestedAttr(musicDir);
+            RssLastRequestedAttr attr = newRssLastRequestedAttr(musicDir);
 
             if (attr.isSupported()) {
                 OffsetDateTime nowUtc = OffsetDateTime.now(ZoneOffset.UTC);
@@ -99,9 +100,9 @@ public final class Freshener {
      * @param path The file whose attribute should be updated.
      * @param watchedSet The music set to include in the attribute's value.
      */
-    public static void updateWatchesAttr(@NotNull Path path, @NotNull MusicSet watchedSet) {
+    public void updateWatchesAttr(@NotNull Path path, @NotNull MusicSet watchedSet) {
         try {
-            WatchesAttr attr = new WatchesAttr(path);
+            WatchesAttr attr = newWatchesAttr(path);
             if (! attr.isSupported()) return;
 
             // synchronizing like this serializes all writes to ANY file's "watches" attribute;
@@ -116,7 +117,7 @@ public final class Freshener {
                      FileLock lock = chan.lock()) {
 
                     List<MusicSet> watches = attr.getValue();
-                    if (!watches.contains(watchedSet)) {
+                    if (! watches.contains(watchedSet)) {
                         watches.add(watchedSet);
                         attr.setValue(watches);
                     }
@@ -136,18 +137,31 @@ public final class Freshener {
      * @return music_dir, as an absolute Path object.
      */
     @NotNull
-    private static Path getMusicDirSetting() {
+    private Path getMusicDirSetting() {
         String musicDir = System.getProperty("music_dir");
         if (musicDir.startsWith("~/"))
             musicDir = System.getProperty("user.home") + musicDir.substring(1);
         return Path.of(musicDir);
     }
 
-    /**
-     * Private constructor to prevent instantiation.
-     * This class's methods are all static, and it shouldn't be instantiated.
-     */
-    private Freshener() {
-        // nothing here
+    /** Returns a new LastUsedAttr instance. */
+    @NotNull
+    @VisibleForTesting
+    LastUsedAttr newLastUsedAttr(@NotNull Path path) {
+        return new LastUsedAttr(path);
+    }
+
+    /** Returns a new RssLastRequestedAttr instance. */
+    @NotNull
+    @VisibleForTesting
+    RssLastRequestedAttr newRssLastRequestedAttr(@NotNull Path path) {
+        return new RssLastRequestedAttr(path);
+    }
+
+    /** Returns a new WatchesAttr instance. */
+    @NotNull
+    @VisibleForTesting
+    WatchesAttr newWatchesAttr(@NotNull Path path) {
+        return new WatchesAttr(path);
     }
 }
