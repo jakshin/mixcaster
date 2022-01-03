@@ -18,9 +18,14 @@
 package jakshin.mixcaster.http;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.logging.Level;
+import java.util.logging.LogManager;
+
+import static jakshin.mixcaster.logging.Logging.logger;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -28,6 +33,12 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 class ByteRangeParserTest {
     private ByteRangeParser instance;
+
+    @BeforeAll
+    static void beforeAll() {
+        LogManager.getLogManager().reset();
+        logger.setLevel(Level.OFF);
+    }
 
     @BeforeEach
     void setUp() {
