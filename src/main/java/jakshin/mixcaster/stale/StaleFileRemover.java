@@ -113,7 +113,7 @@ public class StaleFileRemover implements Runnable {
 
             if (rssLastRequestedUtc != null && rssLastRequestedUtc.isBefore(staleThresholdUtc)) {
                 logger.log(INFO, () -> String.format("No podcast requests have been received since %s, " +
-                        "so we'll only consider files if unless they're included in a watched music set",
+                        "so we'll only consider files if they're included in a watched music set",
                         DateTimeFormatter.RFC_1123_DATE_TIME.format(rssLastRequestedUtc)));
             }
 
