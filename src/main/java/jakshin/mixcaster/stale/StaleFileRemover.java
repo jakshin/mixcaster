@@ -58,20 +58,33 @@ import static jakshin.mixcaster.logging.Logging.*;
 public class StaleFileRemover implements Runnable {
     /**
      * Starts periodically looking for stale music files and removing them,
-     * after first waiting for an initial delay (measured in seconds).
+     * after first waiting for an initial delay.
      */
-    public static void start(long initialDelaySeconds) {
+    public boolean start(long initialDelay, long delay, @NotNull TimeUnit timeUnit) {
         if (getRemoveStaleMusicFilesAfterDaysSetting() == 0) {
             logger.log(INFO, "Feature disabled: periodically removing stale music files");
-            return;
+            return false;
         }
 
         synchronized (StaleFileRemover.class) {
-            if (future == null) {
-                long delaySeconds = 3600L;  // 1 hour
-                var executor = new ScheduledThreadPoolExecutor(1);
-                future = executor.scheduleWithFixedDelay(new StaleFileRemover(),
-                        initialDelaySeconds, delaySeconds, TimeUnit.SECONDS);
+            if (future != null) {
+                return false;
+            }
+
+            var executor = new ScheduledThreadPoolExecutor(1);
+            future = executor.scheduleWithFixedDelay(this, initialDelay, delay, timeUnit);
+            return true;
+        }
+    }
+
+    /**
+     * Stops periodically looking for stale music files and removing them.
+     */
+    public void stop() {
+        synchronized (StaleFileRemover.class) {
+            if (future != null) {
+                future.cancel(true);
+                future = null;
             }
         }
     }
@@ -234,7 +247,7 @@ public class StaleFileRemover implements Runnable {
      * @return music_dir, as an absolute Path object.
      */
     @NotNull
-    private static Path getMusicDirSetting() {
+    private Path getMusicDirSetting() {
         String musicDir = System.getProperty("music_dir");
         if (musicDir.startsWith("~/"))
             musicDir = System.getProperty("user.home") + musicDir.substring(1);
@@ -245,7 +258,7 @@ public class StaleFileRemover implements Runnable {
      * Gets the remove_stale_music_files_after_days configuration setting.
      * @return remove_stale_music_files_after_days, converted to an int.
      */
-    private static int getRemoveStaleMusicFilesAfterDaysSetting() {
+    private int getRemoveStaleMusicFilesAfterDaysSetting() {
         String daysStr = System.getProperty("remove_stale_music_files_after_days");
         return Integer.parseInt(daysStr);  // already validated
     }
@@ -254,7 +267,7 @@ public class StaleFileRemover implements Runnable {
      * Gets the watch_interval_minutes configuration setting.
      * @return watch_interval_minutes, converted to an int.
      */
-    private static int getWatchIntervalMinutes() {
+    private int getWatchIntervalMinutes() {
         String minutesStr = System.getProperty("watch_interval_minutes");
         return Integer.parseInt(minutesStr);  // already validated
     }

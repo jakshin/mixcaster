@@ -134,11 +134,13 @@ public class Main {
                     ? AppVersion.display : String.format("(%s)", AppVersion.display);
             this.init(String.format("Mixcaster service starting up %s", serviceVersion), true);
 
-            var executor = new ScheduledThreadPoolExecutor(1);
-            executor.scheduleWithFixedDelay(new LogCleaner(), 2, 3600, TimeUnit.SECONDS);
+            var cleaner = new ScheduledThreadPoolExecutor(1);
+            cleaner.scheduleWithFixedDelay(new LogCleaner(), 2, 3600, TimeUnit.SECONDS);
 
             Watcher.start(10);
-            StaleFileRemover.start(600);
+
+            var remover = new StaleFileRemover();
+            remover.start(600, 3600, TimeUnit.SECONDS);
 
             HttpServer server = new HttpServer();
             server.run();
