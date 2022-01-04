@@ -54,7 +54,7 @@ public class Watcher implements Runnable {
      */
     public static boolean isWatchingAnything() {
         synchronized (Watcher.class) {
-            return !watchedMusicSets.isEmpty();
+            return (watchedMusicSets != null && !watchedMusicSets.isEmpty());
         }
     }
 
@@ -64,9 +64,11 @@ public class Watcher implements Runnable {
      */
     public static boolean isWatchingAnyOf(@NotNull final List<MusicSet> musicSets) {
         synchronized (Watcher.class) {
-            for (MusicSet musicSet : musicSets) {
-                if (watchedMusicSets.contains(musicSet)) {
-                    return true;
+            if (watchedMusicSets != null) {
+                for (MusicSet musicSet : musicSets) {
+                    if (watchedMusicSets.contains(musicSet)) {
+                        return true;
+                    }
                 }
             }
 
