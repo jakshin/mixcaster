@@ -22,9 +22,12 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.net.Socket;
+import java.net.SocketException;
 import java.nio.charset.StandardCharsets;
 import java.util.LinkedList;
 import java.util.Locale;
+import java.util.logging.Level;
+
 import static jakshin.mixcaster.logging.Logging.*;
 
 /**
@@ -137,7 +140,8 @@ class HttpResponse implements Runnable {
             }
             catch (Throwable misery) {
                 // log and give up
-                logger.log(ERROR, "Couldn't send HTTP error response", misery);
+                Level logLevel = (misery instanceof SocketException) ? WARNING : ERROR;
+                logger.log(logLevel, () -> String.format("Couldn't send HTTP error response: %s", misery));
             }
         }
         finally {
