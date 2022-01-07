@@ -18,9 +18,11 @@
 package jakshin.mixcaster.http;
 
 import jakshin.mixcaster.utils.AppVersion;
-import jakshin.mixcaster.utils.DateFormatter;
 import jakshin.mixcaster.utils.ResourceLoader;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -33,12 +35,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static jakshin.mixcaster.logging.Logging.logger;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mockStatic;
@@ -110,12 +109,12 @@ class BannerResponderTest {
 
             // we should have only loaded the resource once
             mockedStatic.verify(loadResourceAsText, times(1));
-
-            // we should use a buffer big enough to hold the resource
-            StringBuilder resource = ResourceLoader.loadResourceAsText(resourcePath.get(), 8192);
-            int minBufferSize = resource.length();
-            assertThat(usedBufferSize.get()).isGreaterThanOrEqualTo(minBufferSize);
         }
+
+        // we should use a buffer big enough to hold the resource
+        StringBuilder resource = ResourceLoader.loadResourceAsText(resourcePath.get(), 8192);
+        int minBufferSize = resource.length();
+        assertThat(usedBufferSize.get()).isGreaterThanOrEqualTo(minBufferSize);
     }
 
     @Test
@@ -127,34 +126,13 @@ class BannerResponderTest {
         String headers = response.substring(0, index);
         String body = response.substring(index + 4);
 
-        assertThat(headers).containsOnlyOnce("Accept-Ranges: bytes");
         assertThat(headers).containsOnlyOnce("Cache-Control: no-cache");
         assertThat(headers).containsOnlyOnce("Connection: close");
         assertThat(headers).containsOnlyOnce("Content-Length: " + body.length());
         assertThat(headers).containsOnlyOnce("Content-Type: text/html");
 
-        parseDateHeader("Date", headers);
-        parseDateHeader("Last-Modified", headers);
-    }
-
-    private Date parseDateHeader(String headerName, String headers) {
-        Pattern p = Pattern.compile("\\r\\n" + headerName + ":\\s+[^\\r\\n]+GMT\\r\\n");
-        Matcher m = p.matcher(headers);
-
-        if (! m.find()) {
-            fail(String.format("Missing the %s response header", headerName));
-        }
-
-        int index = m.group().indexOf(':');
-        String headerValue = m.group().substring(index + 1).trim();
-
-        try {
-            return DateFormatter.parse(headerValue);
-        }
-        catch (ParseException ex) {
-            fail(String.format("Invalid format in the %s response header: %s", headerName, headerValue));
-            return new Date();  // we never get here, it's just to keep the compiler happy
-        }
+        Utilities.parseDateHeader("Date", headers);
+        Utilities.parseDateHeader("Last-Modified", headers);
     }
 
     @Test
@@ -170,6 +148,18 @@ class BannerResponderTest {
 
         assertThat(headers).isNotBlank();
         assertThat(body).isEmpty();
+    }
+
+    @Test
+    void respondsToGetRequests() throws IOException, ParseException {
+        responder.respond(request, writer);
+
+        String response = writer.toString();
+        int index = response.indexOf("\r\n\r\n");
+        String body = response.substring(index + 4);
+
+        assertThat(body).contains("<!DOCTYPE html>");
+        assertThat(body).contains("</html>");
     }
 
     @Test
@@ -205,7 +195,7 @@ class BannerResponderTest {
     private Date getNextLastModifiedHeader() throws IOException, ParseException {
         writer.getBuffer().delete(0, writer.getBuffer().length());
         responder.respond(request, writer);
-        return parseDateHeader("Last-Modified", writer.toString());
+        return Utilities.parseDateHeader("Last-Modified", writer.toString());
     }
 
     private void incrementVersion(AtomicReference<String> version, int partToIncrement) {
