@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.*;
 import java.net.SocketException;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
 import java.util.Date;
 import java.util.concurrent.TimeoutException;
 
@@ -57,6 +58,12 @@ class FileResponder extends Responder {
             // ensure the file really is in our music_dir
             if (! file.getCanonicalPath().startsWith(getMusicDirSetting())) {
                 logger.log(WARNING, "Refusing to serve file outside music_dir: {0}", localPath);
+                throw new HttpException(403, "Forbidden");
+            }
+
+            // we don't allow serving symlinks, for now (this check should happen before
+            // we use isDirectory() and isFile(), because they read through symlinks)
+            if (Files.isSymbolicLink(file.toPath())) {
                 throw new HttpException(403, "Forbidden");
             }
 
