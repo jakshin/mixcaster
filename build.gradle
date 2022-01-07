@@ -23,6 +23,7 @@ dependencies {
     testImplementation 'org.assertj:assertj-core:3.21.0'
     testImplementation 'org.junit.jupiter:junit-jupiter:5.8.2'
     testImplementation 'org.mockito:mockito-junit-jupiter:4.2.0'
+    testImplementation 'org.mockito:mockito-inline:4.2.0'
 }
 
 def appVersion = 'dev'  // Must be either "dev" or major.minor.patch
@@ -98,6 +99,10 @@ snyk {
 
 test {
     useJUnitPlatform()
+
+    // Avoid a warning message printed by Java every time tests are run, since adding our
+    // mockito-inline dependency ("Sharing is only supported for boot loader classes...")
+    jvmArgs '-Xshare:off'
 }
 
 // Use "shadowJar" in place of "jar"
