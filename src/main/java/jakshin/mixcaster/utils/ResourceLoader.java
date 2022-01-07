@@ -70,9 +70,8 @@ public final class ResourceLoader {
      *                       The impact of setting this too low is extra memory allocation+copy cycles.
      * @return The resource's content.
      */
-    @NotNull
-    public static byte[] loadResourceAsBytes(@NotNull String resourcePath,
-                                             int capacityNeeded) throws IOException {
+    public static byte @NotNull [] loadResourceAsBytes(@NotNull String resourcePath,
+                                                       int capacityNeeded) throws IOException {
 
         ByteArrayOutputStream ba = new ByteArrayOutputStream(capacityNeeded);
 
