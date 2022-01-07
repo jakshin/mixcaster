@@ -17,6 +17,7 @@
 
 package jakshin.mixcaster.stale;
 
+import jakshin.mixcaster.TestUtilities;
 import jakshin.mixcaster.stale.attributes.LastUsedAttr;
 import jakshin.mixcaster.stale.attributes.RssLastRequestedAttr;
 import org.junit.jupiter.api.*;
@@ -29,7 +30,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
-import java.util.Comparator;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
@@ -48,32 +48,13 @@ class StaleFileRemoverTest {
 
     private Path mockMusicDir;
 
-    private static String originalMusicDirProperty;
-    private static String originalRemoveStaleMusic;
-
-    private static void restoreOriginalValue(String key, String originalValue) {
-        if (originalValue == null)
-            System.clearProperty(key);
-        else
-            System.setProperty(key, originalValue);
-    }
-
     @BeforeAll
     static void beforeAll() {
-        originalMusicDirProperty = System.getProperty("music_dir");
-        originalRemoveStaleMusic = System.getProperty("remove_stale_music_files_after_days");
-
         LogManager.getLogManager().reset();
         logger.setLevel(Level.OFF);
 
         // don't put a goofy Java icon in macOS's dock while tests run
         System.setProperty("apple.awt.UIElement", "true");
-    }
-
-    @AfterAll
-    static void afterAll() {
-        restoreOriginalValue("music_dir", originalMusicDirProperty);
-        restoreOriginalValue("remove_stale_music_files_after_days", originalRemoveStaleMusic);
     }
 
     @BeforeEach
@@ -83,19 +64,11 @@ class StaleFileRemoverTest {
     }
 
     @AfterEach
-    void tearDown() throws IOException {
+    void tearDown() {
         remover.stop();
-
-        if (mockMusicDir != null && Files.exists(mockMusicDir)) {
-            Files.walk(mockMusicDir).sorted(Comparator.reverseOrder()).forEach(path -> {
-                try {
-                    Files.delete(path);
-                }
-                catch (IOException e) {
-                    e.printStackTrace();
-                }
-            });
-        }
+        System.clearProperty("music_dir");
+        System.clearProperty("remove_stale_music_files_after_days");
+        TestUtilities.removeTempDirectory(mockMusicDir);
     }
 
     @Test
