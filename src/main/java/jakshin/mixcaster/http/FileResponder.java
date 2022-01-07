@@ -168,20 +168,28 @@ class FileResponder extends Responder {
 
     /**
      * Gets the music_dir configuration setting.
-     * @return music_dir, as an absolute path, with a trailing slash.
+     * @return music_dir, as an absolute canonical path, with a trailing slash.
      */
     @NotNull
-    private static String getMusicDirSetting() {
-        String musicDir = System.getProperty("music_dir");
+    private synchronized static String getMusicDirSetting() throws IOException {
+        if (canonicalMusicDir == null) {
+            String musicDir = System.getProperty("music_dir");
+            if (musicDir.startsWith("~/")) {
+                musicDir = System.getProperty("user.home") + musicDir.substring(1);
+            }
 
-        if (musicDir.startsWith("~/")) {
-            musicDir = System.getProperty("user.home") + musicDir.substring(1);
+            canonicalMusicDir = new File(musicDir).getCanonicalPath();
+            if (!canonicalMusicDir.endsWith("/")) {
+                canonicalMusicDir += "/";
+            }
         }
 
-        if (! musicDir.endsWith("/")) {
-            musicDir += "/";
-        }
-
-        return musicDir;
+        return canonicalMusicDir;
     }
+
+    /**
+     * The music_dir setting, as an absolute canonical path, with a trailing slash.
+     * Populated the first time respond() is called.
+     */
+    private static String canonicalMusicDir;
 }
