@@ -91,7 +91,7 @@ public class Main {
 
         try {
             // initialize settings and logging
-            this.init(String.format("Mixcaster %s", AppVersion.display), false);
+            this.init(String.format("Mixcaster %s", AppVersion.display()), false);
 
             logCleanerThread = new Thread(new LogCleaner());
             logCleanerThread.start();
@@ -130,8 +130,8 @@ public class Main {
      */
     private int runService() {
         try {
-            String serviceVersion = AppVersion.display.startsWith("(")
-                    ? AppVersion.display : String.format("(%s)", AppVersion.display);
+            String serviceVersion = AppVersion.display().startsWith("(")
+                    ? AppVersion.display() : String.format("(%s)", AppVersion.display());
             this.init(String.format("Mixcaster service starting up %s", serviceVersion), true);
 
             var cleaner = new ScheduledThreadPoolExecutor(1);
@@ -180,7 +180,7 @@ public class Main {
      * Prints version information.
      */
     private void printVersion() {
-        System.out.printf("Mixcaster %s%n", AppVersion.display);
+        System.out.printf("Mixcaster %s%n", AppVersion.display());
         System.out.println("https://github.com/jakshin/mixcaster");
     }
 

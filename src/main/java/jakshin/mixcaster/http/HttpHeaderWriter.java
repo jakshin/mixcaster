@@ -345,7 +345,7 @@ class HttpHeaderWriter {
      */
     private void addCommonHeaders(@NotNull StringBuilder out, @NotNull StringBuilder log) {
         this.addHeader(out, log, "Date: %s", DateFormatter.format(new Date()));
-        this.addHeader(out, log, "Server: Mixcaster/%s (%s)", AppVersion.raw, System.getProperty("os.name"));
+        this.addHeader(out, log, "Server: Mixcaster/%s (%s)", AppVersion.raw(), System.getProperty("os.name"));
         this.addHeader(out, log, "Connection: close");
         this.addHeader(out, log, "Accept-Ranges: bytes");
     }

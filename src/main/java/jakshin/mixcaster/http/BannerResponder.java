@@ -21,6 +21,7 @@ import jakshin.mixcaster.utils.AppVersion;
 import jakshin.mixcaster.utils.DateFormatter;
 import jakshin.mixcaster.utils.ResourceLoader;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.*;
 import java.text.ParseException;
@@ -55,12 +56,12 @@ class BannerResponder extends Responder {
 
         // read the resource into a buffer, if we haven't already done so;
         // we do this in its own step so that we can send a Content-Length response header, and cache
-        synchronized (BannerResponder.resourceBufferLock) {
+        synchronized (BannerResponder.class) {
             if (BannerResponder.resourceBuffer == null) {
                 logger.log(DEBUG, "Loading banner.html resource");
-                StringBuilder sb = ResourceLoader.loadResourceAsText("http/banner.html", 41_000);
+                StringBuilder sb = ResourceLoader.loadResourceAsText("http/banner.html", 42_000);
                 BannerResponder.resourceBuffer = sb.toString()
-                        .replace("{{version}}", AppVersion.display)
+                        .replace("{{version}}", AppVersion.display())
                         .replace("{{port}}", System.getProperty("http_port"));
             }
             else {
@@ -104,7 +105,7 @@ class BannerResponder extends Responder {
         Calendar cal = Calendar.getInstance();
         cal.setTime(lastModified);
 
-        String[] version = AppVersion.raw.split("\\.");
+        String[] version = AppVersion.raw().split("\\.");
         if (version.length == 3) {
             // our use of the Cache-Control header causes browsers to send an If-Modified-Since request;
             // add hours for major version, minutes for minor version, and seconds for patch version
@@ -123,8 +124,6 @@ class BannerResponder extends Responder {
     }
 
     /** A buffer where we cache the resource on first use. */
-    private static String resourceBuffer;
-
-    /** An object on which we synchronize writes to resourceBuffer. */
-    private static final Object resourceBufferLock = new Object();
+    @VisibleForTesting
+    static String resourceBuffer; //NOPMD - suppressed MutableStaticState - only mutated by test code
 }

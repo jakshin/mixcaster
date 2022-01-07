@@ -17,17 +17,34 @@
 
 package jakshin.mixcaster.utils;
 
+import org.jetbrains.annotations.NotNull;
 import java.net.URL;
 
 /**
  * The application's version info.
  */
+@SuppressWarnings({"PMD.CommentRequired", "PMD.AvoidFieldNameMatchingMethodName"})
 public final class AppVersion {
-    /** The application's version, in raw format: "dev" or major.minor.patch. */
-    public static final String raw;
+    /**
+     * Returns the application's version,
+     * in raw format: "dev" or major.minor.patch.
+     */
+    @NotNull
+    public static String raw() {
+        return raw;
+    }
 
-    /** The application's version, ready for display, with a leading "v" if major.minor.patch. */
-    public static final String display;
+    /**
+     * Returns the application's version, ready for display,
+     * with a leading "v" if major.minor.patch.
+     */
+    @NotNull
+    public static String display() {
+        return display;
+    }
+
+    private static final String raw;
+    private static final String display;
 
     static {
         URL resourceUrl = AppVersion.class.getResource("AppVersion.class");
