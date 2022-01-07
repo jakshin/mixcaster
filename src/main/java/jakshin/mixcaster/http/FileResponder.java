@@ -75,7 +75,9 @@ class FileResponder extends Responder {
 
             // update the file's lastUsed attribute, iff it already exists
             // (the intent is to only track lastUsed on files downloaded by Mixcaster)
-            new Freshener().updateLastUsedAttr(file.toPath(), true);
+            if (file.isFile()) {
+                new Freshener().updateLastUsedAttr(file.toPath(), true);
+            }
 
             // handle If-Modified-Since
             // this date is only valid if the file exists, so don't use it otherwise
