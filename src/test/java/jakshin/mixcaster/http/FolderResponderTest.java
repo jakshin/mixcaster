@@ -18,11 +18,13 @@
 package jakshin.mixcaster.http;
 
 import jakshin.mixcaster.TestUtilities;
+import jakshin.mixcaster.dlqueue.DownloadQueue;
 import jakshin.mixcaster.mixcloud.MixcloudClient;
 import jakshin.mixcaster.mixcloud.MixcloudException;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.MockedConstruction;
+import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.ByteArrayOutputStream;
@@ -39,8 +41,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.mockConstruction;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 /**
  * Unit tests for the FolderResponder class.
@@ -88,11 +89,15 @@ class FolderResponderTest {
     void delegatesToPodcastXmlResponder() throws MixcloudException, HttpException, IOException,
                                     URISyntaxException, InterruptedException, TimeoutException {
 
-        try (MockedConstruction<MixcloudClient> ignored = mockConstruction(MixcloudClient.class,
+        try (MockedStatic<DownloadQueue> mockedStatic = mockStatic(DownloadQueue.class);
+             MockedConstruction<MixcloudClient> ignored = mockConstruction(MixcloudClient.class,
                 (mock, context) -> {
                     when(mock.queryDefaultView(anyString())).thenReturn("shows");
                     when(mock.query(any())).thenAnswer(invocation -> Utilities.createMockPodcast());
                 })) {
+
+            DownloadQueue mockDownloadQueue = mock(DownloadQueue.class);
+            mockedStatic.when(DownloadQueue::getInstance).thenReturn(mockDownloadQueue);
 
             request = new HttpRequest("GET", "/maxswineberg/", "HTTP/1.1");
 

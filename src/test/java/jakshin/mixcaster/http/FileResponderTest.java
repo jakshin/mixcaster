@@ -18,6 +18,7 @@
 package jakshin.mixcaster.http;
 
 import jakshin.mixcaster.TestUtilities;
+import jakshin.mixcaster.dlqueue.DownloadQueue;
 import jakshin.mixcaster.mixcloud.MixcloudClient;
 import jakshin.mixcaster.mixcloud.MixcloudException;
 import jakshin.mixcaster.stale.attributes.LastUsedAttr;
@@ -98,11 +99,15 @@ class FileResponderTest {
     void delegatesToPodcastXmlResponder() throws MixcloudException, HttpException, IOException,
                                     URISyntaxException, InterruptedException, TimeoutException {
 
-        try (MockedConstruction<MixcloudClient> ignored = mockConstruction(MixcloudClient.class,
-                (mock, context) -> {
-                    when(mock.queryDefaultView(anyString())).thenReturn("shows");
-                    when(mock.query(any())).thenAnswer(invocation -> Utilities.createMockPodcast());
-                })) {
+        try (MockedStatic<DownloadQueue> mockedStatic = mockStatic(DownloadQueue.class);
+             MockedConstruction<MixcloudClient> ignored = mockConstruction(MixcloudClient.class,
+                     (mock, context) -> {
+                         when(mock.queryDefaultView(anyString())).thenReturn("shows");
+                         when(mock.query(any())).thenAnswer(invocation -> Utilities.createMockPodcast());
+                     })) {
+
+            DownloadQueue mockDownloadQueue = mock(DownloadQueue.class);
+            mockedStatic.when(DownloadQueue::getInstance).thenReturn(mockDownloadQueue);
 
             request = new HttpRequest("GET", "/newagerage", "HTTP/1.1");
 
