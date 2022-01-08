@@ -18,9 +18,11 @@
 package jakshin.mixcaster.http;
 
 import jakshin.mixcaster.TestUtilities;
+import jakshin.mixcaster.mixcloud.MixcloudClient;
 import jakshin.mixcaster.mixcloud.MixcloudException;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.MockedConstruction;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.ByteArrayOutputStream;
@@ -35,6 +37,10 @@ import java.util.logging.LogManager;
 import static jakshin.mixcaster.logging.Logging.logger;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mockConstruction;
+import static org.mockito.Mockito.when;
 
 /**
  * Unit tests for the FolderResponder class.
@@ -81,15 +87,23 @@ class FolderResponderTest {
     @Test
     void delegatesToPodcastXmlResponder() throws MixcloudException, HttpException, IOException,
                                     URISyntaxException, InterruptedException, TimeoutException {
-        request = new HttpRequest("GET", "/maxswineberg/", "HTTP/1.1");
 
-        responder.respond(request, writer, out);
+        try (MockedConstruction<MixcloudClient> ignored = mockConstruction(MixcloudClient.class,
+                (mock, context) -> {
+                    when(mock.queryDefaultView(anyString())).thenReturn("shows");
+                    when(mock.query(any())).thenAnswer(invocation -> Utilities.createMockPodcast());
+                })) {
 
-        String response = writer.toString();
-        assertThat(response).startsWith("HTTP/1.1 200 OK\r\n");
-        assertThat(response).contains("Content-Type: text/xml; charset=UTF-8\r\n");
-        Utilities.parseDateHeader("Last-Modified", response);
-        validateCommonHeaders(response);
+            request = new HttpRequest("GET", "/maxswineberg/", "HTTP/1.1");
+
+            responder.respond(request, writer, out);
+
+            String response = writer.toString();
+            assertThat(response).startsWith("HTTP/1.1 200 OK\r\n");
+            assertThat(response).contains("Content-Type: text/xml; charset=UTF-8\r\n");
+            Utilities.parseDateHeader("Last-Modified", response);
+            validateCommonHeaders(response);
+        }
     }
 
     @Test
