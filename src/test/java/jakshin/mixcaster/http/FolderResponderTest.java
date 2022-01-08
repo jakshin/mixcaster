@@ -27,7 +27,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.net.URISyntaxException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
@@ -50,15 +49,7 @@ class FolderResponderTest {
 
     @BeforeAll
     static void beforeAll() throws IOException {
-        mockMusicDir = Files.createTempDirectory("mix-fr-");
-        Files.createDirectory(Path.of(mockMusicDir.toString(), "dir"));
-        Files.createDirectory(Path.of(mockMusicDir.toString(), "dir/subdir"));
-        Files.createFile(Path.of(mockMusicDir.toString(), "dir/file.txt"));
-
-        System.setProperty("music_dir", mockMusicDir.toString());
-        System.setProperty("http_cache_time_seconds", "3600");
-        System.setProperty("episode_max_count", "25");
-        System.setProperty("download_threads", "auto");
+        mockMusicDir = TestUtilities.createMockMusicDir("mix-for-");
 
         LogManager.getLogManager().reset();
         logger.setLevel(Level.OFF);
@@ -83,7 +74,7 @@ class FolderResponderTest {
 
     private void validateCommonHeaders(String response) {
         assertThat(response).containsOnlyOnce("Connection: close\r\n");
-        assertThat(response).matches("(?s).*Content-Length:\\s+[1-9]+\\r\\n.*");
+        assertThat(response).matches("(?s).*Content-Length:\\s+[1-9][0-9]+\\r\\n.*");
         Utilities.parseDateHeader("Date", response);
     }
 
@@ -104,14 +95,14 @@ class FolderResponderTest {
     @Test
     void redirectsIfThePathIsAFile() throws MixcloudException, HttpException, IOException,
                                     URISyntaxException, InterruptedException, TimeoutException {
-        request = new HttpRequest("GET", "/dir/file.txt/", "HTTP/1.1");
+        request = new HttpRequest("GET", "/dir/file.m4a/", "HTTP/1.1");
 
         responder.respond(request, writer, out);
 
         String response = writer.toString();
         assertThat(response).startsWith("HTTP/1.1 301 Moved Permanently\r\n");
         assertThat(response).contains("Content-Type: text/plain\r\n");
-        assertThat(response).contains("Location: /dir/file.txt\r\n");
+        assertThat(response).contains("Location: /dir/file.m4a\r\n");
         validateCommonHeaders(response);
     }
 
