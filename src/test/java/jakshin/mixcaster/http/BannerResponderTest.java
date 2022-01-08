@@ -117,37 +117,36 @@ class BannerResponderTest {
         assertThat(usedBufferSize.get()).isGreaterThanOrEqualTo(minBufferSize);
     }
 
-    @Test
-    void sendsAppropriateResponseHeaders() throws IOException, ParseException {
-        responder.respond(request, writer);
-
-        String response = writer.toString();
+    private void validateResponse(String response, boolean headRequest) {
         int index = response.indexOf("\r\n\r\n");
-        String headers = response.substring(0, index);
+        String headers = response.substring(0, index + 2);
         String body = response.substring(index + 4);
 
-        assertThat(headers).containsOnlyOnce("Cache-Control: no-cache");
-        assertThat(headers).containsOnlyOnce("Connection: close");
-        assertThat(headers).containsOnlyOnce("Content-Length: " + body.length());
-        assertThat(headers).containsOnlyOnce("Content-Type: text/html");
+        assertThat(headers).startsWith("HTTP/1.1 200 OK\r\n");
+        assertThat(headers).containsOnlyOnce("Cache-Control: no-cache\r\n");
+        assertThat(headers).containsOnlyOnce("Connection: close\r\n");
+        assertThat(headers).containsOnlyOnce("Content-Type: text/html\r\n");
 
         Utilities.parseDateHeader("Date", headers);
         Utilities.parseDateHeader("Last-Modified", headers);
+
+        if (headRequest)
+            assertThat(body).isEmpty();
+        else
+            assertThat(headers).containsOnlyOnce("Content-Length: " + body.length() + "\r\n");
     }
 
     @Test
-    void respondsToHeadRequests () throws IOException, ParseException {
+    void sendsAppropriateResponseHeaders() throws IOException, ParseException {
+        responder.respond(request, writer);
+        validateResponse(writer.toString(), false);
+    }
+
+    @Test
+    void respondsToHeadRequests() throws IOException, ParseException {
         var headRequest = new HttpRequest("HEAD", "/", "HTTP/1.1");
-
         responder.respond(headRequest, writer);
-
-        String response = writer.toString();
-        int index = response.indexOf("\r\n\r\n");
-        String headers = response.substring(0, index);
-        String body = response.substring(index + 4);
-
-        assertThat(headers).isNotBlank();
-        assertThat(body).isEmpty();
+        validateResponse(writer.toString(), true);
     }
 
     @Test

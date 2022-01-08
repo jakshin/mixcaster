@@ -139,9 +139,14 @@ class FavIconResponderTest {
         responder.respond(headRequest, writer, out);
 
         String headers = writer.toString();
-        byte[] body = out.toByteArray();
+        assertThat(headers).startsWith("HTTP/1.1 200 OK\r\n");
+        assertThat(headers).doesNotContain("Cache-Control: no-cache");
+        assertThat(headers).containsOnlyOnce("Connection: close\r\n");
+        assertThat(headers).containsOnlyOnce("Content-Type: image/x-icon\r\n");
+        Utilities.parseDateHeader("Date", headers);
+        Utilities.parseDateHeader("Last-Modified", headers);
 
-        assertThat(headers).isNotBlank();
+        byte[] body = out.toByteArray();
         assertThat(body).isEmpty();
     }
 
