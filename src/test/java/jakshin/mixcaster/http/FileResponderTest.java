@@ -98,7 +98,7 @@ class FileResponderTest {
     void delegatesToPodcastXmlResponder() throws MixcloudException, HttpException, IOException,
                                     URISyntaxException, InterruptedException, TimeoutException {
 
-        try (MockedConstruction<MixcloudClient> mocked = mockConstruction(MixcloudClient.class,
+        try (MockedConstruction<MixcloudClient> ignored = mockConstruction(MixcloudClient.class,
                 (mock, context) -> {
                     when(mock.queryDefaultView(anyString())).thenReturn("shows");
                     when(mock.query(any())).thenAnswer(invocation -> Utilities.createMockPodcast());
