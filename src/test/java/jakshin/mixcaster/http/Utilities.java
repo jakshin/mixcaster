@@ -54,7 +54,7 @@ public class Utilities {
             ep.enclosureLengthBytes = 1234;
             ep.enclosureMimeType = "audio/mp4";
             ep.enclosureMixcloudUrl = new URI("https://example.com/music.m4a");
-            ep.enclosureUrl = new URI("http://localhost:6499");
+            ep.enclosureUrl = new URI("http://localhost:6499/somebody/music.m4a");
             ep.link = new URI("https://example.com/mock-music");
             ep.pubDate = new Date();
             ep.title = "Mock Music";
