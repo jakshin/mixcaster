@@ -22,6 +22,7 @@ import jakshin.mixcaster.podcast.PodcastEpisode;
 import jakshin.mixcaster.utils.DateFormatter;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.StringWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.ParseException;
@@ -91,5 +92,9 @@ public class Utilities {
             fail(String.format("Invalid format in the %s response header: %s", headerName, headerValue));
             return new Date();  // we never get here, it's just to keep the compiler happy
         }
+    }
+
+    public static void resetStringWriter(@NotNull StringWriter writer) {
+        writer.getBuffer().delete(0, writer.getBuffer().length());
     }
 }
