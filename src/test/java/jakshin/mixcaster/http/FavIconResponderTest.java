@@ -78,7 +78,7 @@ class FavIconResponderTest {
         assertThat(writer.toString()).startsWith("HTTP/1.1 304 Not Modified");
 
         request.headers.put("If-Modified-Since", "Sun, 08 May 2016 02:00:00 GMT");
-        writer.getBuffer().delete(0, writer.getBuffer().length());
+        Utilities.resetStringWriter(writer);
 
         responder.respond(request, writer, out);
         assertThat(writer.toString()).startsWith("HTTP/1.1 200 OK");

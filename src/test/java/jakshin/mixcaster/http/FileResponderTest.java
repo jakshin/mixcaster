@@ -228,7 +228,7 @@ class FileResponderTest {
 
         Date backThen = Date.from(Instant.now().minus(10, ChronoUnit.MINUTES));
         request.headers.put("If-Modified-Since", DateFormatter.format(backThen));
-        writer.getBuffer().delete(0, writer.getBuffer().length());
+        Utilities.resetStringWriter(writer);
 
         responder.respond(request, writer, out);
         assertThat(writer.toString()).startsWith("HTTP/1.1 200 OK");
