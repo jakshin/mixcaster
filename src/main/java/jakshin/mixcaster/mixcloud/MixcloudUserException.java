@@ -30,7 +30,7 @@ public class MixcloudUserException extends MixcloudException {
      * @param message The detail message.
      * @param username The Mixcloud user that doesn't exist.
      */
-    MixcloudUserException(@NotNull String message, @NotNull String username) {
+    public MixcloudUserException(@NotNull String message, @NotNull String username) {
         super(message);
         this.username = username;
     }

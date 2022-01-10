@@ -32,7 +32,7 @@ public class MixcloudPlaylistException extends MixcloudException {
      * @param username The Mixcloud user that might not exist.
      * @param playlist The slug of the Mixcloud playlist that doesn't exist.
      */
-    MixcloudPlaylistException(@NotNull String message, @NotNull String username, @NotNull String playlist) {
+    public MixcloudPlaylistException(@NotNull String message, @NotNull String username, @NotNull String playlist) {
         super(message);
         this.username = username;
         this.playlist = playlist;
