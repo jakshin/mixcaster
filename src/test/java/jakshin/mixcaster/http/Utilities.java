@@ -39,6 +39,11 @@ public class Utilities {
 
     @NotNull
     public static Podcast createMockPodcast() {
+        return createMockPodcast(3);
+    }
+
+    @NotNull
+    public static Podcast createMockPodcast(int numEpisodes) {
         var podcast = new Podcast();
 
         try {
@@ -49,21 +54,25 @@ public class Utilities {
             podcast.iTunesAuthorAndOwnerName = "Somebody";
             podcast.iTunesImageUrl = new URI("https://example.com/image.jpg");
 
-            var ep = new PodcastEpisode();
-            ep.description = "Mock description";
-            ep.enclosureLastModified = new Date();
-            ep.enclosureLengthBytes = 1234;
-            ep.enclosureMimeType = "audio/mp4";
-            ep.enclosureMixcloudUrl = new URI("https://example.com/music.m4a");
-            ep.enclosureUrl = new URI("http://localhost:6499/somebody/music.m4a");
-            ep.link = new URI("https://example.com/mock-music");
-            ep.pubDate = new Date();
-            ep.title = "Mock Music";
-            ep.iTunesAuthor = "Somebody";
-            ep.iTunesDuration = 2345;
-            ep.iTunesImageUrl = new URI("https://example.com/mock-music-image.jpg");
+            for (int num = 1; num <= numEpisodes; num++) {
+                String musicFile = String.format("music-%d.m4a", num);
 
-            podcast.episodes.add(ep);
+                var ep = new PodcastEpisode();
+                ep.description = String.format("Mock description %d", num);
+                ep.enclosureLastModified = new Date();
+                ep.enclosureLengthBytes = 1234;
+                ep.enclosureMimeType = "audio/mp4";
+                ep.enclosureMixcloudUrl = new URI("https://example.com/" + musicFile);
+                ep.enclosureUrl = new URI("http://localhost:6499/somebody/" + musicFile);
+                ep.link = new URI("https://example.com/mock-music-" + num);
+                ep.pubDate = new Date();
+                ep.title = String.format("Mock Music %d", num);
+                ep.iTunesAuthor = "Somebody";
+                ep.iTunesDuration = 2345;
+                ep.iTunesImageUrl = new URI("https://example.com/mock-music-image.jpg");
+
+                podcast.episodes.add(ep);
+            }
         }
         catch (URISyntaxException ex) {
             ex.printStackTrace();
