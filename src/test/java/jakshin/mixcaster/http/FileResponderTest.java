@@ -122,6 +122,25 @@ class FileResponderTest {
     }
 
     @Test
+    void servesFilesFromTheRootMusicDirectory() throws MixcloudException, HttpException, IOException,
+                                    URISyntaxException, InterruptedException, TimeoutException {
+        String fileName = "/hello.txt";
+        Path path = Path.of(mockMusicDir.toString(), fileName);
+        Files.writeString(path, "Hello, sailor!");
+
+        request = new HttpRequest("GET", fileName, "HTTP/1.1");
+
+        responder.respond(request, writer, out);
+
+        String headers = writer.toString();
+        assertThat(headers).startsWith("HTTP/1.1 200 OK\r\n");
+        assertThat(headers).contains("Accept-Ranges: bytes\r\n");
+        assertThat(headers).contains("Content-Type: text/plain\r\n");
+        Utilities.parseDateHeader("Last-Modified", headers);
+        validateCommonHeaders(headers);
+    }
+
+    @Test
     void refusesToServeFilesOutsideTheMusicDir() throws IOException {
         // ServableFile protects us by normalizing paths, which usually results in 404s...
         requestFilesOutsideTheMusicDir(404, "Not Found");
