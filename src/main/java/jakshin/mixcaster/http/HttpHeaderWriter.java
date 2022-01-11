@@ -154,16 +154,15 @@ class HttpHeaderWriter {
      * @param resourceLastModified The date/time at which the resource being requested was last modified.
      * @return Whether not-modified headers were output in order to satisfy the request.
      */
-    public boolean sendNotModifiedHeadersIfNeeded(@NotNull HttpRequest request,
+    boolean sendNotModifiedHeadersIfNeeded(@NotNull HttpRequest request,
                                                   @NotNull Writer writer,
                                                   @NotNull Date resourceLastModified) throws IOException {
-
         try {
             if (request.headers.containsKey("If-Modified-Since")) {
                 Date ifModifiedSince = DateFormatter.parse(request.headers.get("If-Modified-Since"));
 
                 if (ifModifiedSince.compareTo(resourceLastModified) >= 0) {
-                    new HttpHeaderWriter().sendNotModifiedHeaders(writer);
+                    sendNotModifiedHeaders(writer);
                     return true;  // not-modified headers sent, response has been satisfied
                 }
             }
