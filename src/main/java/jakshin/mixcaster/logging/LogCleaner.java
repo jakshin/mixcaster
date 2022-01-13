@@ -189,5 +189,5 @@ public class LogCleaner implements Runnable {
     }
 
     /** Holds a file and its last-modified date. */
-    private static record FileAndTimestamp(File file, long timestamp) { }
+    private record FileAndTimestamp(File file, long timestamp) { }
 }
