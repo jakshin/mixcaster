@@ -18,6 +18,7 @@
 package jakshin.mixcaster.logging;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.File;
 import java.io.IOException;
@@ -91,6 +92,12 @@ public final class Logging {
 
     /** Whether logging has been initialized or not. */
     private static boolean initialized;
+
+    @VisibleForTesting
+    static synchronized void resetLogging() {
+        LogManager.getLogManager().reset();
+        initialized = false;
+    }
 
     /**
      * Gets the log_max_count configuration setting.
