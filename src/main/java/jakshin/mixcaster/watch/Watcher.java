@@ -21,6 +21,7 @@ import jakshin.mixcaster.download.Downloader;
 import jakshin.mixcaster.mixcloud.MixcloudException;
 import jakshin.mixcaster.mixcloud.MusicSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -39,56 +40,60 @@ import static jakshin.mixcaster.logging.Logging.*;
  * check each one found for new music, and start downloading.
  */
 public class Watcher implements Runnable {
-    /**
-     * Creates a new instance.
-     * Normally this is called by start(), not directly.
-     */
-    Watcher() {
-        Path path = Paths.get(Watcher.class.getProtectionDomain().getCodeSource().getLocation().getPath());
-        Path confFilePath = Paths.get(path.getParent().toString(), "mixcaster-watches.conf");
-        settings = new WatchSettings(confFilePath);
-    }
 
     /**
      * Are we watching any music sets?
      */
-    public static boolean isWatchingAnything() {
-        synchronized (Watcher.class) {
-            return (watchedMusicSets != null && !watchedMusicSets.isEmpty());
+    public static synchronized boolean isWatchingAnything() throws IOException {
+        if (watchedMusicSets == null) {
+            loadOrRefreshSettings();
         }
+
+        return (watchedMusicSets.size() != 0);
     }
 
     /**
      * Are we watching any of the given music sets?
      * @param musicSets A list of music sets we might be watching.
      */
-    public static boolean isWatchingAnyOf(@NotNull final List<MusicSet> musicSets) {
-        synchronized (Watcher.class) {
-            if (watchedMusicSets != null) {
-                for (MusicSet musicSet : musicSets) {
-                    if (watchedMusicSets.contains(musicSet)) {
-                        return true;
-                    }
-                }
-            }
-
-            return false;
+    public static synchronized boolean isWatchingAnyOf(@NotNull final List<MusicSet> musicSets) throws IOException {
+        if (watchedMusicSets == null) {
+            loadOrRefreshSettings();
         }
+
+        for (MusicSet musicSet : musicSets) {
+            if (watchedMusicSets.contains(musicSet)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
      * Starts checking watches in mixcaster-watches.conf every watch_interval_minutes,
      * after first waiting for an initial delay (measured in seconds).
      */
-    public static void start(long initialDelaySeconds) {
-        synchronized (Watcher.class) {
-            if (future == null) {
-                long delaySeconds = getWatchIntervalMinutes() * 60L;
-                var executor = new ScheduledThreadPoolExecutor(1);
-                future = executor.scheduleWithFixedDelay(new Watcher(),
-                        initialDelaySeconds, delaySeconds, TimeUnit.SECONDS);
-            }
+    public static synchronized void start(long initialDelaySeconds) {
+        if (future == null) {
+            long delaySeconds = getWatchIntervalMinutes() * 60L;
+            var executor = new ScheduledThreadPoolExecutor(1);
+            future = executor.scheduleWithFixedDelay(new Watcher(),
+                    initialDelaySeconds, delaySeconds, TimeUnit.SECONDS);
         }
+    }
+
+    /**
+     * Stops checking any watches configured in mixcaster-watches.conf.
+     */
+    public static synchronized void stop() {
+        if (future != null) {
+            future.cancel(true);
+            future = null;
+        }
+
+        watchedMusicSets = null;
+        settings = null;
     }
 
     /**
@@ -98,7 +103,7 @@ public class Watcher implements Runnable {
     public void run() {
         try {
             synchronized (Watcher.class) {
-                watchedMusicSets = settings.loadIfChanged();
+                loadOrRefreshSettings();
                 if (watchedMusicSets.isEmpty()) {
                     return;  // we already logged in loadIfChanged(), so just quietly bail here
                 }
@@ -146,26 +151,53 @@ public class Watcher implements Runnable {
     }
 
     /**
+     * Returns the full path to mixcaster-watches.conf.
+     */
+    @VisibleForTesting
+    @NotNull
+    static Path getConfigFilePath() {
+        Path path = Paths.get(Watcher.class.getProtectionDomain().getCodeSource().getLocation().getPath());
+        return Paths.get(path.getParent().toString(), "mixcaster-watches.conf");
+    }
+
+    /**
+     * Loads or refreshes settings from mixcaster-watches.conf...
+     * probably not at all surprising, given the method's name.
+     */
+    @VisibleForTesting
+    static synchronized void loadOrRefreshSettings() throws IOException {
+        if (settings == null) {
+            Path configFilePath = getConfigFilePath();
+            settings = new WatchSettings(configFilePath);
+        }
+
+        watchedMusicSets = settings.loadIfChanged();
+    }
+
+    /**
      * Gets the watch_interval_minutes configuration setting.
      * @return watch_interval_minutes, converted to an int.
      */
-    private static int getWatchIntervalMinutes() {
+    @VisibleForTesting
+    static int getWatchIntervalMinutes() {
         String minutesStr = System.getProperty("watch_interval_minutes");
         return Integer.parseInt(minutesStr);  // already validated
     }
 
     /**
      * The future representing scheduled execution.
-     * Null until start() has been called.
+     * Null until start() has been called, or if stop() has been called.
      */
     private static ScheduledFuture<?> future;
 
     /**
-     * Music sets we're watching, loaded from our settings file via the WatchSettings in our "settings" property.
+     * Settings, stored in mixcaster-watches.conf.
+     */
+    private static WatchSettings settings;
+
+    /**
+     * Music sets we're watching, loaded from our settings file via our "settings" property.
      * This is refreshed from disk, if needed, every watch_interval_minutes.
      */
     private static List<MusicSet> watchedMusicSets;
-
-    /** Settings loaded from mixcaster-watches.conf. */
-    private final WatchSettings settings;
 }
