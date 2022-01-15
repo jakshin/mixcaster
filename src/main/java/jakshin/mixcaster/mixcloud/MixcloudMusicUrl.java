@@ -17,7 +17,9 @@
 
 package jakshin.mixcaster.mixcloud;
 
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -64,8 +66,7 @@ record MixcloudMusicUrl(@NotNull String urlStr) {
         try {
             logger.log(DEBUG, "Getting HEAD of URL: {0}", urlStr);
 
-            URL url = new URL(urlStr);
-            conn = (HttpURLConnection) url.openConnection();
+            conn = openConnection(urlStr);
             conn.setRequestMethod("HEAD");
             conn.setRequestProperty("User-Agent", System.getProperty("user_agent"));
             conn.setRequestProperty("Referer", urlStr);
@@ -104,6 +105,19 @@ record MixcloudMusicUrl(@NotNull String urlStr) {
 
             throw ex;
         }
+    }
+
+    /**
+     * Returns an object that represents a connection to a remote URL.
+     * @param spec A string representation of the remote URL.
+     */
+    @NotNull
+    @VisibleForTesting
+    HttpURLConnection openConnection(@NonNls @NotNull String spec) throws IOException {
+        // this doesn't actually establish a network connection;
+        // the returned object's connect() does that
+        var url = new URL(spec);
+        return (HttpURLConnection) url.openConnection();
     }
 
     /**
