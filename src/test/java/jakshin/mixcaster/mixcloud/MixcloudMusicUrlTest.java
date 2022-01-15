@@ -17,29 +17,144 @@
 
 package jakshin.mixcaster.mixcloud;
 
-import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.time.Instant;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.AdditionalMatchers.find;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
 
 class MixcloudMusicUrlTest {
-    @BeforeEach
-    void setUp() {
+    private static final String urlStr = "https://stream.mixcloud.com/a/b/c/d.m4a?sig=blah";
+    private static final String testUserAgent = "Test User Agent/1.0";
+    private static final int timeoutMillis = 1234;
+    private MixcloudMusicUrl mmu;
+    private HttpURLConnection mockConnection;
+
+    @BeforeAll
+    static void beforeAll() {
+        System.setProperty("user_agent", testUserAgent);
     }
 
-    @AfterEach
-    void tearDown() {
+    @AfterAll
+    static void afterAll() {
+        System.clearProperty("user_agent");
+    }
+
+    @BeforeEach
+    void setUp() throws MixcloudException, IOException {
+        mockConnection = mock(HttpURLConnection.class);
+        doReturn("audio/mp4").when(mockConnection).getContentType();
+        doReturn(12345678L).when(mockConnection).getContentLengthLong();
+        doReturn(Instant.now().toEpochMilli()).when(mockConnection).getLastModified();
+
+        mmu = mock(MixcloudMusicUrl.class, withSettings().useConstructor(urlStr));
+        doCallRealMethod().when(mmu).localUrl(anyString(), anyString(), anyString());
+        doCallRealMethod().when(mmu).getHeaders(anyInt());
+        doReturn(mockConnection).when(mmu).openConnection(anyString());
     }
 
     @Test
     void localUrlWorks() {
-        String host = System.getProperty("http_hostname") + ":" + System.getProperty("http_port");
-        String expResult = "http://" + host + "/Somebody/some-lovely-music.m4a";
+        String host = "foo:123";
 
-        var mixcloudMusicUrl = new MixcloudMusicUrl("https://stream.mixcloud.com/a/b/c/d.m4a?sig=blah");
-        String result = mixcloudMusicUrl.localUrl(host, "Somebody", "some-lovely-music");
+        MixcloudMusicUrl mmu = new MixcloudMusicUrl("https://stream.mixcloud.com/a/b/c/d.m4a?sig=blah");
+        String result = mmu.localUrl(host, "Somebody", "some-lovely-music");
 
-        assertEquals(expResult, result);
+        String expected = "http://" + host + "/Somebody/some-lovely-music.m4a";
+        assertThat(result).isEqualTo(expected);
+    }
+
+    @Test
+    void makesHeadRequests() throws MixcloudException, IOException {
+        mmu.getHeaders(timeoutMillis);
+        verify(mockConnection).setRequestMethod("HEAD");
+    }
+
+    @Test
+    void sendsTheConfiguredUserAgent() throws MixcloudException, IOException {
+        mmu.getHeaders(timeoutMillis);
+        verify(mockConnection).setRequestProperty("User-Agent", testUserAgent);
+    }
+
+    @Test
+    void sendRefererWithTheSameDomain() throws MixcloudException, IOException {
+        mmu.getHeaders(timeoutMillis);
+
+        var url = new URL(urlStr);
+        String host = String.format("%s://%s", url.getProtocol(), url.getHost());
+        verify(mockConnection).setRequestProperty(eq("Referer"), find(host));
+    }
+
+    @Test
+    void usesTheGivenTimeout() throws MixcloudException, IOException {
+        int millis = 2345;
+        mmu.getHeaders(millis);
+
+        verify(mockConnection).setConnectTimeout(millis);
+        verify(mockConnection).setReadTimeout(millis);
+    }
+
+    @Test
+    void doesNotDisconnectOnSuccess() throws MixcloudException, IOException {
+        mmu.getHeaders(timeoutMillis);
+        verify(mockConnection, never()).disconnect();
+    }
+
+    @Test
+    void disconnectsAfterAnError() throws IOException {
+        doThrow(new IOException("Testing")).when(mockConnection).connect();
+
+        assertThatThrownBy(() -> mmu.getHeaders(timeoutMillis)).isInstanceOf(IOException.class);
+        verify(mockConnection).disconnect();
+    }
+
+    @Test
+    void throwsIfTheContentTypeIsUnexpected() {
+        String contentType = "text/html";
+        doReturn(contentType).when(mockConnection).getContentType();
+
+        assertThatThrownBy(() -> mmu.getHeaders(timeoutMillis))
+                .isInstanceOf(MixcloudException.class)
+                .hasMessageContaining(contentType);
+        verify(mockConnection).disconnect();
+    }
+
+    @Test
+    void throwsIfTheContentLengthIsUnknown() {
+        doReturn(-1L).when(mockConnection).getContentLengthLong();
+
+        assertThatThrownBy(() -> mmu.getHeaders(timeoutMillis))
+                .isInstanceOf(MixcloudException.class)
+                .hasMessageContaining("content length");
+        verify(mockConnection).disconnect();
+    }
+
+    @Test
+    void throwsIfTheLastModifiedDateIsUnknown() {
+        doReturn(0L).when(mockConnection).getLastModified();
+
+        assertThatThrownBy(() -> mmu.getHeaders(timeoutMillis))
+                .isInstanceOf(MixcloudException.class)
+                .hasMessageContaining("last-modified");
+        verify(mockConnection).disconnect();
+    }
+
+    @Test
+    void openConnectionWorks() throws IOException {
+        doCallRealMethod().when(mmu).openConnection(anyString());
+
+        HttpURLConnection conn = mmu.openConnection(urlStr);
+        URL url = conn.getURL();
+        assertThat(url).isEqualTo(new URL(urlStr));
     }
 }
