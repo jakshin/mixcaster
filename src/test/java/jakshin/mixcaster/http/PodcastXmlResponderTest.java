@@ -110,7 +110,7 @@ class PodcastXmlResponderTest {
                             throw new MixcloudPlaylistException("Mock exception", "artist", "does-not-exist");
 
                         int episodes = "empty".equals(queried.playlist()) ? 0 : 3;
-                        mockPodcast = Utilities.createMockPodcast(episodes);
+                        mockPodcast = TestUtilities.createMockPodcast(episodes);
                         return mockPodcast;
                     });
                 });

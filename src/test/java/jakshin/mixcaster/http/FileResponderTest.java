@@ -103,7 +103,7 @@ class FileResponderTest {
              MockedConstruction<MixcloudClient> ignored = mockConstruction(MixcloudClient.class,
                      (mock, context) -> {
                          when(mock.queryDefaultView(anyString())).thenReturn("shows");
-                         when(mock.query(any())).thenAnswer(invocation -> Utilities.createMockPodcast());
+                         when(mock.query(any())).thenAnswer(invocation -> TestUtilities.createMockPodcast());
                      })) {
 
             DownloadQueue mockDownloadQueue = mock(DownloadQueue.class);

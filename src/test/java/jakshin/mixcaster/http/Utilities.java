@@ -17,14 +17,10 @@
 
 package jakshin.mixcaster.http;
 
-import jakshin.mixcaster.podcast.Podcast;
-import jakshin.mixcaster.podcast.PodcastEpisode;
 import jakshin.mixcaster.utils.DateFormatter;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.StringWriter;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.text.ParseException;
 import java.util.Date;
 import java.util.regex.Matcher;
@@ -36,51 +32,6 @@ import static org.assertj.core.api.Assertions.fail;
  * Utility functions for use in tests.
  */
 public class Utilities {
-
-    @NotNull
-    public static Podcast createMockPodcast() {
-        return createMockPodcast(3);
-    }
-
-    @NotNull
-    public static Podcast createMockPodcast(int numEpisodes) {
-        var podcast = new Podcast();
-
-        try {
-            podcast.userID = "VXNlcjozNjI3OTMy";
-            podcast.title = "Mock Podcast";
-            podcast.link = new URI("https://example.com/rss");
-            podcast.description = "Mocked for testing";
-            podcast.iTunesAuthorAndOwnerName = "Somebody";
-            podcast.iTunesImageUrl = new URI("https://example.com/image.jpg");
-
-            for (int num = 1; num <= numEpisodes; num++) {
-                String musicFile = String.format("music-%d.m4a", num);
-
-                var ep = new PodcastEpisode();
-                ep.description = String.format("Mock description %d", num);
-                ep.enclosureLastModified = new Date();
-                ep.enclosureLengthBytes = 1234;
-                ep.enclosureMimeType = "audio/mp4";
-                ep.enclosureMixcloudUrl = new URI("https://example.com/" + musicFile);
-                ep.enclosureUrl = new URI("http://localhost:6499/somebody/" + musicFile);
-                ep.link = new URI("https://example.com/mock-music-" + num);
-                ep.pubDate = new Date();
-                ep.title = String.format("Mock Music %d", num);
-                ep.iTunesAuthor = "Somebody";
-                ep.iTunesDuration = 2345;
-                ep.iTunesImageUrl = new URI("https://example.com/mock-music-image.jpg");
-
-                podcast.episodes.add(ep);
-            }
-        }
-        catch (URISyntaxException ex) {
-            ex.printStackTrace();
-            fail(ex.getMessage());
-        }
-
-        return podcast;
-    }
 
     @NotNull
     public static Date parseDateHeader(String headerName, String headers) {
