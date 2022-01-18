@@ -108,7 +108,7 @@ public class Watcher implements Runnable {
                     return;  // we already logged in loadIfChanged(), so just quietly bail here
                 }
 
-                var downloader = new Downloader(false);
+                var downloader = new Downloader(null);
                 for (var musicSet : watchedMusicSets) {
                     String[] parts;
 

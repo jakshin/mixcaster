@@ -20,8 +20,10 @@ package jakshin.mixcaster.dlqueue;
 import jakshin.mixcaster.mixcloud.MusicSet;
 import jakshin.mixcaster.stale.Freshener;
 import jakshin.mixcaster.utils.TimeSpanFormatter;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.*;
 import java.net.*;
@@ -102,18 +104,22 @@ public final class DownloadQueue {
      * We don't automatically start downloading as items are added to the queue
      * so that the sorting logic can first be applied across the whole set of downloads.
      *
-     * @param exitWhenEmpty Whether to exit, via System.exit(), when the queue is empty.
+     * @param callWhenEmpty A callback to invoke when the queue is empty (optional).
+     *                      If processQueue() is called multiple times with different callbacks,
+     *                      only the last one passed is retained. It's only invoked once.
+     *                      It might be invoked immediately on the same thread this was called on,
+     *                      or later on a different thread that was handling a download.
      */
-    public synchronized void processQueue(boolean exitWhenEmpty) {
+    public synchronized void processQueue(@Nullable Runnable callWhenEmpty) {
         Download download;
         while ((download = this.waitingDownloads.poll()) != null) {
             this.activeDownloads.add(download);
             this.pool.execute(new DownloadRunnable(download));
         }
 
-        if (exitWhenEmpty) {
-            this.exitWhenEmpty = true;
-            this.exitIfEmpty();
+        if (callWhenEmpty != null) {
+            this.callWhenEmpty = callWhenEmpty;
+            this.callIfEmpty();
         }
     }
 
@@ -135,20 +141,16 @@ public final class DownloadQueue {
      */
     private synchronized void removeActiveDownload(@NotNull Download download) {
         this.activeDownloads.remove(download);
-
-        if (this.exitWhenEmpty) {
-            this.exitIfEmpty();
-        }
+        this.callIfEmpty();
     }
 
     /**
-     * Exits if the queue is empty. This should only be called if exitWhenEmpty is true,
-     * and only from synchronized methods (it's not synchronized itself).
+     * Calls the callback passed to processQueue() if the queue is empty.
      */
-    private void exitIfEmpty() {
-        if (this.activeDownloads.isEmpty() && this.waitingDownloads.isEmpty()) {
-            logger.log(DEBUG, "The download queue is empty, exiting as requested");
-            System.exit(0);
+    private synchronized void callIfEmpty() {
+        if (callWhenEmpty != null && activeDownloads.isEmpty() && waitingDownloads.isEmpty()) {
+            callWhenEmpty.run();
+            callWhenEmpty = null;
         }
     }
 
@@ -170,7 +172,8 @@ public final class DownloadQueue {
     /**
      * A thing which can perform a download in a separate thread.
      */
-    private class DownloadRunnable implements Runnable {
+    @VisibleForTesting
+    class DownloadRunnable implements Runnable {
         /** Creates a new instance of the class. */
         DownloadRunnable(@NotNull Download download) {
             this.download = download;
@@ -187,8 +190,7 @@ public final class DownloadQueue {
                         new String[] {this.download.remoteUrl, System.lineSeparator(), this.download.localFilePath});
 
                 // set up the HTTP connection we'll download from
-                URL url = new URL(this.download.remoteUrl);
-                conn = (HttpURLConnection) url.openConnection();  // no actual network connection yet
+                conn = openConnection(this.download.remoteUrl);  // no actual network connection yet
                 conn.setInstanceFollowRedirects(true);
                 conn.setRequestProperty("User-Agent", System.getProperty("user_agent"));
                 conn.setRequestProperty("Referer", this.download.remoteUrl);
@@ -274,6 +276,19 @@ public final class DownloadQueue {
             }
         }
 
+        /**
+         * Returns an object that represents a connection to a remote URL.
+         * @param spec A string representation of the remote URL.
+         */
+        @NotNull
+        @VisibleForTesting
+        HttpURLConnection openConnection(@NonNls @NotNull String spec) throws IOException {
+            // this doesn't actually establish a network connection;
+            // the returned object's getInputStream() does that
+            var url = new URL(spec);
+            return (HttpURLConnection) url.openConnection();
+        }
+
         /** The download. */
         private final Download download;
 
@@ -293,8 +308,12 @@ public final class DownloadQueue {
     /** The queue of URLs being downloaded. */
     private final LinkedList<Download> activeDownloads = new LinkedList<>();  //NOPMD - suppressed LooseCoupling
 
-    /** Whether to call System.exit() after finishing processing the queue. */
-    private boolean exitWhenEmpty;
+    /**
+     * An optional callback to invoke when the queue has been fully processed and is empty.
+     * This is unset as soon as it's called, so it's only ever called once.
+     */
+    @Nullable
+    private Runnable callWhenEmpty;
 
     /** The single instance of this class. */
     private static DownloadQueue instance;

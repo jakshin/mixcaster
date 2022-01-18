@@ -44,10 +44,11 @@ import static jakshin.mixcaster.logging.Logging.*;
 public class Downloader {
     /**
      * Creates a new instance.
-     * @param exitWhenDownloadQueueIsEmpty Whether to exit when the download queue is empty.
+     * @param callWhenQueueIsEmpty A callback to invoke when the download queue is empty,
+     *                             iff we add any downloads to it. Only used for command-line downloads.
      */
-    public Downloader(boolean exitWhenDownloadQueueIsEmpty) {
-        this.exitWhenDownloadQueueIsEmpty = exitWhenDownloadQueueIsEmpty;
+    public Downloader(@Nullable Runnable callWhenQueueIsEmpty) {
+        this.callWhenQueueIsEmpty = callWhenQueueIsEmpty;
     }
 
     /**
@@ -169,13 +170,13 @@ public class Downloader {
         else {
             String filesStr = (downloadCount == 1) ? "music file" : "music files";
             logger.log(INFO, "Downloading {0} {1} ...", new Object[] { downloadCount, filesStr });
-            queue.processQueue(exitWhenDownloadQueueIsEmpty);
+            queue.processQueue(callWhenQueueIsEmpty);
         }
     }
 
     /**
-     * Whether to exit when the download queue is empty, iff we add any downloads to it.
-     * This is set to true for command-line downloads, and false for downloads from watches.
+     * A callback to invoke when the download queue is empty, iff we add any downloads to it.
+     * This is only used when doing command-line downloads, not when processing watches.
      */
-    private final boolean exitWhenDownloadQueueIsEmpty;
+    private final Runnable callWhenQueueIsEmpty;
 }

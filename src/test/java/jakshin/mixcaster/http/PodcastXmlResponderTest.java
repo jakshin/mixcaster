@@ -294,7 +294,7 @@ class PodcastXmlResponderTest {
         assertThat(episodes).isGreaterThan(0);  // sanity check
 
         verify(mockDownloadQueue, times(episodes)).enqueue(any());
-        verify(mockDownloadQueue).processQueue(anyBoolean());
+        verify(mockDownloadQueue).processQueue(any());
     }
 
     private void validateResponseHeaders(String headers) {

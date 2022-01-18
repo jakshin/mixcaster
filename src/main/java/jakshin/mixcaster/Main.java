@@ -34,7 +34,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.Serial;
-import java.nio.file.*;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -97,12 +98,12 @@ public class Main {
             logCleanerThread.start();
 
             // download
-            int result = new Downloader(true).download(args, false);
-            DownloadQueue queue = DownloadQueue.getInstance();
+            Runnable callback = () -> System.exit(0);
+            int result = new Downloader(callback).download(args, false);
 
-            if (queue.activeDownloadCount() == 0) {
+            if (DownloadQueue.getInstance().activeDownloadCount() == 0) {
                 // ApolloClient's OkHttp instance's non-daemon threads will prevent a natural exit,
-                // and DownloadQueue isn't going force the app to exit, so we need to do so here
+                // and DownloadQueue isn't going call our callback, so we need to explicitly exit here
                 waitForThreadToFinish(logCleanerThread);
                 System.exit(result);
             }

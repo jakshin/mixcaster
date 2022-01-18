@@ -207,7 +207,7 @@ class PodcastXmlResponder extends Responder {
         else {
             String filesStr = (queued == 1) ? "music file" : "music files";
             logger.log(INFO, "Downloading {0} new {1} ...", new Object[] { queued, filesStr });
-            queue.processQueue(false);
+            queue.processQueue(null);
         }
     }
 
