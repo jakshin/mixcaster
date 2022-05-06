@@ -28,6 +28,14 @@ dependencies {
 
 def appVersion = 'dev'  // Must be either "dev" or major.minor.patch
 
+// Use Java 17 for all compilation, test and javadoc tasks,
+// even if version 18+ is installed and the default
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(17))
+    }
+}
+
 // Enable some javac diagnostics
 gradle.projectsEvaluated {
     tasks.withType(JavaCompile) {
