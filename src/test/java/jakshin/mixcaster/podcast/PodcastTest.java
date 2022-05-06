@@ -162,7 +162,7 @@ class PodcastTest {
         OutputStream out = null;
 
         try {
-            URL url = new URL("http://validator.w3.org/feed/check.cgi");
+            URL url = new URL("https://validator.w3.org/feed/check.cgi");
             conn = (HttpURLConnection) url.openConnection();
             conn.setInstanceFollowRedirects(true);
             conn.setRequestProperty("User-Agent", System.getProperty("user_agent"));
