@@ -842,7 +842,7 @@ public class MixcloudClient {
 
     /** Reusing a single ApolloClient instance allows us to reuse the underlying OkHttp instance
         and the associated thread pools and connections. */
-    private final ApolloClient apolloClient = ApolloClient.builder().serverUrl("https://www.mixcloud.com/graphql").build();
+    private final ApolloClient apolloClient = ApolloClient.builder().serverUrl("https://app.mixcloud.com/graphql").build();
 
     /**
      * Timeout for HTTP connects and reads.
