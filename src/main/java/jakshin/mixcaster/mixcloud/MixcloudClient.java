@@ -832,7 +832,7 @@ public class MixcloudClient {
      */
     @NotNull
     private List<String> getSubscribedToSetting() {
-        String[] subscribedTo = System.getProperty("subscribed_to").split("\s+");
+        String[] subscribedTo = System.getProperty("subscribed_to").split("\\s+");
         return Arrays.asList(subscribedTo);
     }
 
