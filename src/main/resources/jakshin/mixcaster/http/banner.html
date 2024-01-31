@@ -670,15 +670,14 @@ agAAAAAElFTkSuQmCC">
 <div class="bookmarklet">Use this bookmarklet on a Mixcloud page that lists music,<br>
 	to load RSS for a podcast containing that music:
 	<a href="javascript:(function(){
-		if (location.host != 'www.mixcloud.com' ||
-			document.querySelector('section.profile-header') == null)
+		if (location.host != 'www.mixcloud.com')
+			return alert('This bookmarklet is for use on www.mixcloud.com');
+		if (document.querySelector('div[class^=\'AudioCardTitle\']') != null
+			|| confirm('Can\'t find any music listed on this page.\n\nContinue anyway?'))
 		{
-			alert('This isn\'t a Mixcloud page that lists music.');
-			return;
+			var podcastUrl = 'http://localhost:{{port}}' + location.pathname;
+			location.href = podcastUrl;
 		}
-
-		var podcastUrl = 'http://localhost:{{port}}' + location.pathname;
-		location.href = podcastUrl;
 	})();">Mixcaster</a>
 </div>
 
