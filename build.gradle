@@ -26,7 +26,7 @@ dependencies {
     testImplementation 'org.mockito:mockito-inline:4.2.0'
 }
 
-def appVersion = 'dev'  // Must be either "dev" or major.minor.patch
+def appVersion = '1.1.2'  // Must be either "dev" or major.minor.patch
 
 // Use Java 17 for all compilation, test and javadoc tasks,
 // even if version 18+ is installed and the default
